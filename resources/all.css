@@ -1,0 +1,39 @@
+.endnote {
+    margin-right: 20px;
+}
+
+.endnote h2 {
+    margin-top: 20px;
+}
+
+.endnote hr {
+    border: 0;
+    border-bottom: 1px solid #e5e5e5;
+    margin-top: 20px;
+}
+
+.endnote input[type="file"] {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.endnote p {
+    margin: 20px 0 0 0;
+}
+
+.endnote .center {
+    text-align: center;
+}
+
+.endnote .error {
+    margin: 20px 0 0 0;
+}
+
+.endnote .updated {
+    margin: 20px 0 0 0;
+}
+
+.endnote .welcome-panel {
+    margin-top: 20px;
+    padding: 0 20px 20px 20px;
+}
