@@ -11,31 +11,50 @@ Author URI: http://www.medialeg.ch
 
 $GLOBALS['endnote'] = array();
 
-function endnote_get_csv($xml)
+function endnote_get_directory($items)
 {
-    $errors = array();
-    $csv = '';
-
-    $errors[] = 'endnote_get_csv() - Invalid EndNote XML File';
-
-    return array($errors, $csv);
+    $directory = endnote_get_file($items);
+    if (!@is_dir($directory)) {
+        @mkdir($directory, 0777, true);
+    }
+    return $directory;
 }
 
 function endnote_get_file($items)
 {
-    $wp_upload_dir = wp_upload_dir();
-    array_unshift($items, 'endnote');
-    array_unshift($items, $wp_upload_dir['basedir']);
+    array_unshift($items, 'files');
+    array_unshift($items, rtrim(plugin_dir_path(__FILE__), '/'));
     return implode(DIRECTORY_SEPARATOR, $items);
 }
 
-function endnote_get_directory($items)
+function endnote_get_items($xml)
 {
-    $directory = endnote_get_file($items);
-    if (!is_dir($directory)) {
-        mkdir($directory, 0777, true);
+    $items = array(array('ID', 'Type of Document', 'Title', 'Year'));
+    foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') as $key => $value) {
+        try {
+            $rec_number = (string) array_pop($value->xpath('rec-number'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $ref_type = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $title = (string) array_pop($value->xpath('titles/title/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $year = (string) array_pop($value->xpath('dates/year/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        $items[] = array($rec_number, $ref_type, $title, $year);
     }
-    return $directory;
+
+    return array(array(), $items);
 }
 
 function endnote_register_deactivation_hook()
@@ -118,16 +137,62 @@ function endnote_dashboard()
     }
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['endnote']['flashes'] = array();
-        list($errors, $csv) = endnote_get_csv(file_get_contents($_FILES['file']['tmp_name']));
+        $xml = endnote_get_file(array($_FILES['file']['name']));
+        if (!copy($_FILES['file']['tmp_name'],  $xml)) {
+            $_SESSION['endnote']['flashes'][] = array('error', 'endnote_dashboard() - Invalid copy()');
+            ?>
+            <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
+            <?php
+            die();
+        }
+        list($errors, $items) = endnote_get_items(file_get_contents($_FILES['file']['tmp_name']));
         if ($errors) {
             foreach ($errors AS $error) {
                 $_SESSION['endnote']['flashes'][] = array('error', $error);
             }
-        } else {
-            $_SESSION['endnote']['flashes'][] = array('updated', 'The file was uploaded successfully.');
+            ?>
+            <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
+            <?php
+            die();
         }
+        $csv = preg_replace('#\.xml$#', '.csv', $xml);
+        $resource = @fopen($csv, 'w');
+        if (!$resource) {
+            $_SESSION['endnote']['flashes'][] = array('error', 'endnote_dashboard() - Invalid fopen()');
+            ?>
+            <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
+            <?php
+            die();
+        }
+        foreach ($items as $item) {
+            if (!fputcsv($resource, $item)) {
+                $_SESSION['endnote']['flashes'][] = array('error', 'endnote_dashboard() - Invalid fputcsv()');
+                ?>
+                <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
+                <?php
+                die();
+            }
+        }
+        if (!@fclose($resource)) {
+            $_SESSION['endnote']['flashes'][] = array('error', 'endnote_dashboard() - Invalid fclose()');
+            ?>
+            <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
+            <?php
+            die();
+        }
+        $_SESSION['endnote']['flashes'][] = array('updated', 'Your file was processed successfully.');
         ?>
-        <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
+        <div class="endnote">
+            <h2>Dashboard</h2>
+            <?php endnote_flashes(); ?>
+            <div class="welcome-panel">
+            <p>
+                <a href="<?php echo sprintf('%s/%s', plugins_url('endnote/files'), basename($csv)); ?>">
+                    Click here
+                </a>
+                to download the processed file.
+            </p>
+        </div>
         <?php
         die();
     }
