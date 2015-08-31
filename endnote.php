@@ -50,7 +50,7 @@ function endnote_get_items($xml)
         )
     );
     foreach (
-        @simplexml_load_string(utf8_encode(mb_convert_encoding($xml, "ascii", "auto")))->xpath('//xml/records/record')
+        @simplexml_load_string(utf8_encode(mb_convert_encoding($xml, 'ascii', 'auto')))->xpath('//xml/records/record')
         as
         $key
         =>
