@@ -29,15 +29,40 @@ function endnote_get_file($items)
 
 function endnote_get_items($xml)
 {
-    $items = array(array('ID', 'Type of Document', 'Title', 'Year'));
-    foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') as $key => $value) {
+    $items = array(
+        array(
+            'ID',
+            'Type',
+            'Title',
+            'Year',
+            'Book Title',
+            'Journal',
+            'Volume',
+            'Issue',
+            'Page',
+            'URL',
+            'DOI',
+            'ISSN',
+            'ISBN',
+            'Publisher',
+            'Place Published',
+            'Access Date',
+        )
+    );
+    foreach (
+        @simplexml_load_string(utf8_encode(mb_convert_encoding($xml, "ascii", "auto")))->xpath('//xml/records/record')
+        as
+        $key
+        =>
+        $value
+    ) {
         try {
-            $rec_number = (string) array_pop($value->xpath('rec-number'));
+            $id = (string) array_pop($value->xpath('rec-number'));
         } catch (Exception $exception) {
             return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
         }
         try {
-            $ref_type = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
+            $type = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
         } catch (Exception $exception) {
             return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
         }
@@ -51,7 +76,84 @@ function endnote_get_items($xml)
         } catch (Exception $exception) {
             return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
         }
-        $items[] = array($rec_number, $ref_type, $title, $year);
+        try {
+            $book_title = (string) array_pop($value->xpath('titles/secondary-title/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $journal = (string) array_pop($value->xpath('titles/secondary-title/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $volume = (string) array_pop($value->xpath('volume/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $issue = (string) array_pop($value->xpath('number/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $page = (string) array_pop($value->xpath('pages/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $url = (string) array_pop($value->xpath('urls/related-urls/url/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $doi = (string) array_pop($value->xpath('urls/related-urls/url/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $issn = (string) array_pop($value->xpath('orig-pub/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $isbn = (string) array_pop($value->xpath('isbn/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $publisher = (string) array_pop($value->xpath('pages/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $place_published = (string) array_pop($value->xpath('pub-location/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $access_date = (string) array_pop($value->xpath('access-date/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        $items[] = array(
+            $id,
+            $type,
+            $title,
+            $year,
+            $book_title,
+            $journal,
+            $volume,
+            $issue,
+            $page,
+            $url,
+            $doi,
+            $issn,
+            $isbn,
+            $publisher,
+            $place_published,
+            $access_date,
+        );
     }
 
     return array(array(), $items);
