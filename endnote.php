@@ -9,7 +9,15 @@ Version: 1.0
 Author URI: http://www.medialeg.ch
 */
 
+libxml_use_internal_errors(true);
+
 $GLOBALS['endnote'] = array();
+
+function endnote_get_file($items)
+{
+    array_unshift($items, 'files', rtrim(plugin_dir_path(__FILE__), '/'));
+    return implode(DIRECTORY_SEPARATOR, $items);
+}
 
 function endnote_get_directory($items)
 {
@@ -20,155 +28,143 @@ function endnote_get_directory($items)
     return $directory;
 }
 
-function endnote_get_file($items)
+function endnote_get_prefix()
 {
-    array_unshift($items, 'files');
-    array_unshift($items, rtrim(plugin_dir_path(__FILE__), '/'));
-    return implode(DIRECTORY_SEPARATOR, $items);
-}
-
-function endnote_get_items($xml)
-{
-    $items = array(
-        array(
-            'ID',
-            'Type',
-            'Title',
-            'Year',
-            'Book Title',
-            'Journal',
-            'Volume',
-            'Issue',
-            'Page',
-            'URL',
-            'DOI',
-            'ISSN',
-            'ISBN',
-            'Publisher',
-            'Place Published',
-            'Access Date',
-        )
-    );
-    foreach (
-        @simplexml_load_string(utf8_encode(mb_convert_encoding($xml, 'ascii', 'auto')))->xpath('//xml/records/record')
-        as
-        $key
-        =>
-        $value
-    ) {
-        try {
-            $id = (string) array_pop($value->xpath('rec-number'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $type = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $title = (string) array_pop($value->xpath('titles/title/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $year = (string) array_pop($value->xpath('dates/year/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $book_title = (string) array_pop($value->xpath('titles/secondary-title/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $journal = (string) array_pop($value->xpath('titles/secondary-title/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $volume = (string) array_pop($value->xpath('volume/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $issue = (string) array_pop($value->xpath('number/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $page = (string) array_pop($value->xpath('pages/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $url = (string) array_pop($value->xpath('urls/related-urls/url/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $doi = (string) array_pop($value->xpath('urls/related-urls/url/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $issn = (string) array_pop($value->xpath('orig-pub/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $isbn = (string) array_pop($value->xpath('isbn/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $publisher = (string) array_pop($value->xpath('pages/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $place_published = (string) array_pop($value->xpath('pub-location/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $access_date = (string) array_pop($value->xpath('access-date/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        $items[] = array(
-            $id,
-            $type,
-            $title,
-            $year,
-            $book_title,
-            $journal,
-            $volume,
-            $issue,
-            $page,
-            $url,
-            $doi,
-            $issn,
-            $isbn,
-            $publisher,
-            $place_published,
-            $access_date,
-        );
-    }
-
-    return array(array(), $items);
-}
-
-function endnote_register_deactivation_hook()
-{
-    rmdir(endnote_get_directory(array()));
+    return sprintf('%sendnote_', $GLOBALS['wpdb']->prefix);
 }
 
 function endnote_register_activation_hook()
 {
     endnote_register_deactivation_hook();
 
+    $query = <<<EOD
+CREATE TABLE IF NOT EXISTS `%sdocuments` (
+    `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
+EOD;
+    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
+
+    $query = <<<EOD
+CREATE TABLE IF NOT EXISTS `%sarticles` (
+    `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `document_id` INT(11) UNSIGNED NOT NULL,
+    `document_type` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `title` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `year` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `book_title` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `journal` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `volume` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `issue` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `page` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `url` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `doi` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `issn` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `isbn` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `publisher` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `place` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `published` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `access_date` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `document_type` (`document_type`),
+    KEY `title` (`title`),
+    KEY `year` (`year`),
+    KEY `book_title` (`book_title`),
+    KEY `journal` (`journal`),
+    KEY `volume` (`volume`),
+    KEY `issue` (`issue`),
+    KEY `page` (`page`),
+    KEY `url` (`url`),
+    KEY `doi` (`doi`),
+    KEY `issn` (`issn`),
+    KEY `isbn` (`isbn`),
+    KEY `publisher` (`publisher`),
+    KEY `place` (`place`),
+    KEY `published` (`published`),
+    KEY `access_date` (`access_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
+EOD;
+    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
+
+    $query = <<<EOD
+CREATE TABLE IF NOT EXISTS `%sauthors` (
+    `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `document_id` INT(11) UNSIGNED NOT NULL,
+    `name` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `first_names` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `urls` TEXT COLLATE utf8_unicode_ci NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `name` (`name`),
+    KEY `first_names` (`first_names`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
+EOD;
+    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
+
+    $query = <<<EOD
+CREATE TABLE IF NOT EXISTS `%sarticles_authors` (
+    `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `article_id` INT(11) UNSIGNED NOT NULL,
+    `author_id` INT(11) UNSIGNED NOT NULL,
+    `role` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `role` (`role`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
+EOD;
+    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
+
+    $query = <<<EOD
+ALTER TABLE `%sarticles`
+    ADD CONSTRAINT `%sarticles_document_id`
+    FOREIGN KEY (`document_id`)
+    REFERENCES `%sdocuments` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+EOD;
+    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()));
+
+    $query = <<<EOD
+ALTER TABLE `%sauthors`
+    ADD CONSTRAINT `%sauthors_document_id`
+    FOREIGN KEY (`document_id`)
+    REFERENCES `%sdocuments` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+EOD;
+    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()));
+
+    $query = <<<EOD
+ALTER TABLE `%sarticles_authors`
+    ADD CONSTRAINT `%sarticles_authors_article_id`
+    FOREIGN KEY (`article_id`)
+    REFERENCES `%sarticles` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+EOD;
+    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()));
+
+    $query = <<<EOD
+ALTER TABLE `%sarticles_authors`
+    ADD CONSTRAINT `%sarticles_authors_author_id`
+    FOREIGN KEY (`author_id`)
+    REFERENCES `%sauthors` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+EOD;
+    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()));
+
     endnote_get_directory(array());
+}
+
+function endnote_register_deactivation_hook()
+{
+    rmdir(endnote_get_directory(array()));
+
+    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles_authors`', endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sauthors`', endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles`', endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sdocuments`', endnote_get_prefix()));
 }
 
 function endnote_init()
@@ -203,18 +199,18 @@ function endnote_admin_init()
 
 function endnote_scripts()
 {
-    wp_enqueue_script('all_js', sprintf('%s/resources/all.js', plugins_url('/endnote')), array('jquery'));
+    wp_enqueue_script('all_js', sprintf('%s/endnote.js', plugins_url('/endnote')), array('jquery'));
 }
 
 function endnote_styles()
 {
-    wp_enqueue_style('all_css', sprintf('%s/resources/all.css', plugins_url('/endnote')));
+    wp_enqueue_style('all_css', sprintf('%s/endnote.css', plugins_url('/endnote')));
 }
 
 function endnote_admin_menu()
 {
-    add_menu_page('EndNote', 'EndNote', 'manage_options', '/endnote', 'endnote_dashboard', '');
-    add_submenu_page('/endnote', 'Dashboard', 'Dashboard', 'manage_options', '/endnote', 'endnote_dashboard');
+    add_menu_page('EndNote', 'EndNote', 'manage_options', '/endnote', 'endnote_documents', '');
+    add_submenu_page('/endnote', 'Documents', 'Documents', 'manage_options', '/endnote', 'endnote_documents');
     add_submenu_page('/endnote', 'F.A.Q', 'F.A.Q', 'manage_options', '/endnote/faq', 'endnote_faq');
 }
 
@@ -232,7 +228,7 @@ function endnote_flashes()
     <?php
 }
 
-function endnote_dashboard()
+function endnote_documents()
 {
     if (!current_user_can('manage_options')) {
         wp_die('You do not have permissions to access this page.');
@@ -300,7 +296,7 @@ function endnote_dashboard()
     }
     ?>
     <div class="endnote">
-        <h2>Dashboard</h2>
+        <h2>Documents</h2>
         <?php endnote_flashes(); ?>
         <div class="welcome-panel">
             <form
