@@ -1,13 +1,13 @@
 <?php
 
-/*
-Plugin Name: EndNote
-Plugin URI: http://www.medialeg.ch
-Description: ...coming soon...
-Author: Reto Schneider
-Version: 1.0
-Author URI: http://www.medialeg.ch
-*/
+/**
+ * Plugin Name: EndNote
+ * Plugin URI: http://www.medialeg.ch
+ * Description: ...coming soon...
+ * Author: Reto Schneider
+ * Version: 1.0
+ * Author URI: http://www.medialeg.ch
+ */
 
 libxml_use_internal_errors(true);
 
