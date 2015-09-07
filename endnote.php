@@ -209,18 +209,19 @@ function endnote_styles()
 
 function endnote_admin_menu()
 {
-    add_menu_page('EndNote', 'EndNote', 'manage_options', '/endnote', 'endnote_documents', '');
-    add_submenu_page('/endnote', 'Documents', 'Documents', 'manage_options', '/endnote', 'endnote_documents');
-    add_submenu_page('/endnote', 'F.A.Q', 'F.A.Q', 'manage_options', '/endnote/faq', 'endnote_faq');
+    add_menu_page('EndNote', 'EndNote', 'manage_options', '/endnote/documents', 'endnote_documents', '');
+    add_submenu_page(null, 'Documents', 'EndNote', 'manage_options', '/endnote/documents', 'endnote_documents');
+    add_submenu_page('/endnote/doc', 'F.A.Q', 'F.A.Q', 'manage_options', '/endnote/faq', 'endnote_faq');
+    add_submenu_page(null, '', '', 'manage_options', '/endnote/zip', 'endnote_zip');
 }
 
 function endnote_flashes()
 {
     ?>
     <?php if (!empty($_SESSION['endnote']['flashes'])): ?>
-        <?php foreach ($_SESSION['endnote']['flashes'] AS $flash): ?>
-            <div class="<?php echo $flash[0]; ?>">
-                <p><strong><?php echo $flash[1]; ?></strong></p>
+        <?php foreach ($_SESSION['endnote']['flashes'] AS $key => $value): ?>
+            <div class="<?php echo $key; ?>">
+                <p><strong><?php echo $value; ?></strong></p>
             </div>
         <?php endforeach; ?>
         <?php $_SESSION['endnote']['flashes'] = array(); ?>
@@ -233,86 +234,141 @@ function endnote_documents()
     if (!current_user_can('manage_options')) {
         wp_die('You do not have permissions to access this page.');
     }
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        $_SESSION['endnote']['flashes'] = array();
-        $xml = endnote_get_file(array($_FILES['file']['name']));
-        if (!copy($_FILES['file']['tmp_name'],  $xml)) {
-            $_SESSION['endnote']['flashes'][] = array('error', 'endnote_dashboard() - Invalid copy()');
-            ?>
-            <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
-            <?php
-            die();
-        }
-        list($errors, $items) = endnote_get_items(file_get_contents($_FILES['file']['tmp_name']));
-        if ($errors) {
-            foreach ($errors AS $error) {
-                $_SESSION['endnote']['flashes'][] = array('error', $error);
-            }
-            ?>
-            <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
-            <?php
-            die();
-        }
-        $csv = preg_replace('#\.xml$#', '.csv', $xml);
-        $resource = @fopen($csv, 'w');
-        if (!$resource) {
-            $_SESSION['endnote']['flashes'][] = array('error', 'endnote_dashboard() - Invalid fopen()');
-            ?>
-            <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
-            <?php
-            die();
-        }
-        foreach ($items as $item) {
-            if (!fputcsv($resource, $item)) {
-                $_SESSION['endnote']['flashes'][] = array('error', 'endnote_dashboard() - Invalid fputcsv()');
-                ?>
-                <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
-                <?php
-                die();
-            }
-        }
-        if (!@fclose($resource)) {
-            $_SESSION['endnote']['flashes'][] = array('error', 'endnote_dashboard() - Invalid fclose()');
-            ?>
-            <meta content="0;url=<?php echo admin_url('admin.php?page=endnote');?>" http-equiv="refresh">
-            <?php
-            die();
-        }
-        $_SESSION['endnote']['flashes'][] = array('updated', 'Your file was processed successfully.');
-        ?>
-        <div class="endnote">
-            <h2>Dashboard</h2>
-            <?php endnote_flashes(); ?>
-            <div class="welcome-panel">
-            <p>
-                <a href="<?php echo sprintf('%s/%s', plugins_url('endnote/files'), basename($csv)); ?>">
-                    Click here
-                </a>
-                to download the processed file.
-            </p>
-        </div>
-        <?php
-        die();
-    }
+    $action = $_REQUEST['action']? $_REQUEST['action']: 'select_all';
     ?>
-    <div class="endnote">
-        <h2>Documents</h2>
-        <?php endnote_flashes(); ?>
-        <div class="welcome-panel">
-            <form
-                action="<?php echo admin_url('admin.php?page=endnote'); ?>"
-                enctype="multipart/form-data"
-                method="post"
-                >
-                <p>
-                    <input id="file" name="file" type="file">
-                    Choose a valid EndNote XML file.
-                </p>
-                <hr>
-                <p>
-                    <input class="button-primary" type="submit" value="Submit">
-                </p>
-            </form>
+    <div class="endnote wrap">
+        <?php
+        switch ($action) {
+            case 'delete':
+                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                    $GLOBALS['wpdb']->delete(
+                        sprintf('%sdocuments', endnote_get_prefix()),
+                        array(
+                            'id' => $_REQUEST['id'],
+                        ),
+                        null,
+                        null
+                    );
+                    $_SESSION['endnote']['flashes'] = array('updated' => 'The document was deleted successfully.');
+                    ?>
+                    <meta
+                        content="0;url=<?php
+                        echo admin_url('admin.php?action=select_all&deleted=deleted&page=endnote/documents');
+
+                        ?>"
+                        http-equiv="refresh"
+                        >
+                    <?php
+                    die();
+                } else {
+                    ?>
+                    <h1>Documents - Delete</h1>
+                    <div class="error">
+                        <p><strong>Are you sure you want to delete this document?</strong></p>
+                    </div>
+                    <form
+                        action="<?php
+                        echo admin_url(
+                            sprintf('admin.php?action=delete&id=%d&page=endnote/documents', $_REQUEST['id'])
+                        );
+                        ?>"
+                        method="post"
+                        >
+                        <p class="submit">
+                            <input class="button-primary" type="submit" value="Yes">
+                            <a
+                                class="float-right"
+                                href="<?php echo admin_url('admin.php?action=select_all&page=endnote/documents'); ?>"
+                                >No</a>
+                        </p>
+                    </form>
+                    <?php
+                }
+                break;
+            case 'insert':
+                /**
+                 *
+                 */
+                break;
+            case 'select_one':
+                /**
+                 *
+                 */
+                break;
+            case 'select_all':
+            default:
+                $documents = $GLOBALS['wpdb']->get_results(
+                    sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', endnote_get_prefix()), ARRAY_A
+                );
+                ?>
+                <h1>
+                    Documents
+                    <a
+                        class="page-title-action"
+                        href="<?php echo admin_url('admin.php?action=insert&page=endnote/documents'); ?>"
+                        >Upload</a>
+                </h1>
+                <?php endnote_flashes(); ?>
+                <?php if ($documents): ?>
+                    <table class="bordered widefat wp-list-table">
+                        <tr>
+                            <th class="narrow center">ID</th>
+                            <th>Name</th>
+                            <th class="narrow center">ZIP</th>
+                            <th class="narrow center">XML</th>
+                            <th class="narrow center">Actions</th>
+                        </tr>
+                        <?php foreach ($documents as $document): ?>
+                            <tr>
+                                <td class="narrow center"><?php echo $document['id']; ?></td>
+                                <td><?php echo $document['name']; ?></td>
+                                <td class="narrow center">
+                                    <a href="<?php
+                                    echo admin_url(
+                                        sprintf(
+                                            'admin.php?action=select&id=%d&page=endnote/zip', $document['id']
+                                        )
+                                    );
+                                    ?>">Download</a>
+                                    &dash;
+                                    <a href="<?php
+                                    echo admin_url(
+                                        sprintf(
+                                            'admin.php?action=insert&id=%d&page=endnote/zip', $document['id']
+                                        )
+                                    );
+                                    ?>">Upload</a>
+                                </td>
+                                <td class="narrow center">
+                                    <a href="<?php
+                                    echo admin_url(
+                                        sprintf(
+                                            'admin.php?action=select_one&id=%d&page=endnote/documents', $document['id']
+                                        )
+                                    );
+                                    ?>">Download</a>
+                                </td>
+                                <td class="narrow center">
+                                    <a href="<?php
+                                    echo admin_url(
+                                        sprintf(
+                                            'admin.php?action=delete&id=%d&page=endnote/documents', $document['id']
+                                        )
+                                    );
+                                    ?>">Delete</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </table>
+                <?php else: ?>
+                    <div class="error">
+                        <p><strong>There are no documents in the database.</strong></p>
+                    </div>
+                <?php endif; ?>
+                <?php
+                break;
+        }
+        ?>
         </div>
     </div>
     <?php
@@ -324,8 +380,8 @@ function endnote_faq()
         wp_die('You do not have permissions to access this page.');
     }
     ?>
-    <div class="endnote">
-        <h2>F.A.Q.</h2>
+    <div class="endnote wrap">
+        <h1>F.A.Q.</h1>
         <div class="welcome-panel">
             <p class="center">...coming soon...</p>
         </div>

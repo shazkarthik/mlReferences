@@ -1,39 +1,90 @@
 .endnote {
-    margin-right: 20px;
+    margin: 0 20px 0 0 !important;
 }
 
-.endnote h2 {
-    margin-top: 20px;
+.endnote h1 {
+    margin: 20px 0 0 0 !important;
+    padding: 0 !important;
 }
 
 .endnote hr {
-    border: 0;
-    border-bottom: 1px solid #e5e5e5;
-    margin-top: 20px;
+    border: 0 !important;
+    border-bottom: 1px solid #e5e5e5 !important;
+    margin-top: 20px !important;
 }
 
 .endnote input[type="file"] {
-    display: block;
-    margin-bottom: 10px;
+    display: block !important;
+    margin-bottom: 10px !important;
 }
 
 .endnote p {
-    margin: 20px 0 0 0;
+    margin: 20px 0 0 0 !important;
+}
+
+.endnote .bordered {
+    border-collapse: collapse !important;
+    margin-top: 20px !important;
+}
+
+.endnote .bordered td {
+    border: 1px solid #e5e5e5 !important;
+    vertical-align: middle !important;
+}
+
+.endnote .bordered th {
+    border: 1px solid #e5e5e5 !important;
+    font-size: 13px !important;
+    font-weight: bold !important;
+    vertical-align: middle !important;
+}
+
+.endnote .button-primary + a {
+    line-height: 28px !important;
 }
 
 .endnote .center {
-    text-align: center;
+    text-align: center !important;
 }
 
-.endnote .error {
-    margin: 20px 0 0 0;
+.endnote .error,
+.endnote .updated {
+    margin: 20px 0 0 0 !important;
+}
+
+.endnote .error p,
+.endnote .updated p {
+    margin: 10px 0 !important;
+    padding: 0 !important;
+}
+
+.endnote .float-left {
+    float: left !important;
+}
+
+.endnote .float-right {
+    float: right !important;
+}
+
+.endnote .narrow {
+    white-space: nowrap !important;
+    width: 1px !important;
+}
+
+.endnote .right {
+    text-align: right !important;
+}
+
+.endnote .submit {
+    margin: 20px 0 !important;
+    padding: 0 !important;
 }
 
 .endnote .updated {
-    margin: 20px 0 0 0;
+    margin: 20px 0 0 0 !important;
 }
 
 .endnote .welcome-panel {
-    margin-top: 20px;
-    padding: 0 20px 20px 20px;
+    margin-top: 20px !important;
+    padding: 0 20px 20px 20px !important;
 }
