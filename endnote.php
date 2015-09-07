@@ -237,6 +237,65 @@ function endnote_dashboard()
     <div class="endnote wrap">
         <?php
         switch ($action) {
+            case 'upload':
+                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                    $file = endnote_get_file(array($GLOBALS['wpdb']->insert_id, $_FILES['file']['name']));
+                    if (copy($_FILES['file']['name'], $file)) {
+                        $GLOBALS['wpdb']->insert(
+                            sprintf('%sdocuments', endnote_get_prefix()),
+                            array(
+                                'name' => $_FILES['file']['name'],
+                            )
+                        );
+                        /**
+                         * 1. insert corresponding records into `articles` (using `$GLOBALS['wpdb']->insert()`)
+                         * 2. insert corresponding records into `authors` (using `$GLOBALS['wpdb']->insert()`)
+                         * 3. insert corresponding records into `articles_authors` (using `$GLOBALS['wpdb']->insert()`)
+                         * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Upload XML" section)
+                         * i.e.: identical to what you do in 1.php but for all 3 tables instead of just one
+                         */
+                        $_SESSION['endnote']['flashes'] = array(
+                            'error' => 'The document was not uploaded successfully. Please try again.',
+                        );
+                        ?>
+                        <meta
+                            content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>"
+                            http-equiv="refresh"
+                            >
+                        <?php
+                        die();
+                    }
+                    $_SESSION['endnote']['flashes'] = array('updated' => 'The document was uploaded successfully.');
+                    ?>
+                    <meta
+                        content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>" http-equiv="refresh"
+                        >
+                    <?php
+                    die();
+                } else {
+                    ?>
+                    <h1>Documents - Upload</h1>
+                    <form
+                        action="<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
+                        enctype="multipart/form-data"
+                        method="post"
+                        >
+                        <table class="bordered widefat wp-list-table">
+                            <tr>
+                                <td class="narrow" class="top"><label for="file">File</label></td>
+                                <td><input id="file" name="file" type="file"></td>
+                            </tr>
+                        </table>
+                        <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
+                    </form>
+                    <?php
+                }
+                break;
+            case 'download':
+                /**
+                 * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Download XML" section)
+                 */
+                break;
             case 'delete':
                 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $GLOBALS['wpdb']->delete(
@@ -277,70 +336,14 @@ function endnote_dashboard()
                     <?php
                 }
                 break;
-            case 'download':
-                /**
-                 *
-                 */
-                break;
-            case 'upload':
-                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                    $GLOBALS['wpdb']->insert(
-                        sprintf('%sdocuments', endnote_get_prefix()),
-                        array(
-                            'name' => $_FILES['file']['name'],
-                        )
-                    );
-                    if (
-                        copy(
-                            $_FILES['file']['name'],
-                            endnote_get_file(array($GLOBALS['wpdb']->insert_id, $_FILES['file']['name']))
-                        )
-                    ) {
-                        $_SESSION['endnote']['flashes'] = array(
-                            'error' => 'The document was not uploaded successfully. Please try again.',
-                        );
-                        ?>
-                        <meta
-                            content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>"
-                            http-equiv="refresh"
-                            >
-                        <?php
-                        die();
-                    }
-                    $_SESSION['endnote']['flashes'] = array('updated' => 'The document was uploaded successfully.');
-                    ?>
-                    <meta
-                        content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>" http-equiv="refresh"
-                        >
-                    <?php
-                    die();
-                } else {
-                    ?>
-                    <h1>Documents - Upload</h1>
-                    <form
-                        action="<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
-                        enctype="multipart/form-data"
-                        method="post"
-                        >
-                        <table class="bordered widefat wp-list-table">
-                            <tr>
-                                <td class="narrow" class="top"><label for="file">File</label></td>
-                                <td><input id="file" name="file" type="file"></td>
-                            </tr>
-                        </table>
-                        <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
-                    </form>
-                    <?php
-                }
-                break;
             case 'download_zip':
                 /**
-                 *
+                 * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Download ZIP" section)
                  */
                 break;
             case 'upload_zip':
                 /**
-                 *
+                 * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Upload ZIP" section)
                  */
                 break;
             default:
