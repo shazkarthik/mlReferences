@@ -209,10 +209,8 @@ function endnote_styles()
 
 function endnote_admin_menu()
 {
-    add_menu_page('EndNote', 'EndNote', 'manage_options', '/endnote/documents', 'endnote_documents', '');
-    add_submenu_page(null, 'Documents', 'EndNote', 'manage_options', '/endnote/documents', 'endnote_documents');
-    add_submenu_page('/endnote/doc', 'F.A.Q', 'F.A.Q', 'manage_options', '/endnote/faq', 'endnote_faq');
-    add_submenu_page(null, '', '', 'manage_options', '/endnote/zip', 'endnote_zip');
+    add_menu_page('EndNote', 'EndNote', 'manage_options', '/endnote', 'endnote_dashboard', '');
+    add_submenu_page('/endnote', 'F.A.Q', 'F.A.Q', 'manage_options', '/endnote/faq', 'endnote_faq');
 }
 
 function endnote_flashes()
@@ -229,12 +227,12 @@ function endnote_flashes()
     <?php
 }
 
-function endnote_documents()
+function endnote_dashboard()
 {
     if (!current_user_can('manage_options')) {
         wp_die('You do not have permissions to access this page.');
     }
-    $action = $_REQUEST['action']? $_REQUEST['action']: 'select_all';
+    $action = $_REQUEST['action']? $_REQUEST['action']: '';
     ?>
     <div class="endnote wrap">
         <?php
@@ -252,10 +250,7 @@ function endnote_documents()
                     $_SESSION['endnote']['flashes'] = array('updated' => 'The document was deleted successfully.');
                     ?>
                     <meta
-                        content="0;url=<?php
-                        echo admin_url('admin.php?action=select_all&deleted=deleted&page=endnote/documents');
-
-                        ?>"
+                        content="0;url=<?php echo admin_url('admin.php?action=&deleted=deleted&page=endnote'); ?>"
                         http-equiv="refresh"
                         >
                     <?php
@@ -268,34 +263,86 @@ function endnote_documents()
                     </div>
                     <form
                         action="<?php
-                        echo admin_url(
-                            sprintf('admin.php?action=delete&id=%d&page=endnote/documents', $_REQUEST['id'])
-                        );
+                        echo admin_url(sprintf('admin.php?action=delete&id=%d&page=endnote', $_REQUEST['id']));
                         ?>"
                         method="post"
                         >
                         <p class="submit">
                             <input class="button-primary" type="submit" value="Yes">
-                            <a
-                                class="float-right"
-                                href="<?php echo admin_url('admin.php?action=select_all&page=endnote/documents'); ?>"
-                                >No</a>
+                            <a class="float-right" href="<?php echo admin_url('admin.php?action=&page=endnote'); ?>">
+                                No
+                            </a>
                         </p>
                     </form>
                     <?php
                 }
                 break;
-            case 'insert':
+            case 'download':
                 /**
                  *
                  */
                 break;
-            case 'select_one':
+            case 'upload':
+                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                    $GLOBALS['wpdb']->insert(
+                        sprintf('%sdocuments', endnote_get_prefix()),
+                        array(
+                            'name' => $_FILES['file']['name'],
+                        )
+                    );
+                    if (
+                        copy(
+                            $_FILES['file']['name'],
+                            endnote_get_file(array($GLOBALS['wpdb']->insert_id, $_FILES['file']['name']))
+                        )
+                    ) {
+                        $_SESSION['endnote']['flashes'] = array(
+                            'error' => 'The document was not uploaded successfully. Please try again.',
+                        );
+                        ?>
+                        <meta
+                            content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>"
+                            http-equiv="refresh"
+                            >
+                        <?php
+                        die();
+                    }
+                    $_SESSION['endnote']['flashes'] = array('updated' => 'The document was uploaded successfully.');
+                    ?>
+                    <meta
+                        content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>" http-equiv="refresh"
+                        >
+                    <?php
+                    die();
+                } else {
+                    ?>
+                    <h1>Documents - Upload</h1>
+                    <form
+                        action="<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
+                        enctype="multipart/form-data"
+                        method="post"
+                        >
+                        <table class="bordered widefat wp-list-table">
+                            <tr>
+                                <td class="narrow" class="top"><label for="file">File</label></td>
+                                <td><input id="file" name="file" type="file"></td>
+                            </tr>
+                        </table>
+                        <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
+                    </form>
+                    <?php
+                }
+                break;
+            case 'download_zip':
                 /**
                  *
                  */
                 break;
-            case 'select_all':
+            case 'upload_zip':
+                /**
+                 *
+                 */
+                break;
             default:
                 $documents = $GLOBALS['wpdb']->get_results(
                     sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', endnote_get_prefix()), ARRAY_A
@@ -305,7 +352,7 @@ function endnote_documents()
                     Documents
                     <a
                         class="page-title-action"
-                        href="<?php echo admin_url('admin.php?action=insert&page=endnote/documents'); ?>"
+                        href="<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
                         >Upload</a>
                 </h1>
                 <?php endnote_flashes(); ?>
@@ -325,35 +372,27 @@ function endnote_documents()
                                 <td class="narrow center">
                                     <a href="<?php
                                     echo admin_url(
-                                        sprintf(
-                                            'admin.php?action=select&id=%d&page=endnote/zip', $document['id']
-                                        )
+                                        sprintf('admin.php?action=download_zip&id=%d&page=endnote', $document['id'])
                                     );
                                     ?>">Download</a>
-                                    &dash;
+                                    -
                                     <a href="<?php
                                     echo admin_url(
-                                        sprintf(
-                                            'admin.php?action=insert&id=%d&page=endnote/zip', $document['id']
-                                        )
+                                        sprintf('admin.php?action=upload_zip&id=%d&page=endnote', $document['id'])
                                     );
                                     ?>">Upload</a>
                                 </td>
                                 <td class="narrow center">
                                     <a href="<?php
                                     echo admin_url(
-                                        sprintf(
-                                            'admin.php?action=select_one&id=%d&page=endnote/documents', $document['id']
-                                        )
+                                        sprintf('admin.php?action=download&id=%d&page=endnote', $document['id'])
                                     );
                                     ?>">Download</a>
                                 </td>
                                 <td class="narrow center">
                                     <a href="<?php
                                     echo admin_url(
-                                        sprintf(
-                                            'admin.php?action=delete&id=%d&page=endnote/documents', $document['id']
-                                        )
+                                        sprintf('admin.php?action=delete&id=%d&page=endnote', $document['id'])
                                     );
                                     ?>">Delete</a>
                                 </td>
