@@ -15,7 +15,8 @@ $GLOBALS['endnote'] = array();
 
 function endnote_get_file($items)
 {
-    array_unshift($items, 'files', rtrim(plugin_dir_path(__FILE__), '/'));
+    array_unshift($items, 'files');
+    array_unshift($items, rtrim(plugin_dir_path(__FILE__), '/'));
     return implode(DIRECTORY_SEPARATOR, $items);
 }
 
@@ -239,38 +240,29 @@ function endnote_dashboard()
         switch ($action) {
             case 'upload':
                 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                    $GLOBALS['wpdb']->insert(
+                        sprintf('%sdocuments', endnote_get_prefix()),
+                        array(
+                            'name' => $_FILES['file']['name'],
+                        )
+                    );
+                    endnote_get_directory(array($GLOBALS['wpdb']->insert_id));
                     $file = endnote_get_file(array($GLOBALS['wpdb']->insert_id, $_FILES['file']['name']));
-                    if (copy($_FILES['file']['name'], $file)) {
-                        $GLOBALS['wpdb']->insert(
-                            sprintf('%sdocuments', endnote_get_prefix()),
-                            array(
-                                'name' => $_FILES['file']['name'],
-                            )
-                        );
-                        /**
-                         * 1. insert corresponding records into `articles` (using `$GLOBALS['wpdb']->insert()`)
-                         * 2. insert corresponding records into `authors` (using `$GLOBALS['wpdb']->insert()`)
-                         * 3. insert corresponding records into `articles_authors` (using `$GLOBALS['wpdb']->insert()`)
-                         * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Upload XML" section)
-                         * i.e.: identical to what you do in 1.php but for all 3 tables instead of just one
-                         */
-                        $_SESSION['endnote']['flashes'] = array(
-                            'updated' => 'The document was uploaded successfully.',
-                        );
-                        ?>
-                        <meta
-                            content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>"
-                            http-equiv="refresh"
-                            >
-                        <?php
-                        die();
-                    }
+                    copy($_FILES['file']['tmp_name'], $file);
+                    /**
+                     * 1. insert corresponding records into `articles` (using `$GLOBALS['wpdb']->insert()`)
+                     * 2. insert corresponding records into `authors` (using `$GLOBALS['wpdb']->insert()`)
+                     * 3. insert corresponding records into `articles_authors` (using `$GLOBALS['wpdb']->insert()`)
+                     * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Upload XML" section)
+                     * i.e.: identical to what you do in 1.php but for all 3 tables instead of just one
+                     */
                     $_SESSION['endnote']['flashes'] = array(
-                        'error' => 'The document was not uploaded successfully. Please try again.',
+                        'updated' => 'The document was uploaded successfully.',
                     );
                     ?>
                     <meta
-                        content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>" http-equiv="refresh"
+                        content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>"
+                        http-equiv="refresh"
                         >
                     <?php
                     die();
