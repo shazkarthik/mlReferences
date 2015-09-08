@@ -255,7 +255,7 @@ function endnote_dashboard()
                          * i.e.: identical to what you do in 1.php but for all 3 tables instead of just one
                          */
                         $_SESSION['endnote']['flashes'] = array(
-                            'error' => 'The document was not uploaded successfully. Please try again.',
+                            'updated' => 'The document was uploaded successfully.',
                         );
                         ?>
                         <meta
@@ -265,7 +265,9 @@ function endnote_dashboard()
                         <?php
                         die();
                     }
-                    $_SESSION['endnote']['flashes'] = array('updated' => 'The document was uploaded successfully.');
+                    $_SESSION['endnote']['flashes'] = array(
+                        'error' => 'The document was not uploaded successfully. Please try again.',
+                    );
                     ?>
                     <meta
                         content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>" http-equiv="refresh"
