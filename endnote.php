@@ -38,139 +38,56 @@ function endnote_get_prefix()
 
 function endnote_get_items($xml)
 {
-    $items = array(array(
-        'ID',
-        'Type of Document',
-        'Title',
-        'Year',
-        'BookTitle',
-        'Journal',
-        'Volume',
-        'Issue',
-        'Page',
-        'URL',
-        'DOI',
-        'ISSN',
-        'ISBN',
-        'Publisher',
-        'Place Published',
-        'AccessDate',
-        'Author1',
-        'Author2'
-    ));
-    foreach (@simplexml_load_string(utf8_encode(mb_convert_encoding($xml, "ascii", "auto")))->xpath(
-        '//xml/records/record'
-    ) as $key => $value) {
+    $items = array();
+    foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
         try {
-            $rec_number = (string) array_pop($value->xpath('rec-number'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $ref_type = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
+            $id = (string) array_pop($value->xpath('rec-number'));
+            $type = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
             $title = (string) array_pop($value->xpath('titles/title/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $year = (string) array_pop($value->xpath('dates/year/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $book_title = (string) array_pop($value->xpath('titles/secondary-title/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $journal = (string) array_pop($value->xpath('titles/secondary-title/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $volume = (string) array_pop($value->xpath('volume/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $issue = (string) array_pop($value->xpath('number/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $pages = (string) array_pop($value->xpath('pages/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $url = (string) array_pop($value->xpath('urls/related-urls/url/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $doi = (string) array_pop($value->xpath('urls/related-urls/url/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $issn = (string) array_pop($value->xpath('orig-pub/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $isbn = (string) array_pop($value->xpath('isbn/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
             $publisher = (string) array_pop($value->xpath('pages/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
-            $pub_location = (string) array_pop($value->xpath('pub-location/style'));
-        } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
-        }
-        try {
+            $place_published = (string) array_pop($value->xpath('pub-location/style'));
             $access_date = (string) array_pop($value->xpath('access-date/style'));
+            $authors_primary = array();
+            foreach ($value->xpath('contributors/authors/author') as $name) {
+                $authors_primary[] = (string) $name->style;
+            }
+            $authors_secondary = array();
+            foreach ($value->xpath('contributors/secondary-authors/author') as $name) {
+                $authors_secondary[] = (string) $sec_name->style;
+            }
+            $items[] = array(
+                $id,
+                $type,
+                $title,
+                $year,
+                $book_title,
+                $journal,
+                $volume,
+                $issue,
+                $pages,
+                $url,
+                $doi,
+                $issn,
+                $isbn,
+                $publisher,
+                $place_published,
+                $access_date,
+                $authors_primary,
+                $authors_secondary,
+            );
         } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), array());
         }
-        $author_names = $value->xpath('contributors/authors/author');
-        unset($author1);
-        foreach ($author_names as $author_name) {
-            $author1[] = (string) $author_name->style;
-        }
-        $sec_names = $value->xpath('contributors/secondary-authors/author');
-        unset($author2);
-        foreach ($sec_names as $sec_name) {
-                $author2[] = (string) $sec_name->style;
-        }
-        $items[] = array(
-            $rec_number,
-            $ref_type,
-            $title,
-            $year,
-            $book_title,
-            $journal,
-            $volume,
-            $issue,
-            $pages,
-            $url,
-            $doi,
-            $issn,
-            $isbn,
-            $publisher,
-            $pub_location,
-            $access_date,
-            $author1,
-            $author2
-        );
     }
     return array(array(), $items);
 }
