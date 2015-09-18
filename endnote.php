@@ -66,7 +66,7 @@ function endnote_get_items($xml)
                 $name = (string) $name->style;
                 $item['authors'][] = array(
                     'name' => $name,
-                    'first_name' => explode(',', $name, 2)[1],
+                    'first_name' => trim(explode(',', $name, 2)[1]),
                     'role' => 'Author',
                     'url' => endnote_get_url($name),
                 );
@@ -75,7 +75,7 @@ function endnote_get_items($xml)
                 $name = (string) $name->style;
                 $item['authors'][] = array(
                     'name' => $name,
-                    'first_name' => explode(',', $name, 2)[1],
+                    'first_name' => trim(explode(',', $name, 2)[1]),
                     'role' => 'Editor',
                     'url' => endnote_get_url($name),
                 );
@@ -424,20 +424,20 @@ function endnote_dashboard()
             case 'download':
                 $document = $GLOBALS['wpdb']->get_row(
                     sprintf(
-                        'SELECT `name` FROM `%sdocuments` WHERE `id` = %s',
+                        'SELECT * FROM `%sdocuments` WHERE `id` = %s',
                         endnote_get_prefix(),
-                        mysql_real_escape_string($_REQUEST['id'])
+                        intval($_REQUEST['id'])
                     ),
                     ARRAY_A
                 );
                 $query = <<<EOD
-SELECT `%sauthors.name`
+SELECT `%sauthors`.`name`
 FROM `%sauthors`
 INNER JOIN `%sarticles_authors` ON
-    `%sarticles_authors`.`article_id` = %s AND `%sarticles_authors`.`author_id` = `%sauthors.id`
+    `%sarticles_authors`.`article_id` = %s AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
 WHERE `%sarticles_authors`.`role` = '%s'
-OFFSET %s
 LIMIT 1
+OFFSET %s
 EOD;
                 $xml = simplexml_load_file(endnote_get_file(array($_REQUEST['id'], $document['name'])));
                 foreach ($xml->xpath('//xml/records/record') AS $key => $value) {
@@ -451,6 +451,9 @@ EOD;
                         ),
                         ARRAY_A
                     );
+                    if (!$article) {
+                        continue;
+                    }
                     $types = $value->xpath('ref-type');
                     foreach ($types AS $type) {
                         $dom = dom_import_simplexml($type);
@@ -546,12 +549,12 @@ EOD;
                         );
                         if ($author) {
                             $dom = dom_import_simplexml($v);
-                            $dom->nodeValue = $editor['name'];
+                            $dom->nodeValue = $author['name'];
                         }
                     }
                     $editors = $value->xpath('contributors/secondary-authors/author/style');
                     foreach ($editors AS $k => $v) {
-                        $author = $GLOBALS['wpdb']->get_row(
+                        $editor = $GLOBALS['wpdb']->get_row(
                             sprintf(
                                 $query,
                                 endnote_get_prefix(),
@@ -567,7 +570,7 @@ EOD;
                             ),
                             ARRAY_A
                         );
-                        if ($author) {
+                        if ($editor) {
                             $dom = dom_import_simplexml($v);
                             $dom->nodeValue = $editor['name'];
                         }
@@ -577,7 +580,7 @@ EOD;
                 ob_clean();
                 header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
                 header(sprintf('Content-Length: %d', strlen($contents)));
-                readfile($contents);
+                echo $contents;
                 break;
             case 'delete':
                 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -627,17 +630,34 @@ EOD;
             case 'download_zip':
                 $document = $GLOBALS['wpdb']->get_row(
                     sprintf(
-                        'SELECT * FROM `%sdocuments` WHERE `id` = %s',
-                        endnote_get_prefix(),
-                        mysql_real_escape_string($_REQUEST['id'])
+                        'SELECT * FROM `%sdocuments` WHERE `id` = %s', endnote_get_prefix(), intval($_REQUEST['id'])
                     ),
                     ARRAY_A
                 );
+                $query = <<<EOD
+SELECT
+    id,
+    number,
+    type,
+    title,
+    year,
+    book_title,
+    journal,
+    volume,
+    issue,
+    page,
+    url,
+    doi,
+    issn,
+    isbn,
+    publisher,
+    place_published,
+    access_date
+FROM `%sarticles`
+WHERE `document_id` = %s
+EOD;
                 $articles = $GLOBALS['wpdb']->get_results(
-                    sprintf(
-                        'SELECT * FROM `%sarticles` WHERE `document_id` = %s', endnote_get_prefix(), $document['id']
-                    ),
-                    ARRAY_A
+                    sprintf($query, endnote_get_prefix(), $document['id']), ARRAY_A
                 );
                 $resource = @fopen('php://temp/maxmemory:999999999', 'w');
                 @fputcsv(
@@ -670,7 +690,9 @@ EOD;
                 @fclose($resource);
                 $authors = $GLOBALS['wpdb']->get_results(
                     sprintf(
-                        'SELECT * FROM `%sauthors` WHERE `document_id` = %s', endnote_get_prefix(), $document['id']
+                        'SELECT id, name, first_name, url FROM `%sauthors` WHERE `document_id` = %s',
+                        endnote_get_prefix(),
+                        $document['id']
                     ),
                     ARRAY_A
                 );
@@ -691,7 +713,7 @@ EOD;
                 $authors = stream_get_contents($resource);
                 @fclose($resource);
                 $query = <<<EOD
-SELECT *
+SELECT id, article_id, author_id, role
 FROM `%sarticles_authors`
 WHERE
     `article_id` IN (
@@ -755,7 +777,6 @@ EOD;
                         $GLOBALS['wpdb']->update(
                             sprintf('%sarticles', endnote_get_prefix()),
                             array(
-                                'number' => $article[1],
                                 'type' => $article[2],
                                 'title' => $article[3],
                                 'year' => $article[4],
