@@ -34,8 +34,6 @@ function endnote_get_prefix()
     return sprintf('%sendnote_', $GLOBALS['wpdb']->prefix);
 }
 
-
-
 function endnote_get_items($xml)
 {
     $items = array();
@@ -110,7 +108,7 @@ EOD;
 CREATE TABLE IF NOT EXISTS `%sarticles` (
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `document_id` INT(11) UNSIGNED NOT NULL,
-    `document_type` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `type` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `title` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `year` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `book_title` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -123,11 +121,10 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     `issn` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `isbn` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `publisher` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
-    `place` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
-    `published` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `place_published` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `access_date` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     PRIMARY KEY (`id`),
-    KEY `document_type` (`document_type`),
+    KEY `type` (`type`),
     KEY `title` (`title`),
     KEY `year` (`year`),
     KEY `book_title` (`book_title`),
@@ -140,8 +137,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     KEY `issn` (`issn`),
     KEY `isbn` (`isbn`),
     KEY `publisher` (`publisher`),
-    KEY `place` (`place`),
-    KEY `published` (`published`),
+    KEY `place_published` (`place_published`),
     KEY `access_date` (`access_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
 EOD;
@@ -308,77 +304,85 @@ function endnote_dashboard()
                     endnote_get_directory(array($GLOBALS['wpdb']->insert_id));
                     $file = endnote_get_file(array($GLOBALS['wpdb']->insert_id, $_FILES['file']['name']));
                     copy($_FILES['file']['tmp_name'], $file);
-
-                    list($errors, $items) = endnote_get_items(file_get_contents($file));
+                    list($errors, $items) = endnote_get_items(@file_get_contents($file));
+                    if ($errors) {
+                        $_SESSION['endnote']['flashes'] = array(
+                            'error' => 'The document was not uploaded successfully. Please try again.',
+                        );
+                        ?>
+                        <meta
+                            content="0;url=<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
+                            http-equiv="refresh"
+                            >
+                        <?php
+                        die();
+                    }
                     $document_id = $GLOBALS['wpdb']->insert_id;
                     foreach ($items as $item) {
-                        if($item[0] != 'ID') {
-                            $GLOBALS['wpdb']->insert(
-                                sprintf('%sarticles', endnote_get_prefix()),
-                                array(
-                                    'document_id' => $document_id,
-                                    'document_type' => $item[1],
-                                    'title' => $item[2],
-                                    'year' => $item[3],
-                                    'book_title' => $item[4],
-                                    'journal' => $item[5],
-                                    'volume' => $item[6],
-                                    'issue' => $item[7],
-                                    'page' => $item[8],
-                                    'url' => $item[9],
-                                    'doi' => $item[10],
-                                    'issn' => $item[11],
-                                    'isbn' => $item[12],
-                                    'publisher' => $item[13],
-                                    'place' => $item[14],
-                                    'published' => $item[14],
-                                    'access_date' => $item[15],
-                                )
-                            );
-                            $articles_id = $GLOBALS['wpdb']->insert_id;
-                            if($item[16]) {
-                                foreach ($item[16] as $name) {
-                                    $GLOBALS['wpdb']->insert(
-                                        sprintf('%sauthors', endnote_get_prefix()),
-                                        array(
-                                            'document_id' => $document_id,
-                                            'name' => $name,
-                                            'first_names' => explode(',', $name)[1],
-                                        )
-                                    );
-                                    $GLOBALS['wpdb']->insert(
-                                        sprintf('%sarticles_authors', endnote_get_prefix()),
-                                        array(
-                                            'article_id' => $articles_id,
-                                            'author_id' => $GLOBALS['wpdb']->insert_id,
-                                            'role' => 'Author',
-                                        )
-                                    );
-                                }
+                        $GLOBALS['wpdb']->insert(
+                            sprintf('%sarticles', endnote_get_prefix()),
+                            array(
+                                'id' => $item[0],
+                                'document_id' => $document_id,
+                                'type' => $item[1],
+                                'title' => $item[2],
+                                'year' => $item[3],
+                                'book_title' => $item[4],
+                                'journal' => $item[5],
+                                'volume' => $item[6],
+                                'issue' => $item[7],
+                                'page' => $item[8],
+                                'url' => $item[9],
+                                'doi' => $item[10],
+                                'issn' => $item[11],
+                                'isbn' => $item[12],
+                                'publisher' => $item[13],
+                                'place_published' => $item[14],
+                                'access_date' => $item[15],
+                            )
+                        );
+                        $article_id = $GLOBALS['wpdb']->insert_id;
+                        if ($item[16]) {
+                            foreach ($item[16] as $name) {
+                                $GLOBALS['wpdb']->insert(
+                                    sprintf('%sauthors', endnote_get_prefix()),
+                                    array(
+                                        'document_id' => $document_id,
+                                        'name' => $name,
+                                        'first_names' => explode(',', $name, 2)[1],
+                                    )
+                                );
+                                $GLOBALS['wpdb']->insert(
+                                    sprintf('%sarticles_authors', endnote_get_prefix()),
+                                    array(
+                                        'article_id' => $article_id,
+                                        'author_id' => $GLOBALS['wpdb']->insert_id,
+                                        'role' => 'Author',
+                                    )
+                                );
                             }
-                            if($item[17]) {
-                                foreach ($item[17] as $name) {
-                                    $GLOBALS['wpdb']->insert(
-                                        sprintf('%sauthors', endnote_get_prefix()),
-                                        array(
-                                            'document_id' => $document_id,
-                                            'name' => $name,
-                                            'first_names' => explode(',', $name)[1],
-                                        )
-                                    );
-                                    $GLOBALS['wpdb']->insert(
-                                        sprintf('%sarticles_authors', endnote_get_prefix()),
-                                        array(
-                                            'article_id' => $articles_id,
-                                            'author_id' => $GLOBALS['wpdb']->insert_id,
-                                            'role' => 'Editor',
-                                        )
-                                    );
-                                }
+                        }
+                        if ($item[17]) {
+                            foreach ($item[17] as $name) {
+                                $GLOBALS['wpdb']->insert(
+                                    sprintf('%sauthors', endnote_get_prefix()),
+                                    array(
+                                        'document_id' => $document_id,
+                                        'name' => $name,
+                                        'first_names' => explode(',', $name, 2)[1],
+                                    )
+                                );
+                                $GLOBALS['wpdb']->insert(
+                                    sprintf('%sarticles_authors', endnote_get_prefix()),
+                                    array(
+                                        'article_id' => $article_id,
+                                        'author_id' => $GLOBALS['wpdb']->insert_id,
+                                        'role' => 'Editor',
+                                    )
+                                );
                             }
                         }
                     }
-
                     $_SESSION['endnote']['flashes'] = array(
                         'updated' => 'The document was uploaded successfully.',
                     );
@@ -419,7 +423,7 @@ function endnote_dashboard()
                 );
                 $articles_results = $GLOBALS['wpdb']->get_results(sprintf(
                     "SELECT
-                        document_type,
+                        type,
                         title,
                         year,
                         book_title,
@@ -432,8 +436,7 @@ function endnote_dashboard()
                         issn,
                         isbn,
                         publisher,
-                        place,
-                        published,
+                        place_published,
                         access_date
                     FROM %sarticles
                     WHERE document_id=%s",
@@ -456,10 +459,10 @@ function endnote_dashboard()
                 ), ARRAY_A);
                 foreach ($xml->xpath('//xml/records/record') as $value) {
                     foreach ($articles_results as $articles_result) {
-                        $document_types = $value->xpath('ref-type');
-                        foreach ($document_types as $document_type) {
-                            $dom=dom_import_simplexml($document_type);
-                            $dom->setAttribute('name', $articles_result['document_type']);
+                        $types = $value->xpath('ref-type');
+                        foreach ($types as $type) {
+                            $dom=dom_import_simplexml($type);
+                            $dom->setAttribute('name', $articles_result['type']);
                         }
                         $titles = $value->xpath('titles/title/style');
                         foreach ($titles as $title) {
@@ -521,10 +524,10 @@ function endnote_dashboard()
                             $dom=dom_import_simplexml($publisher);
                             $dom->nodeValue = $articles_result['publisher'];
                         }
-                        $places = $value->xpath('pub-location/style');
-                        foreach ($places as $place) {
-                            $dom=dom_import_simplexml($place);
-                            $dom->nodeValue = $articles_result['place'];
+                        $places_published = $value->xpath('pub-location/style');
+                        foreach ($places_published as $place_published) {
+                            $dom=dom_import_simplexml($place_published);
+                            $dom->nodeValue = $articles_result['place_published'];
                         }
                         $access_dates = $value->xpath('access-date/style');
                         foreach ($access_dates as $access_date) {
@@ -610,7 +613,7 @@ function endnote_dashboard()
                 $results = $GLOBALS['wpdb']->get_results(sprintf(
                     "SELECT
                         id,
-                        document_type,
+                        type,
                         title,
                         year,
                         book_title,
@@ -623,8 +626,7 @@ function endnote_dashboard()
                         issn,
                         isbn,
                         publisher,
-                        place,
-                        published,
+                        place_published,
                         access_date
                     FROM %sarticles
                     WHERE document_id=%s",
@@ -632,10 +634,10 @@ function endnote_dashboard()
                 ), ARRAY_A);
                 $headers = array(
                     'id' => 'ID',
-                    'document_type' => 'Document Type',
+                    'type' => 'Type',
                     'title' => 'Title',
                     'year' => 'Year',
-                    'book_title' => 'BookTitle',
+                    'book_title' => 'Book Title',
                     'journal' => 'Journal',
                     'volume' => 'Volume',
                     'issue' => 'Issue',
@@ -645,9 +647,8 @@ function endnote_dashboard()
                     'issn' => 'ISSN',
                     'isbn' => 'ISBN',
                     'publisher' => 'Publisher',
-                    'place' => 'Place',
-                    'published' => 'Published',
-                    'access_date' => 'AccessDate',
+                    'place_published' => 'Place Published',
+                    'access_date' => 'Access Date',
                 );
                 @fputcsv($articles, $headers);
                 foreach ($results as $result) {
@@ -733,7 +734,7 @@ function endnote_dashboard()
                         $GLOBALS['wpdb']->query(sprintf(
                             "UPDATE %sarticles
                             SET
-                                document_type='%s',
+                                type='%s',
                                 title='%s',
                                 year='%s',
                                 book_title='%s',
@@ -746,8 +747,7 @@ function endnote_dashboard()
                                 issn='%s',
                                 isbn='%s',
                                 publisher='%s',
-                                place='%s',
-                                published='%s',
+                                place_published='%s',
                                 access_date='%s'
                             WHERE id='%d'",
                             endnote_get_prefix(),
@@ -764,7 +764,6 @@ function endnote_dashboard()
                             $articles[11],
                             $articles[12],
                             $articles[13],
-                            $articles[14],
                             $articles[14],
                             $articles[15],
                             $articles[0]
