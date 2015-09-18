@@ -34,6 +34,147 @@ function endnote_get_prefix()
     return sprintf('%sendnote_', $GLOBALS['wpdb']->prefix);
 }
 
+
+
+function endnote_get_items($xml)
+{
+    $items = array(array(
+        'ID',
+        'Type of Document',
+        'Title',
+        'Year',
+        'BookTitle',
+        'Journal',
+        'Volume',
+        'Issue',
+        'Page',
+        'URL',
+        'DOI',
+        'ISSN',
+        'ISBN',
+        'Publisher',
+        'Place Published',
+        'AccessDate',
+        'Author1',
+        'Author2'
+    ));
+    foreach (@simplexml_load_string(utf8_encode(mb_convert_encoding($xml, "ascii", "auto")))->xpath(
+        '//xml/records/record'
+    ) as $key => $value) {
+        try {
+            $rec_number = (string) array_pop($value->xpath('rec-number'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $ref_type = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $title = (string) array_pop($value->xpath('titles/title/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $year = (string) array_pop($value->xpath('dates/year/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $book_title = (string) array_pop($value->xpath('titles/secondary-title/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $journal = (string) array_pop($value->xpath('titles/secondary-title/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $volume = (string) array_pop($value->xpath('volume/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $issue = (string) array_pop($value->xpath('number/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $pages = (string) array_pop($value->xpath('pages/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $url = (string) array_pop($value->xpath('urls/related-urls/url/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $doi = (string) array_pop($value->xpath('urls/related-urls/url/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $issn = (string) array_pop($value->xpath('orig-pub/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $isbn = (string) array_pop($value->xpath('isbn/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $publisher = (string) array_pop($value->xpath('pages/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $pub_location = (string) array_pop($value->xpath('pub-location/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        try {
+            $access_date = (string) array_pop($value->xpath('access-date/style'));
+        } catch (Exception $exception) {
+            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), $items);
+        }
+        $author_names = $value->xpath('contributors/authors/author');
+        unset($author1);
+        foreach ($author_names as $author_name) {
+            $author1[] = (string) $author_name->style;
+        }
+        $sec_names = $value->xpath('contributors/secondary-authors/author');
+        unset($author2);
+        foreach ($sec_names as $sec_name) {
+                $author2[] = (string) $sec_name->style;
+        }
+        $items[] = array(
+            $rec_number,
+            $ref_type,
+            $title,
+            $year,
+            $book_title,
+            $journal,
+            $volume,
+            $issue,
+            $pages,
+            $url,
+            $doi,
+            $issn,
+            $isbn,
+            $publisher,
+            $pub_location,
+            $access_date,
+            $author1,
+            $author2
+        );
+    }
+    return array(array(), $items);
+}
+
 function endnote_register_activation_hook()
 {
     endnote_register_deactivation_hook();
@@ -173,6 +314,7 @@ function endnote_init()
     if (!session_id()) {
         session_start();
     }
+    ob_start();
     if (get_magic_quotes_gpc()) {
         $temporary = array(&$_GET, &$_POST, &$_COOKIE, &$_REQUEST);
         while (list($key, $value) = each($temporary)) {
@@ -249,13 +391,77 @@ function endnote_dashboard()
                     endnote_get_directory(array($GLOBALS['wpdb']->insert_id));
                     $file = endnote_get_file(array($GLOBALS['wpdb']->insert_id, $_FILES['file']['name']));
                     copy($_FILES['file']['tmp_name'], $file);
-                    /**
-                     * 1. insert corresponding records into `articles` (using `$GLOBALS['wpdb']->insert()`)
-                     * 2. insert corresponding records into `authors` (using `$GLOBALS['wpdb']->insert()`)
-                     * 3. insert corresponding records into `articles_authors` (using `$GLOBALS['wpdb']->insert()`)
-                     * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Upload XML" section)
-                     * i.e.: identical to what you do in 1.php but for all 3 tables instead of just one
-                     */
+
+                    list($errors, $items) = endnote_get_items(file_get_contents($file));
+                    $document_id = $GLOBALS['wpdb']->insert_id;
+                    foreach ($items as $item) {
+                        if($item[0] != 'ID') {
+                            $GLOBALS['wpdb']->insert(
+                                sprintf('%sarticles', endnote_get_prefix()),
+                                array(
+                                    'document_id' => $document_id,
+                                    'document_type' => $item[1],
+                                    'title' => $item[2],
+                                    'year' => $item[3],
+                                    'book_title' => $item[4],
+                                    'journal' => $item[5],
+                                    'volume' => $item[6],
+                                    'issue' => $item[7],
+                                    'page' => $item[8],
+                                    'url' => $item[9],
+                                    'doi' => $item[10],
+                                    'issn' => $item[11],
+                                    'isbn' => $item[12],
+                                    'publisher' => $item[13],
+                                    'place' => $item[14],
+                                    'published' => $item[14],
+                                    'access_date' => $item[15],
+                                )
+                            );
+                            $articles_id = $GLOBALS['wpdb']->insert_id;
+                            if($item[16]) {
+                                foreach ($item[16] as $name) {
+                                    $GLOBALS['wpdb']->insert(
+                                        sprintf('%sauthors', endnote_get_prefix()),
+                                        array(
+                                            'document_id' => $document_id,
+                                            'name' => $name,
+                                            'first_names' => explode(',', $name)[1],
+                                        )
+                                    );
+                                    $GLOBALS['wpdb']->insert(
+                                        sprintf('%sarticles_authors', endnote_get_prefix()),
+                                        array(
+                                            'article_id' => $articles_id,
+                                            'author_id' => $GLOBALS['wpdb']->insert_id,
+                                            'role' => 'Author',
+                                        )
+                                    );
+                                }
+                            }
+                            if($item[17]) {
+                                foreach ($item[17] as $name) {
+                                    $GLOBALS['wpdb']->insert(
+                                        sprintf('%sauthors', endnote_get_prefix()),
+                                        array(
+                                            'document_id' => $document_id,
+                                            'name' => $name,
+                                            'first_names' => explode(',', $name)[1],
+                                        )
+                                    );
+                                    $GLOBALS['wpdb']->insert(
+                                        sprintf('%sarticles_authors', endnote_get_prefix()),
+                                        array(
+                                            'article_id' => $articles_id,
+                                            'author_id' => $GLOBALS['wpdb']->insert_id,
+                                            'role' => 'Editor',
+                                        )
+                                    );
+                                }
+                            }
+                        }
+                    }
+
                     $_SESSION['endnote']['flashes'] = array(
                         'updated' => 'The document was uploaded successfully.',
                     );
@@ -286,9 +492,158 @@ function endnote_dashboard()
                 }
                 break;
             case 'download':
-                /**
-                 * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Download XML" section)
-                 */
+                $doc = new DomDocument();
+                $file_name = $GLOBALS['wpdb']->get_var(sprintf(
+                    "SELECT name FROM %sdocuments WHERE id=%s",endnote_get_prefix(), $_REQUEST['id']
+                ));
+                $tmp_xml_file = tempnam(sys_get_temp_dir(), '');
+                $xml = simplexml_load_file(
+                    endnote_get_file(array($_REQUEST['id'], $file_name))
+                );
+                $articles_results = $GLOBALS['wpdb']->get_results(sprintf(
+                    "SELECT
+                        document_type,
+                        title,
+                        year,
+                        book_title,
+                        journal,
+                        volume,
+                        issue,
+                        page,
+                        url,
+                        doi,
+                        issn,
+                        isbn,
+                        publisher,
+                        place,
+                        published,
+                        access_date
+                    FROM %sarticles
+                    WHERE document_id=%s",
+                    endnote_get_prefix(),
+                    $_REQUEST['id']
+                ), ARRAY_A);
+                $authors_results = $GLOBALS['wpdb']->get_results(sprintf(
+                    "SELECT wp_endnote_authors.name
+                    FROM wp_endnote_authors JOIN wp_endnote_articles_authors
+                    ON wp_endnote_authors.id = wp_endnote_articles_authors.author_id
+                    WHERE wp_endnote_articles_authors.role='Author'",
+                    endnote_get_prefix(), endnote_get_prefix()
+                ), ARRAY_A);
+                $editors_results = $GLOBALS['wpdb']->get_results(sprintf(
+                    "SELECT wp_endnote_authors.name
+                    FROM wp_endnote_authors JOIN wp_endnote_articles_authors
+                    ON wp_endnote_authors.id = wp_endnote_articles_authors.author_id
+                    WHERE wp_endnote_articles_authors.role='Editor'",
+                    endnote_get_prefix(), endnote_get_prefix()
+                ), ARRAY_A);
+                foreach ($xml->xpath('//xml/records/record') as $value) {
+                    foreach ($articles_results as $articles_result) {
+                        $document_types = $value->xpath('ref-type');
+                        foreach ($document_types as $document_type) {
+                            $dom=dom_import_simplexml($document_type);
+                            $dom->setAttribute('name', $articles_result['document_type']);
+                        }
+                        $titles = $value->xpath('titles/title/style');
+                        foreach ($titles as $title) {
+                            $dom=dom_import_simplexml($title);
+                            $dom->nodeValue = $articles_result['title'];
+                        }
+                        $years = $value->xpath('dates/year/style');
+                        foreach ($years as $year) {
+                            $dom=dom_import_simplexml($year);
+                            $dom->nodeValue = $articles_result['year'];
+                        }
+                        $book_titles = $value->xpath('titles/secondary-title/style');
+                        foreach ($book_titles as $book_title) {
+                            $dom=dom_import_simplexml($book_title);
+                            $dom->nodeValue = $articles_result['book_title'];
+                        }
+                        $journals = $value->xpath('titles/secondary-title/style');
+                        foreach ($journals as $journal) {
+                            $dom=dom_import_simplexml($journal);
+                            $dom->nodeValue = $articles_result['journal'];
+                        }
+                        $volumes = $value->xpath('volume/style');
+                        foreach ($volumes as $volume) {
+                            $dom=dom_import_simplexml($volume);
+                            $dom->nodeValue = $articles_result['volume'];
+                        }
+                        $issues = $value->xpath('number/style');
+                        foreach ($issues as $issue) {
+                            $dom=dom_import_simplexml($issue);
+                            $dom->nodeValue = $articles_result['issue'];
+                        }
+                        $pages = $value->xpath('pages/style');
+                        foreach ($pages as $page) {
+                            $dom=dom_import_simplexml($page);
+                            $dom->nodeValue = $articles_result['page'];
+                        }
+                        $urls = $value->xpath('urls/related-urls/url/style');
+                        foreach ($urls as $url) {
+                            $dom=dom_import_simplexml($url);
+                            $dom->nodeValue = $articles_result['url'];
+                        }
+                        $dois = $value->xpath('urls/related-urls/url/style');
+                        foreach ($dois as $doi) {
+                            $dom=dom_import_simplexml($doi);
+                            $dom->nodeValue = $articles_result['doi'];
+                        }
+                        $issns = $value->xpath('orig-pub/style');
+                        foreach ($issns as $issn) {
+                            $dom=dom_import_simplexml($issn);
+                            $dom->nodeValue = $articles_result['issn'];
+                        }
+                        $isbns = $value->xpath('isbn/style');
+                        foreach ($isbns as $isbn) {
+                            $dom=dom_import_simplexml($isbn);
+                            $dom->nodeValue = $articles_result['isbn'];
+                        }
+                        $publishers = $value->xpath('pages/style');
+                        foreach ($publishers as $publisher) {
+                            $dom=dom_import_simplexml($publisher);
+                            $dom->nodeValue = $articles_result['publisher'];
+                        }
+                        $places = $value->xpath('pub-location/style');
+                        foreach ($places as $place) {
+                            $dom=dom_import_simplexml($place);
+                            $dom->nodeValue = $articles_result['place'];
+                        }
+                        $access_dates = $value->xpath('access-date/style');
+                        foreach ($access_dates as $access_date) {
+                            $dom=dom_import_simplexml($access_date);
+                            $dom->nodeValue = $articles_result['access_date'];
+                        }
+                        array_shift ($articles_results);
+                        break;
+                    }
+                    $authors = $value->xpath('contributors/authors/author/style');
+                    foreach ($authors as $author) {
+                        foreach ($authors_results as $authors_result) {
+                            $dom=dom_import_simplexml($author);
+                            $dom->nodeValue = $authors_result['name'];
+                            break;
+                        }
+                        array_shift ($authors_results);
+                    }
+                    $editors = $value->xpath('contributors/secondary-authors/author/style');
+                    foreach ($editors as $editor) {
+                        foreach ($editors_results as $editors_result) {
+                            $dom=dom_import_simplexml($editor);
+                            $dom->nodeValue = $editors_result['name'];
+                            break;
+                        }
+                        array_shift ($editors_results);
+                    }
+                }
+                file_put_contents($tmp_xml_file, $xml->asXML());
+
+                ob_clean();
+
+                header(sprintf('Content-disposition: attachment; filename="%s"', $file_name));
+                header(sprintf('Content-Length: %d', filesize($tmp_xml_file)));
+                readfile($tmp_xml_file);
+
                 break;
             case 'delete':
                 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -331,14 +686,245 @@ function endnote_dashboard()
                 }
                 break;
             case 'download_zip':
-                /**
-                 * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Download ZIP" section)
-                 */
+                $document = $GLOBALS['wpdb']->get_results(
+                    sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', endnote_get_prefix()), ARRAY_A
+                );
+                $articles = @fopen('php://temp/maxmemory:999999999', 'w');
+                $results = $GLOBALS['wpdb']->get_results(sprintf(
+                    "SELECT
+                        id,
+                        document_type,
+                        title,
+                        year,
+                        book_title,
+                        journal,
+                        volume,
+                        issue,
+                        page,
+                        url,
+                        doi,
+                        issn,
+                        isbn,
+                        publisher,
+                        place,
+                        published,
+                        access_date
+                    FROM %sarticles
+                    WHERE document_id=%s",
+                    endnote_get_prefix(), $_REQUEST['id']
+                ), ARRAY_A);
+                $headers = array(
+                    'id' => 'ID',
+                    'document_type' => 'Document Type',
+                    'title' => 'Title',
+                    'year' => 'Year',
+                    'book_title' => 'BookTitle',
+                    'journal' => 'Journal',
+                    'volume' => 'Volume',
+                    'issue' => 'Issue',
+                    'page' => 'Page',
+                    'url' => 'URL',
+                    'doi' => 'DOI',
+                    'issn' => 'ISSN',
+                    'isbn' => 'ISBN',
+                    'publisher' => 'Publisher',
+                    'place' => 'Place',
+                    'published' => 'Published',
+                    'access_date' => 'AccessDate',
+                );
+                @fputcsv($articles, $headers);
+                foreach ($results as $result) {
+                    @fputcsv($articles, $result);
+                }
+                @rewind($articles);
+                $articles_csv = stream_get_contents($articles);
+                @fclose($articles);
+
+                $authors = @fopen('php://temp/maxmemory:999999999', 'w');
+                $results = $GLOBALS['wpdb']->get_results(sprintf(
+                    "SELECT id,name,first_names FROM %sauthors WHERE document_id=%s",
+                    endnote_get_prefix(), $_REQUEST['id']
+                ), ARRAY_A);
+                $headers = array(
+                    'id' => 'ID',
+                    'name' => 'Name',
+                    'first_names' => 'First Name',
+                );
+                @fputcsv($authors, $headers);
+                foreach ($results as $result) {
+                    @fputcsv($authors, $result);
+                }
+                @rewind($authors);
+                $authors_csv = stream_get_contents($authors);
+                @fclose($authors);
+
+                $articles_authors = @fopen('php://temp/maxmemory:999999999', 'w');
+                $results = $GLOBALS['wpdb']->get_results(sprintf(
+                    "SELECT * FROM %sarticles_authors
+                    WHERE
+                        article_id IN (
+                            SELECT id FROM %sarticles WHERE document_id='%s'
+                        )
+                        AND
+                        author_id IN (
+                            SELECT id FROM %sauthors WHERE document_id='%s'
+                        )",
+                    endnote_get_prefix(), endnote_get_prefix(), $_REQUEST['id'], endnote_get_prefix(), $_REQUEST['id']
+                ), ARRAY_A);
+                $headers = array(
+                    'id' => 'ID',
+                    'article_id' => 'Article_id',
+                    'author_id' => 'Author_id',
+                    'role' => 'Role',
+                );
+                @fputcsv($articles_authors, $headers);
+                foreach ($results as $result) {
+                    @fputcsv($articles_authors, $result);
+                }
+                @rewind($articles_authors);
+                $articles_authors_csv = stream_get_contents($articles_authors);
+                @fclose($articles_authors);
+
+                $file = tempnam(sys_get_temp_dir(), 'endnote');
+
+                $zip = new ZipArchive();
+                $zip->open($file, ZipArchive::CREATE);
+                $zip->addFromString('articles.csv', $articles_csv);
+                $zip->addFromString('authors.csv', $authors_csv);
+                $zip->addFromString('articles_authors.csv', $articles_authors_csv);
+                $zip->close();
+
+                ob_clean();
+
+                header('Content-Type: application/zip');
+                header(sprintf('Content-disposition: attachment; filename="%s.zip"', $_REQUEST['id']));
+                header(sprintf('Content-Length: %d', filesize($file)));
+                readfile($file);
+
+                unlink($file);
+
                 break;
             case 'upload_zip':
-                /**
-                 * Reference: https://bitbucket.org/kalkura/endnote/wiki/UI (see "Upload ZIP" section)
-                 */
+                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                    $articles_csv = file_get_contents(sprintf(
+                        'zip://%s#%s', $_FILES['file']['tmp_name'],
+                        'articles.csv'
+                    ));
+                    $articles = str_getcsv($articles_csv, "\n");
+                    foreach ($articles as $article) {
+                        $articles = str_getcsv($article, ',');
+                        $GLOBALS['wpdb']->query(sprintf(
+                            "UPDATE %sarticles
+                            SET
+                                document_type='%s',
+                                title='%s',
+                                year='%s',
+                                book_title='%s',
+                                journal='%s',
+                                volume='%s',
+                                issue='%s',
+                                page='%s',
+                                url='%s',
+                                doi='%s',
+                                issn='%s',
+                                isbn='%s',
+                                publisher='%s',
+                                place='%s',
+                                published='%s',
+                                access_date='%s'
+                            WHERE id='%d'",
+                            endnote_get_prefix(),
+                            $articles[1],
+                            $articles[2],
+                            $articles[3],
+                            $articles[4],
+                            $articles[5],
+                            $articles[6],
+                            $articles[7],
+                            $articles[8],
+                            $articles[9],
+                            $articles[10],
+                            $articles[11],
+                            $articles[12],
+                            $articles[13],
+                            $articles[14],
+                            $articles[14],
+                            $articles[15],
+                            $articles[0]
+                        ));
+                    }
+                    $authors_csv = file_get_contents(sprintf(
+                        'zip://%s#%s', $_FILES['file']['tmp_name'],
+                        'authors.csv'
+                    ));
+                    $authors = str_getcsv($authors_csv, "\n");
+                    foreach ($authors as $author) {
+                        $authors = str_getcsv($author, ',');
+                        $GLOBALS['wpdb']->query(sprintf(
+                            "UPDATE %sauthors
+                            SET
+                                name='%s',
+                                first_names='%s',
+                                urls='%s'
+                            WHERE id='%d'",
+                            endnote_get_prefix(),
+                            $authors[2],
+                            $authors[3],
+                            $authors[4],
+                            $authors[0]
+                        ));
+                    }
+
+                    $articles_authors_csv = file_get_contents(sprintf(
+                        'zip://%s#%s', $_FILES['file']['tmp_name'],
+                        'articles_authors.csv'
+                    ));
+                    $articles_authors = str_getcsv($articles_authors_csv, "\n");
+                    foreach ($articles_authors as $articles_author) {
+                        $articles_authors = str_getcsv($articles_author, ',');
+                        $GLOBALS['wpdb']->query(sprintf(
+                            "UPDATE %sarticles_authors
+                            SET
+                                article_id='%s',
+                                author_id='%s',role='%s'
+                            WHERE id='%d'",
+                            endnote_get_prefix(),
+                            $articles_authors[1],
+                            $articles_authors[2],
+                            $articles_authors[3],
+                            $articles_authors[0]
+                        ));
+                    }
+                    $_SESSION['endnote']['flashes'] = array(
+                        'updated' => 'The document was uploaded successfully.',
+                    );
+
+                    ?>
+                    <meta
+                        content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>"
+                        http-equiv="refresh"
+                        >
+                    <?php
+                } else {
+                    ?>
+                    <h1>Zip file - Upload</h1>
+                    <form
+                        action="<?php echo admin_url(sprintf(
+                            'admin.php?action=upload_zip&id=%d&page=endnote', $_REQUEST['id']
+                        )); ?>"
+                        enctype="multipart/form-data"
+                        method="post"
+                        >
+                        <table class="bordered widefat wp-list-table">
+                            <tr>
+                                <td class="narrow" class="top"><label for="file">File</label></td>
+                                <td><input id="file" name="file" type="file"></td>
+                            </tr>
+                        </table>
+                        <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
+                    </form>
+                    <?php
+                }
                 break;
             default:
                 $documents = $GLOBALS['wpdb']->get_results(
