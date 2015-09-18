@@ -88,6 +88,21 @@ function endnote_get_items($xml)
     return array(array(), $items);
 }
 
+function endnote_delete($directory)
+{
+    $files = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($files as $file) {
+        if ($file->isDir()) {
+            rmdir($file->getRealPath());
+        } else {
+            unlink($file->getRealPath());
+        }
+    }
+}
+
 function endnote_register_activation_hook()
 {
     endnote_register_deactivation_hook();
@@ -214,17 +229,8 @@ EOD;
 
 function endnote_register_deactivation_hook()
 {
-    $files = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator(endnote_get_directory(array()), RecursiveDirectoryIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::CHILD_FIRST
-    );
-    foreach ($files as $fileinfo) {
-        if ($fileinfo->isDir()) {
-            rmdir($fileinfo->getRealPath());
-        } else {
-            unlink($fileinfo->getRealPath());
-        }
-    }
+
+    endnote_delete(endnote_get_directory(array()));
 
     $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles_authors`', endnote_get_prefix()));
     $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sauthors`', endnote_get_prefix()));
@@ -376,16 +382,11 @@ function endnote_dashboard()
                                     'url' => $author['url'],
                                 )
                             );
-                            $author_id = $GLOBALS['wpdb']->insert_id;
-                            $resource = @fopen('php://stderr', 'w+');
-                            fwrite($resource, print_r(array($article_id)));
-                            fwrite($resource, print_r(array($author_id)));
-                            fwrite($resource, print_r($author, 1));
                             $GLOBALS['wpdb']->insert(
                                 sprintf('%sarticles_authors', endnote_get_prefix()),
                                 array(
                                     'article_id' => $article_id,
-                                    'author_id' => $author_id,
+                                    'author_id' => $GLOBALS['wpdb']->insert_id,
                                     'role' => $author['role'],
                                 )
                             );
@@ -580,6 +581,9 @@ EOD;
                 break;
             case 'delete':
                 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                    $directory = endnote_get_directory(array($_REQUEST['id']));
+                    endnote_delete($directory);
+                    rmdir($directory);
                     $GLOBALS['wpdb']->delete(
                         sprintf('%sdocuments', endnote_get_prefix()),
                         array(
