@@ -882,7 +882,7 @@ EOD;
                 <?php if ($documents): ?>
                     <table class="bordered widefat wp-list-table">
                         <tr>
-                            <th class="narrow center">Identifier</th>
+                            <th class="narrow right">Identifier</th>
                             <th>Name</th>
                             <th class="narrow center">ZIP</th>
                             <th class="narrow center">XML</th>
@@ -890,7 +890,7 @@ EOD;
                         </tr>
                         <?php foreach ($documents AS $document): ?>
                             <tr>
-                                <td class="narrow center"><?php echo $document['id']; ?></td>
+                                <td class="narrow right"><?php echo $document['id']; ?></td>
                                 <td><?php echo $document['name']; ?></td>
                                 <td class="narrow center">
                                     <a href="<?php
