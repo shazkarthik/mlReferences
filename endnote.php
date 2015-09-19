@@ -34,9 +34,24 @@ function endnote_get_prefix()
     return sprintf('%sendnote_', $GLOBALS['wpdb']->prefix);
 }
 
-function endnote_get_url($name)
+function endnote_get_url($first_name, $last_name)
 {
-    return 'http://...';
+    $name = sprintf('%s %s', $first_name, $last_name);
+    $xml = @simplexml_load_string(
+        @file_get_contents(
+            sprintf(
+                'http://lookup.dbpedia.org/api/search/KeywordSearch?QueryClass=person&QueryString=%s',
+                urlencode($name)
+            )
+        )
+    );
+    $xml->registerXPathNamespace('xpns', 'http://lookup.dbpedia.org/');
+    foreach ($xml->xpath('//xpns:Result') AS $key => $value) {
+        if ((string) $value->Label === $name) {
+            return (string) $value->URI;
+        }
+    }
+    return '';
 }
 
 function endnote_get_items($xml)
@@ -64,20 +79,24 @@ function endnote_get_items($xml)
             $item['authors'] = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
                 $name = (string) $name->style;
+                $name = explode($name, ',', 2);
+                $name = array_map('trim', $name);
                 $item['authors'][] = array(
                     'name' => $name,
-                    'first_name' => trim(explode(',', $name, 2)[1]),
+                    'first_name' => $name[1],
                     'role' => 'Author',
-                    'url' => endnote_get_url($name),
+                    'url' => endnote_get_url($name[1], $name[0]),
                 );
             }
             foreach ($value->xpath('contributors/secondary-authors/author') AS $name) {
                 $name = (string) $name->style;
+                $name = explode($name, ',', 2);
+                $name = array_map('trim', $name);
                 $item['authors'][] = array(
                     'name' => $name,
-                    'first_name' => trim(explode(',', $name, 2)[1]),
+                    'first_name' => $name[1],
                     'role' => 'Editor',
-                    'url' => endnote_get_url($name),
+                    'url' => endnote_get_url($name[1], $name[0]),
                 );
             }
             $items[] = $item;
@@ -310,7 +329,7 @@ function endnote_dashboard()
         <?php
         switch ($action) {
             case 'upload':
-                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     list($errors, $items) = endnote_get_items(@file_get_contents($_FILES['file']['tmp_name']));
                     if ($errors) {
                         $_SESSION['endnote']['flashes'] = array(
@@ -583,7 +602,7 @@ EOD;
                 echo $contents;
                 break;
             case 'delete':
-                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $directory = endnote_get_directory(array($_REQUEST['id']));
                     endnote_delete($directory);
                     rmdir($directory);
@@ -772,7 +791,7 @@ EOD;
                 unlink($tempnam);
                 break;
             case 'upload_zip':
-                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $articles = str_getcsv(
                         @file_get_contents(sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'articles.csv')),
                         "\n"
