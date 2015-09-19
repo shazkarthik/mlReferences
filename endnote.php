@@ -83,24 +83,24 @@ function endnote_get_items($xml)
             $item['authors'] = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
                 $name = (string) $name->style;
-                $name = explode($name, ',', 2);
-                $name = array_map('trim', $name);
+                $explode = explode($name, ',', 2);
+                $explode = array_map('trim', $explode);
                 $item['authors'][] = array(
                     'name' => $name,
-                    'first_name' => $name[1],
+                    'first_name' => $explode[1],
                     'role' => 'Author',
-                    'url' => endnote_get_url($name[1], $name[0]),
+                    'url' => endnote_get_url($explode[1], $explode[0]),
                 );
             }
             foreach ($value->xpath('contributors/secondary-authors/author') AS $name) {
                 $name = (string) $name->style;
-                $name = explode($name, ',', 2);
-                $name = array_map('trim', $name);
+                $explode = explode($name, ',', 2);
+                $explode = array_map('trim', $explode);
                 $item['authors'][] = array(
                     'name' => $name,
-                    'first_name' => $name[1],
+                    'first_name' => $explode[1],
                     'role' => 'Editor',
-                    'url' => endnote_get_url($name[1], $name[0]),
+                    'url' => endnote_get_url($explode[1], $explode[0]),
                 );
             }
             $items[] = $item;
