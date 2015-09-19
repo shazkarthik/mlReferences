@@ -663,7 +663,7 @@ EOD;
                 @fputcsv(
                     $resource,
                     array(
-                        'id' => 'ID',
+                        'id' => 'Identifier',
                         'number' => 'Number',
                         'type' => 'Type',
                         'title' => 'Title',
@@ -700,7 +700,7 @@ EOD;
                 @fputcsv(
                     $resource,
                     array(
-                        'id' => 'ID',
+                        'id' => 'Identifier',
                         'name' => 'Name',
                         'first_name' => 'First Name',
                         'url' => 'URL',
@@ -739,9 +739,9 @@ EOD;
                 @fputcsv(
                     $resource,
                     array(
-                        'id' => 'ID',
-                        'article_id' => 'Article ID',
-                        'author_id' => 'Author ID',
+                        'id' => 'Identifier',
+                        'article_id' => 'Article Identifier',
+                        'author_id' => 'Author Identifier',
                         'role' => 'Role',
                     )
                 );
@@ -882,7 +882,7 @@ EOD;
                 <?php if ($documents): ?>
                     <table class="bordered widefat wp-list-table">
                         <tr>
-                            <th class="narrow center">ID</th>
+                            <th class="narrow center">Identifier</th>
                             <th>Name</th>
                             <th class="narrow center">ZIP</th>
                             <th class="narrow center">XML</th>
