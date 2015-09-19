@@ -58,7 +58,7 @@ function endnote_get_items($xml)
             $item['doi'] = (string) array_pop($value->xpath('urls/related-urls/url/style'));
             $item['issn'] = (string) array_pop($value->xpath('orig-pub/style'));
             $item['isbn'] = (string) array_pop($value->xpath('isbn/style'));
-            $item['publisher'] = (string) array_pop($value->xpath('pages/style'));
+            $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
             $item['place_published'] = (string) array_pop($value->xpath('pub-location/style'));
             $item['access_date'] = (string) array_pop($value->xpath('access-date/style'));
             $item['authors'] = array();
@@ -514,7 +514,7 @@ EOD;
                         $dom = dom_import_simplexml($isbn);
                         $dom->nodeValue = $article['isbn'];
                     }
-                    $publishers = $value->xpath('pages/style');
+                    $publishers = $value->xpath('publisher/style');
                     foreach ($publishers AS $publisher) {
                         $dom = dom_import_simplexml($publisher);
                         $dom->nodeValue = $article['publisher'];
