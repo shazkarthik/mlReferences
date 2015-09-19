@@ -13,6 +13,23 @@
     margin-top: 20px !important;
 }
 
+.endnote ol {
+    margin: 20px 0 0 20px !important;
+}
+
+.endnote ol li {
+    font-size: 12px !important;
+    margin: 0 !important;
+}
+
+.endnote ol li ul {
+    margin: 10px 0 10px 15px !important;
+}
+
+.endnote ol li ul li {
+    list-style-type: disc !important;
+}
+
 .endnote p {
     margin: 20px 0 0 0 !important;
 }

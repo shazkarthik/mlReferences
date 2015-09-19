@@ -948,9 +948,81 @@ function endnote_faq()
     }
     ?>
     <div class="endnote wrap">
-        <h1>F.A.Q.</h1>
+        <h1>Frequently Asked Questions</h1>
         <div class="welcome-panel">
-            <p class="center">...coming soon...</p>
+            <p><strong>Steps</strong></p>
+            <hr>
+            <ol>
+                <li>
+                    Upload a new EndNote XML file using the <strong>Upload</strong> link next to the page header
+                </li>
+                <li>
+                    Download a ZIP file using the <strong>Download</strong> link in the <strong>ZIP</strong> column
+                </li>
+                <li>
+                    Extract the downloaded ZIP file
+                </li>
+                <li>
+                    Edit the CSV files inside the extracted ZIP file as required
+                </li>
+                <li>
+                    Re-create the ZIP file and populate it with the edited CSV files
+                </li>
+                <li>
+                    Upload the re-created ZIP file using the <strong>Upload</strong> link in the <strong>ZIP</strong>
+                    column
+                </li>
+                <li>
+                    Downloaded the updated EndNote XML file using the <strong>Download</strong> link in the <strong>XML</strong>
+                    column
+                </li>
+            </ol>
+        </div>
+        <div class="welcome-panel">
+            <p><strong>Columns</strong></p>
+            <hr>
+            <ol>
+                <li>
+                    <strong>articles.csv</strong>
+                    <ul>
+                        <li>Identifier</li>
+                        <li>Number</li>
+                        <li>Type</li>
+                        <li>Title</li>
+                        <li>Year</li>
+                        <li>Book Title</li>
+                        <li>Journal</li>
+                        <li>Volume</li>
+                        <li>Issue</li>
+                        <li>Page</li>
+                        <li>URL</li>
+                        <li>DOI</li>
+                        <li>ISSN</li>
+                        <li>ISBN</li>
+                        <li>Publisher</li>
+                        <li>Place Published</li>
+                        <li>Access Date</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>authors.csv</strong>
+                    <ul>
+                        <li>Identifier</li>
+                        <li>Name</li>
+                        <li>First Name</li>
+                        <li>URL</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>articles_authors.csv</strong>
+                    <ul>
+                        <li>Identifier</li>
+                        <li>Article Identifier</li>
+                        <li>Author Identifier</li>
+                        <li>Role</li>
+                    </ul>
+                </li>
+            </ol>
         </div>
     </div>
     <?php
