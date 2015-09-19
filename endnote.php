@@ -655,6 +655,7 @@ SELECT
     access_date
 FROM `%sarticles`
 WHERE `document_id` = %s
+ORDER BY `type` ASC, `id` ASC
 EOD;
                 $articles = $GLOBALS['wpdb']->get_results(
                     sprintf($query, endnote_get_prefix(), $document['id']), ARRAY_A
@@ -691,7 +692,7 @@ EOD;
                 @fclose($resource);
                 $authors = $GLOBALS['wpdb']->get_results(
                     sprintf(
-                        'SELECT id, name, first_name, url FROM `%sauthors` WHERE `document_id` = %s',
+                        'SELECT id, name, first_name, url FROM `%sauthors` WHERE `document_id` = %s ORDER BY `id` ASC',
                         endnote_get_prefix(),
                         $document['id']
                     ),
@@ -725,6 +726,7 @@ WHERE
     `author_id` IN (
         SELECT `id` FROM `%sauthors` WHERE `document_id` = %s
     )
+ORDER BY `id` ASC
 EOD;
                 $articles_authors = $GLOBALS['wpdb']->get_results(
                     sprintf(
