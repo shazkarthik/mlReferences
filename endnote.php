@@ -37,14 +37,18 @@ function endnote_get_prefix()
 function endnote_get_url($first_name, $last_name)
 {
     $name = sprintf('%s %s', $first_name, $last_name);
-    $xml = @simplexml_load_string(
-        @file_get_contents(
-            sprintf(
-                'http://lookup.dbpedia.org/api/search/KeywordSearch?QueryClass=person&QueryString=%s',
-                urlencode($name)
-            )
+    $xml = @file_get_contents(
+        sprintf(
+            'http://lookup.dbpedia.org/api/search/KeywordSearch?QueryClass=person&QueryString=%s', urlencode($name)
         )
     );
+    if (!$xml) {
+        return '';
+    }
+    $xml = @simplexml_load_string($xml);
+    if (!$xml) {
+        return '';
+    }
     $xml->registerXPathNamespace('xpns', 'http://lookup.dbpedia.org/');
     foreach ($xml->xpath('//xpns:Result') AS $key => $value) {
         if ((string) $value->Label === $name) {
