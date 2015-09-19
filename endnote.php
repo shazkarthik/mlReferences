@@ -680,10 +680,11 @@ EOD;
                         'publisher' => 'Publisher',
                         'place_published' => 'Place Published',
                         'access_date' => 'Access Date',
-                    )
+                    ),
+                    ';'
                 );
                 foreach ($articles AS $article) {
-                    @fputcsv($resource, $article);
+                    @fputcsv($resource, $article, ';');
                 }
                 @rewind($resource);
                 $articles = stream_get_contents($resource);
@@ -704,10 +705,11 @@ EOD;
                         'name' => 'Name',
                         'first_name' => 'First Name',
                         'url' => 'URL',
-                    )
+                    ),
+                    ';'
                 );
                 foreach ($authors AS $author) {
-                    @fputcsv($resource, $author);
+                    @fputcsv($resource, $author, ';');
                 }
                 @rewind($resource);
                 $authors = stream_get_contents($resource);
@@ -743,10 +745,11 @@ EOD;
                         'article_id' => 'Article Identifier',
                         'author_id' => 'Author Identifier',
                         'role' => 'Role',
-                    )
+                    ),
+                    ';'
                 );
                 foreach ($articles_authors AS $article_author) {
-                    @fputcsv($resource, $article_author);
+                    @fputcsv($resource, $article_author, ';');
                 }
                 @rewind($resource);
                 $articles_authors = stream_get_contents($resource);
@@ -773,7 +776,7 @@ EOD;
                         "\n"
                     );
                     foreach ($articles AS $article) {
-                        $article = str_getcsv($article, ',');
+                        $article = str_getcsv($article, ';');
                         $GLOBALS['wpdb']->update(
                             sprintf('%sarticles', endnote_get_prefix()),
                             array(
@@ -803,7 +806,7 @@ EOD;
                         "\n"
                     );
                     foreach ($authors AS $author) {
-                        $author = str_getcsv($author, ',');
+                        $author = str_getcsv($author, ';');
                         $GLOBALS['wpdb']->update(
                             sprintf('%sauthors', endnote_get_prefix()),
                             array(
@@ -823,7 +826,7 @@ EOD;
                         "\n"
                     );
                     foreach ($articles_authors AS $article_author) {
-                        $article_author = str_getcsv($article_author, ',');
+                        $article_author = str_getcsv($article_author, ';');
                         $GLOBALS['wpdb']->update(
                             sprintf('%sarticles_authors', endnote_get_prefix()),
                             array(
