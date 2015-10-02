@@ -66,10 +66,9 @@ function endnote_get_items($xml)
             $item = array();
             $item['number'] = (string) array_pop($value->xpath('rec-number'));
             $item['type'] = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
-            $item['title'] = (string) array_pop($value->xpath('titles/title/style'));
+            $item['title_1'] = (string) array_pop($value->xpath('titles/title/style'));
+            $item['title_2'] = (string) array_pop($value->xpath('titles/secondary-title/style'));
             $item['year'] = (string) array_pop($value->xpath('dates/year/style'));
-            $item['book_title'] = (string) array_pop($value->xpath('titles/secondary-title/style'));
-            $item['journal'] = (string) array_pop($value->xpath('titles/secondary-title/style'));
             $item['volume'] = (string) array_pop($value->xpath('volume/style'));
             $item['issue'] = (string) array_pop($value->xpath('number/style'));
             $item['pages'] = (string) array_pop($value->xpath('pages/style'));
@@ -146,10 +145,9 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     `document_id` INT(11) UNSIGNED NOT NULL,
     `number` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `type` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
-    `title` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `title_1` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `title_2` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `year` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
-    `book_title` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
-    `journal` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `volume` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `issue` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `page` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -163,10 +161,9 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     PRIMARY KEY (`id`),
     KEY `number` (`number`),
     KEY `type` (`type`),
-    KEY `title` (`title`),
+    KEY `title_1` (`title_1`),
+    KEY `title_2` (`title_2`),
     KEY `year` (`year`),
-    KEY `book_title` (`book_title`),
-    KEY `journal` (`journal`),
     KEY `volume` (`volume`),
     KEY `issue` (`issue`),
     KEY `page` (`page`),
@@ -378,10 +375,9 @@ function endnote_dashboard()
                                 'document_id' => $document_id,
                                 'number' => $item['number'],
                                 'type' => $item['type'],
-                                'title' => $item['title'],
+                                'title_1' => $item['title_1'],
+                                'title_2' => $item['title_2'],
                                 'year' => $item['year'],
-                                'book_title' => $item['book_title'],
-                                'journal' => $item['journal'],
                                 'volume' => $item['volume'],
                                 'issue' => $item['issue'],
                                 'page' => $item['page'],
@@ -482,25 +478,20 @@ EOD;
                         $dom = dom_import_simplexml($type);
                         $dom->setAttribute('name', $article['type']);
                     }
-                    $titles = $value->xpath('titles/title/style');
-                    foreach ($titles AS $title) {
-                        $dom = dom_import_simplexml($title);
-                        $dom->nodeValue = $article['title'];
+                    $title_1s = $value->xpath('titles/title/style');
+                    foreach ($title_1s AS $title_1) {
+                        $dom = dom_import_simplexml($title_1);
+                        $dom->nodeValue = $article['title_1'];
+                    }
+                    $title_2s = $value->xpath('titles/secondary-title/style');
+                    foreach ($title_2s AS $title_2) {
+                        $dom = dom_import_simplexml($title_2);
+                        $dom->nodeValue = $article['title_2'];
                     }
                     $years = $value->xpath('dates/year/style');
                     foreach ($years AS $year) {
                         $dom = dom_import_simplexml($year);
                         $dom->nodeValue = $article['year'];
-                    }
-                    $book_titles = $value->xpath('titles/secondary-title/style');
-                    foreach ($book_titles AS $book_title) {
-                        $dom = dom_import_simplexml($book_title);
-                        $dom->nodeValue = $article['book_title'];
-                    }
-                    $journals = $value->xpath('titles/secondary-title/style');
-                    foreach ($journals AS $journal) {
-                        $dom = dom_import_simplexml($journal);
-                        $dom->nodeValue = $article['journal'];
                     }
                     $volumes = $value->xpath('volume/style');
                     foreach ($volumes AS $volume) {
@@ -662,10 +653,9 @@ SELECT
     id,
     number,
     type,
-    title,
+    title_1,
+    title_2,
     year,
-    book_title,
-    journal,
     volume,
     issue,
     page,
@@ -690,10 +680,9 @@ EOD;
                         'id' => 'Identifier',
                         'number' => 'Number',
                         'type' => 'Type',
-                        'title' => 'Title',
+                        'title_1' => 'Title',
+                        'title_2' => 'Title2',
                         'year' => 'Year',
-                        'book_title' => 'Book Title',
-                        'journal' => 'Journal',
                         'volume' => 'Volume',
                         'issue' => 'Issue',
                         'page' => 'Page',
@@ -806,20 +795,19 @@ EOD;
                             sprintf('%sarticles', endnote_get_prefix()),
                             array(
                                 'type' => $article[2],
-                                'title' => $article[3],
-                                'year' => $article[4],
-                                'book_title' => $article[5],
-                                'journal' => $article[6],
-                                'volume' => $article[7],
-                                'issue' => $article[8],
-                                'page' => $article[9],
-                                'url' => $article[10],
-                                'doi' => $article[11],
-                                'issn' => $article[12],
-                                'isbn' => $article[13],
-                                'publisher' => $article[14],
-                                'place_published' => $article[15],
-                                'access_date' => $article[16],
+                                'title_1' => $article[3],
+                                'title_2' => $article[4],
+                                'year' => $article[5],
+                                'volume' => $article[6],
+                                'issue' => $article[7],
+                                'page' => $article[8],
+                                'url' => $article[9],
+                                'doi' => $article[10],
+                                'issn' => $article[11],
+                                'isbn' => $article[12],
+                                'publisher' => $article[13],
+                                'place_published' => $article[14],
+                                'access_date' => $article[15],
                             ),
                             array(
                                 'id' => $article[0]
