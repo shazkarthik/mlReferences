@@ -76,6 +76,7 @@ function endnote_get_items($xml)
             $item['doi'] = (string) array_pop($value->xpath('electronic-resource-num/style'));
             $item['issn'] = (string) array_pop($value->xpath('orig-pub/style'));
             $item['isbn'] = (string) array_pop($value->xpath('isbn/style'));
+            $item['label'] = (string) array_pop($value->xpath('label/style'));
             $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
             $item['place_published'] = (string) array_pop($value->xpath('pub-location/style'));
             $item['access_date'] = (string) array_pop($value->xpath('access-date/style'));
@@ -155,6 +156,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     `doi` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `issn` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `isbn` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `label` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `publisher` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `place_published` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `access_date` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -171,6 +173,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     KEY `doi` (`doi`),
     KEY `issn` (`issn`),
     KEY `isbn` (`isbn`),
+    KEY `label` (`label`),
     KEY `publisher` (`publisher`),
     KEY `place_published` (`place_published`),
     KEY `access_date` (`access_date`)
@@ -385,6 +388,7 @@ function endnote_dashboard()
                                 'doi' => $item['doi'],
                                 'issn' => $item['issn'],
                                 'isbn' => $item['isbn'],
+                                'label' => $item['label'],
                                 'publisher' => $item['publisher'],
                                 'place_published' => $item['place_published'],
                                 'access_date' => $item['access_date'],
@@ -528,6 +532,11 @@ EOD;
                         $dom = dom_import_simplexml($isbn);
                         $dom->nodeValue = $article['isbn'];
                     }
+                    $labels = $value->xpath('label/style');
+                    foreach ($labels AS $label) {
+                        $dom = dom_import_simplexml($label);
+                        $dom->nodeValue = $article['label'];
+                    }
                     $publishers = $value->xpath('publisher/style');
                     foreach ($publishers AS $publisher) {
                         $dom = dom_import_simplexml($publisher);
@@ -663,6 +672,7 @@ SELECT
     doi,
     issn,
     isbn,
+    label,
     publisher,
     place_published,
     access_date
@@ -690,6 +700,7 @@ EOD;
                         'doi' => 'DOI',
                         'issn' => 'ISSN',
                         'isbn' => 'ISBN',
+                        'label' => 'Label',
                         'publisher' => 'Publisher',
                         'place_published' => 'Place Published',
                         'access_date' => 'Access Date',
@@ -805,9 +816,10 @@ EOD;
                                 'doi' => $article[10],
                                 'issn' => $article[11],
                                 'isbn' => $article[12],
-                                'publisher' => $article[13],
-                                'place_published' => $article[14],
-                                'access_date' => $article[15],
+                                'label' => $article[13],
+                                'publisher' => $article[14],
+                                'place_published' => $article[15],
+                                'access_date' => $article[16],
                             ),
                             array(
                                 'id' => $article[0]
@@ -1000,9 +1012,8 @@ function endnote_faq()
                         <li>Number</li>
                         <li>Type</li>
                         <li>Title</li>
+                        <li>Title2</li>
                         <li>Year</li>
-                        <li>Book Title</li>
-                        <li>Journal</li>
                         <li>Volume</li>
                         <li>Issue</li>
                         <li>Page</li>
@@ -1010,6 +1021,7 @@ function endnote_faq()
                         <li>DOI</li>
                         <li>ISSN</li>
                         <li>ISBN</li>
+                        <li>Label</li>
                         <li>Publisher</li>
                         <li>Place Published</li>
                         <li>Access Date</li>
