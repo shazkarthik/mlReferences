@@ -73,7 +73,7 @@ function endnote_get_items($xml)
             $item['issue'] = (string) array_pop($value->xpath('number/style'));
             $item['pages'] = (string) array_pop($value->xpath('pages/style'));
             $item['url'] = (string) array_pop($value->xpath('urls/related-urls/url/style'));
-            $item['doi'] = (string) array_pop($value->xpath('urls/related-urls/url/style'));
+            $item['doi'] = (string) array_pop($value->xpath('electronic-resource-num/style'));
             $item['issn'] = (string) array_pop($value->xpath('orig-pub/style'));
             $item['isbn'] = (string) array_pop($value->xpath('isbn/style'));
             $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
@@ -513,7 +513,7 @@ EOD;
                         $dom = dom_import_simplexml($url);
                         $dom->nodeValue = $article['url'];
                     }
-                    $dois = $value->xpath('urls/related-urls/url/style');
+                    $dois = $value->xpath('electronic-resource-num/style');
                     foreach ($dois AS $doi) {
                         $dom = dom_import_simplexml($doi);
                         $dom->nodeValue = $article['doi'];
