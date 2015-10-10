@@ -86,10 +86,13 @@ function endnote_get_items($xml)
             $item['authors'] = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
                 $name = (string) $name->style;
-                $explode = explode($name, ',', 2);
+                $explode = explode(',', $name, 2);
                 $explode = array_map('trim', $explode);
+                if (!$explode[0] OR !$explode[1]) {
+                    continue;
+                }
                 $item['authors'][] = array(
-                    'name' => $name,
+                    'name' => $explode[0],
                     'first_name' => $explode[1],
                     'role' => 'Author',
                     'url' => endnote_get_url($explode[1], $explode[0]),
@@ -97,10 +100,13 @@ function endnote_get_items($xml)
             }
             foreach ($value->xpath('contributors/secondary-authors/author') AS $name) {
                 $name = (string) $name->style;
-                $explode = explode($name, ',', 2);
+                $explode = explode(',', $name, 2);
                 $explode = array_map('trim', $explode);
+                if (!$explode[0] OR !$explode[1]) {
+                    continue;
+                }
                 $item['authors'][] = array(
-                    'name' => $name,
+                    'name' => $explode[0],
                     'first_name' => $explode[1],
                     'role' => 'Editor',
                     'url' => endnote_get_url($explode[1], $explode[0]),
@@ -405,20 +411,39 @@ function endnote_dashboard()
                         );
                         $article_id = $GLOBALS['wpdb']->insert_id;
                         foreach ($item['authors'] AS $author) {
-                            $GLOBALS['wpdb']->insert(
-                                sprintf('%sauthors', endnote_get_prefix()),
-                                array(
-                                    'document_id' => $document_id,
-                                    'name' => $author['name'],
-                                    'first_name' => $author['first_name'],
-                                    'url' => $author['url'],
-                                )
+                            $query = <<<EOD
+SELECT *
+FROM `%sauthors`
+WHERE `document_id` = %%d AND `name` = %%s AND `first_name` = %%s
+EOD;
+                            $row = $GLOBALS['wpdb']->get_row(
+                                $GLOBALS['wpdb']->prepare(
+                                    sprintf($query, endnote_get_prefix()),
+                                    $document_id,
+                                    $author['name'],
+                                    $author['first_name']
+                                ),
+                                ARRAY_A
                             );
+                            if ($row) {
+                                $author_id = $row['id'];
+                            } else {
+                                $GLOBALS['wpdb']->insert(
+                                    sprintf('%sauthors', endnote_get_prefix()),
+                                    array(
+                                        'document_id' => $document_id,
+                                        'name' => $author['name'],
+                                        'first_name' => $author['first_name'],
+                                        'url' => $author['url'],
+                                    )
+                                );
+                                $author_id = $GLOBALS['wpdb']->insert_id;
+                            }
                             $GLOBALS['wpdb']->insert(
                                 sprintf('%sarticles_authors', endnote_get_prefix()),
                                 array(
                                     'article_id' => $article_id,
-                                    'author_id' => $GLOBALS['wpdb']->insert_id,
+                                    'author_id' => $author_id,
                                     'role' => $author['role'],
                                 )
                             );
@@ -455,9 +480,8 @@ function endnote_dashboard()
                 break;
             case 'download':
                 $document = $GLOBALS['wpdb']->get_row(
-                    sprintf(
-                        'SELECT * FROM `%sdocuments` WHERE `id` = %s',
-                        endnote_get_prefix(),
+                    $GLOBALS['wpdb']->prepare(
+                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', endnote_get_prefix()),
                         intval($_REQUEST['id'])
                     ),
                     ARRAY_A
@@ -466,18 +490,20 @@ function endnote_dashboard()
 SELECT `%sauthors`.`name`
 FROM `%sauthors`
 INNER JOIN `%sarticles_authors` ON
-    `%sarticles_authors`.`article_id` = %s AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
-WHERE `%sarticles_authors`.`role` = '%s'
+    `%sarticles_authors`.`article_id` = %%d AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
+WHERE `%sarticles_authors`.`role` = %%s
 LIMIT 1
-OFFSET %s
+OFFSET %d
 EOD;
                 $xml = simplexml_load_file(endnote_get_file(array($_REQUEST['id'], $document['name'])));
                 foreach ($xml->xpath('//xml/records/record') AS $key => $value) {
                     $number = (string) array_pop($value->xpath('rec-number'));
                     $article = $GLOBALS['wpdb']->get_row(
-                        sprintf(
-                            "SELECT * FROM `%sarticles` WHERE `document_id` = %s AND `number` = '%s'",
-                            endnote_get_prefix(),
+                        $GLOBALS['wpdb']->prepare(
+                            sprintf(
+                                'SELECT * FROM `%sarticles` WHERE `document_id` = %%d AND `number` = %%s',
+                                endnote_get_prefix()
+                            ),
                             $document['id'],
                             $number
                         ),
@@ -574,47 +600,51 @@ EOD;
                     $authors = $value->xpath('contributors/authors/author/style');
                     foreach ($authors AS $k => $v) {
                         $author = $GLOBALS['wpdb']->get_row(
-                            sprintf(
-                                $query,
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
+                            $GLOBALS['wpdb']->prepare(
+                                sprintf(
+                                    $query,
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    $k
+                                ),
                                 $article['id'],
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
-                                'Author',
-                                $k
+                                'Author'
                             ),
                             ARRAY_A
                         );
                         if ($author) {
                             $dom = dom_import_simplexml($v);
-                            $dom->nodeValue = $author['name'];
+                            $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
                         }
                     }
                     $editors = $value->xpath('contributors/secondary-authors/author/style');
                     foreach ($editors AS $k => $v) {
                         $editor = $GLOBALS['wpdb']->get_row(
-                            sprintf(
-                                $query,
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
+                            $GLOBALS['wpdb']->prepare(
+                                sprintf(
+                                    $query,
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    endnote_get_prefix(),
+                                    $k
+                                ),
                                 $article['id'],
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
-                                endnote_get_prefix(),
-                                'Editor',
-                                $k
+                                'Editor'
                             ),
                             ARRAY_A
                         );
                         if ($editor) {
                             $dom = dom_import_simplexml($v);
-                            $dom->nodeValue = $editor['name'];
+                            $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
                         }
                     }
                 }
@@ -671,8 +701,9 @@ EOD;
                 break;
             case 'download_zip':
                 $document = $GLOBALS['wpdb']->get_row(
-                    sprintf(
-                        'SELECT * FROM `%sdocuments` WHERE `id` = %s', endnote_get_prefix(), intval($_REQUEST['id'])
+                    $GLOBALS['wpdb']->prepare(
+                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', endnote_get_prefix()),
+                        intval($_REQUEST['id'])
                     ),
                     ARRAY_A
                 );
@@ -698,11 +729,11 @@ SELECT
     access_date,
     attachment
 FROM `%sarticles`
-WHERE `document_id` = %s
+WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
 EOD;
                 $articles = $GLOBALS['wpdb']->get_results(
-                    sprintf($query, endnote_get_prefix(), $document['id']), ARRAY_A
+                    $GLOBALS['wpdb']->prepare(sprintf($query, endnote_get_prefix()), $document['id']), ARRAY_A
                 );
                 $resource = @fopen('php://temp/maxmemory:999999999', 'w');
                 @fputcsv(
@@ -736,13 +767,14 @@ EOD;
                 @rewind($resource);
                 $articles = stream_get_contents($resource);
                 @fclose($resource);
+                $query = <<<EOD
+SELECT id, name, first_name, url
+FROM `%sauthors`
+WHERE `document_id` = %%d
+ORDER BY `id` ASC
+EOD;
                 $authors = $GLOBALS['wpdb']->get_results(
-                    sprintf(
-                        'SELECT id, name, first_name, url FROM `%sauthors` WHERE `document_id` = %s ORDER BY `id` ASC',
-                        endnote_get_prefix(),
-                        $document['id']
-                    ),
-                    ARRAY_A
+                    $GLOBALS['wpdb']->prepare(sprintf($query, endnote_get_prefix()), $document['id']), ARRAY_A
                 );
                 $resource = @fopen('php://temp/maxmemory:999999999', 'w');
                 @fputcsv(
@@ -766,21 +798,18 @@ SELECT id, article_id, author_id, role
 FROM `%sarticles_authors`
 WHERE
     `article_id` IN (
-        SELECT `id` FROM `%sarticles` WHERE `document_id` = %s
+        SELECT `id` FROM `%sarticles` WHERE `document_id` = %%d
     )
     AND
     `author_id` IN (
-        SELECT `id` FROM `%sauthors` WHERE `document_id` = %s
+        SELECT `id` FROM `%sauthors` WHERE `document_id` = %%d
     )
 ORDER BY `id` ASC
 EOD;
                 $articles_authors = $GLOBALS['wpdb']->get_results(
-                    sprintf(
-                        $query,
-                        endnote_get_prefix(),
-                        endnote_get_prefix(),
+                    $GLOBALS['wpdb']->prepare(
+                        sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()),
                         $document['id'],
-                        endnote_get_prefix(),
                         $document['id']
                     ),
                     ARRAY_A
