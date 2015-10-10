@@ -75,6 +75,7 @@ function endnote_get_items($xml)
             $item['url'] = (string) array_pop($value->xpath('urls/related-urls/url/style'));
             $item['doi'] = (string) array_pop($value->xpath('electronic-resource-num/style'));
             $item['issn'] = (string) array_pop($value->xpath('orig-pub/style'));
+            $item['original_publication'] = (string) array_pop($value->xpath('orig-pub/style'));
             $item['isbn'] = (string) array_pop($value->xpath('isbn/style'));
             $item['label'] = (string) array_pop($value->xpath('label/style'));
             $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
@@ -155,6 +156,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     `url` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `doi` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `issn` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `original_publication` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `isbn` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `label` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `publisher` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
@@ -172,6 +174,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     KEY `url` (`url`),
     KEY `doi` (`doi`),
     KEY `issn` (`issn`),
+    KEY `original_publication` (`original_publication`),
     KEY `isbn` (`isbn`),
     KEY `label` (`label`),
     KEY `publisher` (`publisher`),
@@ -387,6 +390,7 @@ function endnote_dashboard()
                                 'url' => $item['url'],
                                 'doi' => $item['doi'],
                                 'issn' => $item['issn'],
+                                'original_publication' => $item['original_publication'],
                                 'isbn' => $item['isbn'],
                                 'label' => $item['label'],
                                 'publisher' => $item['publisher'],
@@ -526,6 +530,11 @@ EOD;
                     foreach ($issns AS $issn) {
                         $dom = dom_import_simplexml($issn);
                         $dom->nodeValue = $article['issn'];
+                    }
+                    $original_publications = $value->xpath('orig-pub/style');
+                    foreach ($original_publications AS $original_publication) {
+                        $dom = dom_import_simplexml($original_publication);
+                        $dom->nodeValue = $article['original_publication'];
                     }
                     $isbns = $value->xpath('isbn/style');
                     foreach ($isbns AS $isbn) {
@@ -671,6 +680,7 @@ SELECT
     url,
     doi,
     issn,
+    original_publication,
     isbn,
     label,
     publisher,
@@ -699,6 +709,7 @@ EOD;
                         'url' => 'URL',
                         'doi' => 'DOI',
                         'issn' => 'ISSN',
+                        'original_publication' => 'Original Publication',
                         'isbn' => 'ISBN',
                         'label' => 'Label',
                         'publisher' => 'Publisher',
@@ -815,11 +826,12 @@ EOD;
                                 'url' => $article[9],
                                 'doi' => $article[10],
                                 'issn' => $article[11],
-                                'isbn' => $article[12],
-                                'label' => $article[13],
-                                'publisher' => $article[14],
-                                'place_published' => $article[15],
-                                'access_date' => $article[16],
+                                'original_publication' => $article[12],
+                                'isbn' => $article[13],
+                                'label' => $article[14],
+                                'publisher' => $article[15],
+                                'place_published' => $article[16],
+                                'access_date' => $article[17],
                             ),
                             array(
                                 'id' => $article[0]
