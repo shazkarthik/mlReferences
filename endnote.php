@@ -81,7 +81,7 @@ function endnote_get_items($xml)
             $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
             $item['place_published'] = (string) array_pop($value->xpath('pub-location/style'));
             $item['access_date'] = (string) array_pop($value->xpath('access-date/style'));
-            $item['attachment'] = (string) array_pop($value->xpath('pdf-urls/url'));
+            $item['attachment'] = (string) array_pop($value->xpath('urls/pdf-urls/url'));
             $item['attachment'] = str_replace('internal-pdf', '', $item['attachment']);
             $item['authors'] = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
@@ -566,7 +566,7 @@ EOD;
                         $dom = dom_import_simplexml($access_date);
                         $dom->nodeValue = $article['access_date'];
                     }
-                    $attachments = $value->xpath('pdf-urls/url');
+                    $attachments = $value->xpath('urls/pdf-urls/url');
                     foreach ($attachments AS $attachment) {
                         $dom = dom_import_simplexml($attachment);
                         $dom->nodeValue = sprintf('internal-pdf%s', $article['attachment']);
