@@ -81,6 +81,8 @@ function endnote_get_items($xml)
             $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
             $item['place_published'] = (string) array_pop($value->xpath('pub-location/style'));
             $item['access_date'] = (string) array_pop($value->xpath('access-date/style'));
+            $item['attachment'] = (string) array_pop($value->xpath('pdf-urls/url'));
+            $item['attachment'] = str_replace('internal-pdf', '', $item['attachment']);
             $item['authors'] = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
                 $name = (string) $name->style;
@@ -162,6 +164,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     `publisher` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `place_published` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `access_date` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `attachment` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     PRIMARY KEY (`id`),
     KEY `number` (`number`),
     KEY `type` (`type`),
@@ -179,7 +182,8 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     KEY `label` (`label`),
     KEY `publisher` (`publisher`),
     KEY `place_published` (`place_published`),
-    KEY `access_date` (`access_date`)
+    KEY `access_date` (`access_date`),
+    KEY `attachment` (`attachment`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
 EOD;
     $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
@@ -396,6 +400,7 @@ function endnote_dashboard()
                                 'publisher' => $item['publisher'],
                                 'place_published' => $item['place_published'],
                                 'access_date' => $item['access_date'],
+                                'attachment' => $item['attachment'],
                             )
                         );
                         $article_id = $GLOBALS['wpdb']->insert_id;
@@ -561,6 +566,11 @@ EOD;
                         $dom = dom_import_simplexml($access_date);
                         $dom->nodeValue = $article['access_date'];
                     }
+                    $attachments = $value->xpath('pdf-urls/url');
+                    foreach ($attachments AS $attachment) {
+                        $dom = dom_import_simplexml($attachment);
+                        $dom->nodeValue = sprintf('internal-pdf%s', $article['attachment']);
+                    }
                     $authors = $value->xpath('contributors/authors/author/style');
                     foreach ($authors AS $k => $v) {
                         $author = $GLOBALS['wpdb']->get_row(
@@ -685,7 +695,8 @@ SELECT
     label,
     publisher,
     place_published,
-    access_date
+    access_date,
+    attachment
 FROM `%sarticles`
 WHERE `document_id` = %s
 ORDER BY `type` ASC, `id` ASC
@@ -715,6 +726,7 @@ EOD;
                         'publisher' => 'Publisher',
                         'place_published' => 'Place Published',
                         'access_date' => 'Access Date',
+                        'attachment' => 'Attachment',
                     ),
                     ';'
                 );
@@ -832,6 +844,7 @@ EOD;
                                 'publisher' => $article[15],
                                 'place_published' => $article[16],
                                 'access_date' => $article[17],
+                                'attachment' => $article[18],
                             ),
                             array(
                                 'id' => $article[0]
