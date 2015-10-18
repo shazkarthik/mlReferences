@@ -36,6 +36,7 @@ function endnote_get_prefix()
 
 function endnote_get_url($first_name, $last_name)
 {
+    return '';
     $name = sprintf('%s %s', $first_name, $last_name);
     $xml = @file_get_contents(
         sprintf(
@@ -112,6 +113,13 @@ function endnote_get_items($xml)
                     'url' => endnote_get_url($explode[1], $explode[0]),
                 );
             }
+            $item['citations_first'] = '';
+            $item['citations_subsequent'] = '';
+            $item['citations_parenthetical_first'] = '';
+            $item['citations_parenthetical_subsequent'] = '';
+            $item['references_authors'] = '';
+            $item['references_editors'] = '';
+            $item['references_all'] = '';
             $items[] = $item;
         } catch (Exception $exception) {
             return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), array());
@@ -171,6 +179,13 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     `place_published` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `access_date` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `attachment` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+    `citations_first` TEXT COLLATE utf8_unicode_ci NOT NULL,
+    `citations_subsequent` TEXT COLLATE utf8_unicode_ci NOT NULL,
+    `citations_parenthetical_first` TEXT COLLATE utf8_unicode_ci NOT NULL,
+    `citations_parenthetical_subsequent` TEXT COLLATE utf8_unicode_ci NOT NULL,
+    `references_authors` TEXT COLLATE utf8_unicode_ci NOT NULL,
+    `references_editors` TEXT COLLATE utf8_unicode_ci NOT NULL,
+    `references_all` TEXT COLLATE utf8_unicode_ci NOT NULL,
     PRIMARY KEY (`id`),
     KEY `number` (`number`),
     KEY `type` (`type`),
@@ -407,6 +422,13 @@ function endnote_dashboard()
                                 'place_published' => $item['place_published'],
                                 'access_date' => $item['access_date'],
                                 'attachment' => $item['attachment'],
+                                'citations_first' => $item['citations_first'],
+                                'citations_subsequent' => $item['citations_subsequent'],
+                                'citations_parenthetical_first' => $item['citations_parenthetical_first'],
+                                'citations_parenthetical_subsequent' => $item['citations_parenthetical_subsequent'],
+                                'references_authors' => $item['references_authors'],
+                                'references_editors' => $item['references_editors'],
+                                'references_all' => $item['references_all'],
                             )
                         );
                         $article_id = $GLOBALS['wpdb']->insert_id;
@@ -727,7 +749,14 @@ SELECT
     publisher,
     place_published,
     access_date,
-    attachment
+    attachment,
+    citations_first,
+    citations_subsequent,
+    citations_parenthetical_first,
+    citations_parenthetical_subsequent,
+    references_authors,
+    references_editors,
+    references_all
 FROM `%sarticles`
 WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
@@ -758,6 +787,13 @@ EOD;
                         'place_published' => 'Place Published',
                         'access_date' => 'Access Date',
                         'attachment' => 'Attachment',
+                        'citations_first' => 'Authors Publish Text First',
+                        'citations_subsequent' => 'Authors Publish Text Subsequent',
+                        'citations_parenthetical_first' => 'Authors Publish Text First Parenthetical',
+                        'citations_parenthetical_subsequent' => 'Authors Publish Text Subsequent Parenthetical',
+                        'references_authors' => 'Authors Publish Reference',
+                        'references_editors' => 'Editors Publish Reference',
+                        'references_all' => 'Reference Entry',
                     ),
                     ';'
                 );
@@ -874,6 +910,13 @@ EOD;
                                 'place_published' => $article[16],
                                 'access_date' => $article[17],
                                 'attachment' => $article[18],
+                                'citations_first' => $article[19],
+                                'citations_subsequent' => $article[20],
+                                'citations_parenthetical_first' => $article[21],
+                                'citations_parenthetical_subsequent' => $article[22],
+                                'references_authors' => $article[23],
+                                'references_editors' => $article[24],
+                                'references_all' => $article[25],
                             ),
                             array(
                                 'id' => $article[0]
@@ -1079,6 +1122,13 @@ function endnote_faq()
                         <li>Publisher</li>
                         <li>Place Published</li>
                         <li>Access Date</li>
+                        <li>Authors Publish Text First</li>
+                        <li>Authors Publish Text Subsequent</li>
+                        <li>Authors Publish Text First Parenthetical</li>
+                        <li>Authors Publish Text Subsequent Parenthetical</li>
+                        <li>Authors Publish Reference</li>
+                        <li>Editors Publish Reference</li>
+                        <li>Reference Entry</li>
                     </ul>
                 </li>
                 <li>
