@@ -13,6 +13,16 @@ libxml_use_internal_errors(true);
 
 $GLOBALS['endnote'] = array();
 
+function endnote_filters_author($item)
+{
+    return $item['role'] === 'Author';
+}
+
+function endnote_filters_editor($item)
+{
+    return $item['role'] === 'Editor';
+}
+
 function endnote_get_file($items)
 {
     array_unshift($items, 'files');
@@ -29,6 +39,189 @@ function endnote_get_directory($items)
     return $directory;
 }
 
+function endnote_get_initials($name)
+{
+    $initials = array();
+    $name = explode(' ', $name);
+    if (!empty($name)) {
+        foreach ($name as $key => $value) {
+            $initials[] = sprintf('%s.', substr($value, 0, 1));
+        }
+    }
+    return implode(' ', $initials);
+}
+
+function endnote_get_citations_first($authors, $year)
+{
+    $count = count($authors);
+    if ($count === 0) {
+        return '';
+    }
+    if ($count === 1) {
+        return sprintf('%s, %s (%s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+    }
+    if ($count === 2) {
+        return sprintf(
+            '%s, %s & %s, %s (%s)',
+            $authors[0]['name'],
+            endnote_get_initials($authors[0]['first_name']),
+            $authors[1]['name'],
+            endnote_get_initials($authors[1]['first_name']),
+            $year
+        );
+    }
+    if ($count === 3 or $count === 4 or $count === 5) {
+        $names = array();
+        if (!empty($authors)) {
+            foreach ($authors as $key => $value) {
+                $separator = ',';
+                if ($key + 1 === $count - 1) {
+                    $separator = ', &';
+                }
+                if ($key + 1 === $count) {
+                    $separator = '';
+                }
+                $names[] = sprintf(
+                    '%s %s%s', $value['name'], endnote_get_initials($value['first_name']), $separator
+                );
+            }
+        }
+        return sprintf('%s (%s)', implode(' ', $names), $year);
+    }
+    return sprintf('%s, %s et al. (%s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+}
+
+function endnote_get_citations_subsequent($authors, $year)
+{
+    $count = count($authors);
+    if ($count === 0) {
+        return '';
+    }
+    if ($count === 1) {
+        return sprintf('%s, %s (%s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+    }
+    if ($count === 2) {
+        return sprintf(
+            '%s, %s & %s, %s (%s)',
+            $authors[0]['name'],
+            endnote_get_initials($authors[0]['first_name']),
+            $authors[1]['name'],
+            endnote_get_initials($authors[1]['first_name']),
+            $year
+        );
+    }
+    return sprintf('%s, %s et al. (%s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+}
+
+function endnote_get_citations_parenthetical_first($authors, $year)
+{
+    $count = count($authors);
+    if ($count === 0) {
+        return '';
+    }
+    if ($count === 1) {
+        return sprintf('(%s, %s, %s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+    }
+    if ($count === 2) {
+        return sprintf(
+            '(%s, %s & %s, %s, %s)',
+            $authors[0]['name'],
+            endnote_get_initials($authors[0]['first_name']),
+            $authors[1]['name'],
+            endnote_get_initials($authors[1]['first_name']),
+            $year
+        );
+    }
+    if ($count === 3 or $count === 4 or $count === 5) {
+        $names = array();
+        if (!empty($authors)) {
+            foreach ($authors as $key => $value) {
+                $separator = ',';
+                if ($key + 1 === $count - 1) {
+                    $separator = ', &';
+                }
+                if ($key + 1 === $count) {
+                    $separator = '';
+                }
+                $names[] = sprintf(
+                    '%s %s%s', $value['name'], endnote_get_initials($value['first_name']), $separator
+                );
+            }
+        }
+        return sprintf('(%s, %s)', implode(' ', $names), $year);
+    }
+    return sprintf('(%s, %s et al., %s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+}
+
+function endnote_get_citations_parenthetical_subsequent($authors, $year)
+{
+    $count = count($authors);
+    if ($count === 0) {
+        return '';
+    }
+    if ($count === 1) {
+        return sprintf('(%s, %s, %s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+    }
+    if ($count === 2) {
+        return sprintf(
+            '(%s, %s & %s, %s, %s)',
+            $authors[0]['name'],
+            endnote_get_initials($authors[0]['first_name']),
+            $authors[1]['name'],
+            endnote_get_initials($authors[1]['first_name']),
+            $year
+        );
+    }
+    return sprintf('(%s, %s et al., %s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+}
+
+function endnote_get_references_authors($authors)
+{
+    $authors = array_filter($authors, 'endnote_filters_author');
+    $count = count($authors);
+    $names = array();
+    if (!empty($authors)) {
+        foreach ($authors as $key => $value) {
+            $separator = ',';
+            if ($key + 1 === $count - 1) {
+                $separator = ', &';
+            }
+            if ($key + 1 === $count) {
+                $separator = '';
+            }
+            $names[] = sprintf('%s %s%s', $value['name'], endnote_get_initials($value['first_name']), $separator);
+        }
+    }
+    return implode(' ', $names);
+}
+
+function endnote_get_references_editors($authors)
+{
+    $authors = array_filter($authors, 'endnote_filters_editor');
+    $count = count($authors);
+    $names = array();
+    if (!empty($authors)) {
+        foreach ($authors as $key => $value) {
+            $separator = ',';
+            if ($key + 1 === $count - 1) {
+                $separator = ', &';
+            }
+            if ($key + 1 === $count) {
+                $separator = '';
+            }
+            $names[] = sprintf('%s %s%s', $value['name'], endnote_get_initials($value['first_name']), $separator);
+        }
+    }
+    return implode(' ', $names);
+}
+
+function endnote_get_references_all($item)
+{
+    return sprintf(
+        '%s. %s. %s.', endnote_get_citations_first($item['authors'], $item['year']), $item['title_1'], $item['title_2']
+    );
+}
+
 function endnote_get_prefix()
 {
     return sprintf('%sendnote_', $GLOBALS['wpdb']->prefix);
@@ -36,7 +229,6 @@ function endnote_get_prefix()
 
 function endnote_get_url($first_name, $last_name)
 {
-    return '';
     $name = sprintf('%s %s', $first_name, $last_name);
     $xml = @file_get_contents(
         sprintf(
@@ -89,7 +281,7 @@ function endnote_get_items($xml)
                 $name = (string) $name->style;
                 $explode = explode(',', $name, 2);
                 $explode = array_map('trim', $explode);
-                if (!$explode[0] OR !$explode[1]) {
+                if (!$explode[0] or !$explode[1]) {
                     continue;
                 }
                 $item['authors'][] = array(
@@ -103,7 +295,7 @@ function endnote_get_items($xml)
                 $name = (string) $name->style;
                 $explode = explode(',', $name, 2);
                 $explode = array_map('trim', $explode);
-                if (!$explode[0] OR !$explode[1]) {
+                if (!$explode[0] or !$explode[1]) {
                     continue;
                 }
                 $item['authors'][] = array(
@@ -113,13 +305,17 @@ function endnote_get_items($xml)
                     'url' => endnote_get_url($explode[1], $explode[0]),
                 );
             }
-            $item['citations_first'] = '';
-            $item['citations_subsequent'] = '';
-            $item['citations_parenthetical_first'] = '';
-            $item['citations_parenthetical_subsequent'] = '';
-            $item['references_authors'] = '';
-            $item['references_editors'] = '';
-            $item['references_all'] = '';
+            $item['citations_first'] = endnote_get_citations_first($item['authors'], $item['year']);
+            $item['citations_subsequent'] = endnote_get_citations_subsequent($item['authors'], $item['year']);
+            $item['citations_parenthetical_first'] = endnote_get_citations_parenthetical_first(
+                $item['authors'], $item['year']
+            );
+            $item['citations_parenthetical_subsequent'] = endnote_get_citations_parenthetical_subsequent(
+                $item['authors'], $item['year']
+            );
+            $item['references_authors'] = endnote_get_references_authors($item['authors']);
+            $item['references_editors'] = endnote_get_references_editors($item['authors']);
+            $item['references_all'] = endnote_get_references_all($item);
             $items[] = $item;
         } catch (Exception $exception) {
             return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), array());
@@ -1093,8 +1289,8 @@ function endnote_faq()
                     column
                 </li>
                 <li>
-                    Downloaded the updated EndNote XML file using the <strong>Download</strong> link in the <strong>XML</strong>
-                    column
+                    Downloaded the updated EndNote XML file using the <strong>Download</strong> link in the
+                    <strong>XML</strong> column
                 </li>
             </ol>
         </div>
