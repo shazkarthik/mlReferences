@@ -218,7 +218,12 @@ function endnote_get_references_editors($authors)
 function endnote_get_references_all($item)
 {
     return sprintf(
-        '%s. %s. %s.', endnote_get_citations_first($item['authors'], $item['year']), $item['title_1'], $item['title_2']
+        '%s. %s: %s. %s: %s',
+        endnote_get_citations_first($item['authors'], $item['year']),
+        $item['title_1'],
+        $item['title_2'],
+        $item['place_published'],
+        $item['publisher']
     );
 }
 
@@ -229,6 +234,9 @@ function endnote_get_prefix()
 
 function endnote_get_url($first_name, $last_name)
 {
+    if (@$_SERVER['SERVER_NAME'] === '0.0.0.0') {
+        return '';
+    }
     $name = sprintf('%s %s', $first_name, $last_name);
     $xml = @file_get_contents(
         sprintf(
