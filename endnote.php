@@ -272,9 +272,24 @@ function endnote_get_items($xml)
             $item['year'] = (string) array_pop($value->xpath('dates/year/style'));
             $item['volume'] = (string) array_pop($value->xpath('volume/style'));
             $item['issue'] = (string) array_pop($value->xpath('number/style'));
-            $item['pages'] = (string) array_pop($value->xpath('pages/style'));
-            $item['url'] = (string) array_pop($value->xpath('urls/related-urls/url/style'));
-            $item['doi'] = (string) array_pop($value->xpath('electronic-resource-num/style'));
+            $item['page'] = (string) array_pop($value->xpath('pages/style'));
+            $urls = $value->xpath('urls/related-urls/url/style');
+            $item['url'] = '';
+            foreach ($urls as $url) {
+                $url = (string) $url;
+                if (stristr($url, 'doi') === false) {
+                    $item['url'] = $url;
+                    break;
+                }
+            }
+            $item['doi'] = '';
+            foreach ($urls as $url) {
+                $url = (string) $url;
+                if (stristr($url, 'doi') !== false) {
+                    $item['doi'] = $url;
+                    break;
+                }
+            }
             $item['issn'] = (string) array_pop($value->xpath('orig-pub/style'));
             $item['original_publication'] = (string) array_pop($value->xpath('orig-pub/style'));
             $item['isbn'] = (string) array_pop($value->xpath('isbn/style'));
@@ -776,12 +791,17 @@ EOD;
                     $urls = $value->xpath('urls/related-urls/url/style');
                     foreach ($urls AS $url) {
                         $dom = dom_import_simplexml($url);
-                        $dom->nodeValue = $article['url'];
+                        if (stristr($url, 'doi') === false) {
+                            $dom->nodeValue = $article['url'];
+                            break;
+                        }
                     }
-                    $dois = $value->xpath('electronic-resource-num/style');
-                    foreach ($dois AS $doi) {
-                        $dom = dom_import_simplexml($doi);
-                        $dom->nodeValue = $article['doi'];
+                    foreach ($urls AS $url) {
+                        $dom = dom_import_simplexml($url);
+                        if (stristr($url, 'doi') !== false) {
+                            $dom->nodeValue = $article['doi'];
+                            break;
+                        }
                     }
                     $issns = $value->xpath('orig-pub/style');
                     foreach ($issns AS $issn) {
