@@ -291,8 +291,41 @@ function endnote_get_items($xml)
                 }
             }
             $item['issn'] = (string) array_pop($value->xpath('orig-pub/style'));
+            if ($item['issn'] === 'Contents') {
+                $item['issn'] = '';
+            }
+            if ($item['issn'] === 'Original Publication') {
+                $item['issn'] = '';
+            }
+            $item['issn'] = str_replace('ISSN: ', '', $item['issn']);
             $item['original_publication'] = (string) array_pop($value->xpath('orig-pub/style'));
             $item['isbn'] = (string) array_pop($value->xpath('isbn/style'));
+            if ($item['isbn'] === 'ISBN') {
+                $item['isbn'] = '';
+            }
+            if ($item['isbn'] === 'ISSN') {
+                $item['isbn'] = '';
+            }
+            if ($item['isbn'] === 'Report Number') {
+                $item['isbn'] = '';
+            }
+            $item['isbn'] = str_replace('ISSN: ', '', $item['isbn']);
+            $item['isbn'] = str_replace("\n", ' ', $item['isbn']);
+            $item['isbn'] = str_replace("\r", ' ', $item['isbn']);
+            $item['isbn'] = str_replace("\t", ' ', $item['isbn']);
+            $item['isbn'] = preg_replace('/[^0-9A-Z]/', '', $item['isbn']);
+            $item['isbn'] = explode(' ', $item['isbn']);
+            $item['isbn'] = $item['isbn'][0];
+            if (strlen($item['isbn']) === 8) {
+                $item['issn'] = sprintf('%s-%s', substr($item['isbn'], 0, 4), substr($item['isbn'], 4, 4));
+                $item['isbn'] = '';
+            } else {
+                if (strlen($item['isbn']) >= 10) {
+                    $item['isbn'] = substr($item['isbn'], 0, 10);
+                } else {
+                    $item['isbn'] = '';
+                }
+            }
             $item['label'] = (string) array_pop($value->xpath('label/style'));
             $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
             $item['place_published'] = (string) array_pop($value->xpath('pub-location/style'));
