@@ -44,7 +44,7 @@ function references_management_get_initials($name)
     $initials = array();
     $name = explode(' ', $name);
     if (!empty($name)) {
-        foreach ($name as $key => $value) {
+        foreach ($name AS $key => $value) {
             $initials[] = sprintf('%s.', substr($value, 0, 1));
         }
     }
@@ -75,7 +75,7 @@ function references_management_get_citations_first($authors, $year)
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
         if (!empty($authors)) {
-            foreach ($authors as $key => $value) {
+            foreach ($authors AS $key => $value) {
                 $separator = ',';
                 if ($key + 1 === $count - 1) {
                     $separator = ', &';
@@ -145,7 +145,7 @@ function references_management_get_citations_parenthetical_first($authors, $year
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
         if (!empty($authors)) {
-            foreach ($authors as $key => $value) {
+            foreach ($authors AS $key => $value) {
                 $separator = ',';
                 if ($key + 1 === $count - 1) {
                     $separator = ', &';
@@ -203,7 +203,7 @@ function references_management_get_references_authors($authors)
     $count = count($authors);
     $names = array();
     if (!empty($authors)) {
-        foreach ($authors as $key => $value) {
+        foreach ($authors AS $key => $value) {
             $separator = ',';
             if ($key + 1 === $count - 1) {
                 $separator = ', &';
@@ -225,7 +225,7 @@ function references_management_get_references_editors($authors)
     $count = count($authors);
     $names = array();
     if (!empty($authors)) {
-        foreach ($authors as $key => $value) {
+        foreach ($authors AS $key => $value) {
             $separator = ',';
             if ($key + 1 === $count - 1) {
                 $separator = ', &';
@@ -301,7 +301,7 @@ function references_management_get_items($xml)
             $item['page'] = (string) array_pop($value->xpath('pages/style'));
             $urls = $value->xpath('urls/related-urls/url/style');
             $item['url'] = '';
-            foreach ($urls as $url) {
+            foreach ($urls AS $url) {
                 $url = (string) $url;
                 if (stristr($url, 'doi') === false) {
                     $item['url'] = $url;
@@ -309,7 +309,7 @@ function references_management_get_items($xml)
                 }
             }
             $item['doi'] = '';
-            foreach ($urls as $url) {
+            foreach ($urls AS $url) {
                 $url = (string) $url;
                 if (stristr($url, 'doi') !== false) {
                     $item['doi'] = $url;
@@ -414,7 +414,7 @@ function references_management_delete($directory)
         new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
         RecursiveIteratorIterator::CHILD_FIRST
     );
-    foreach ($files as $file) {
+    foreach ($files AS $file) {
         if ($file->isDir()) {
             rmdir($file->getRealPath());
         } else {
@@ -1499,18 +1499,6 @@ function references_management_add_meta_boxes()
         'post'
     );
     add_meta_box(
-        'references_management_translations',
-        'References Management - Translations',
-        'references_management_add_meta_boxes_translations',
-        'page'
-    );
-    add_meta_box(
-        'references_management_translations',
-        'References Management - Translations',
-        'references_management_add_meta_boxes_translations',
-        'post'
-    );
-    add_meta_box(
         'references_management_references',
         'References Management - References',
         'references_management_add_meta_boxes_references',
@@ -1523,37 +1511,64 @@ function references_management_add_meta_boxes()
         'post'
     );
     add_meta_box(
-        'references_management_semantic_annotation',
-        'References Management - Semantic Annotation',
-        'references_management_add_meta_boxes_semantic_annotation',
+        'references_management_semantic_annotations',
+        'References Management - Semantic Annotations',
+        'references_management_add_meta_boxes_semantic_annotations',
         'page'
     );
     add_meta_box(
-        'references_management_semantic_annotation',
-        'References Management - Semantic Annotation',
-        'references_management_add_meta_boxes_semantic_annotation',
+        'references_management_semantic_annotations',
+        'References Management - Semantic Annotations',
+        'references_management_add_meta_boxes_semantic_annotations',
+        'post'
+    );
+    add_meta_box(
+        'references_management_translations',
+        'References Management - Translations',
+        'references_management_add_meta_boxes_translations',
+        'page'
+    );
+    add_meta_box(
+        'references_management_translations',
+        'References Management - Translations',
+        'references_management_add_meta_boxes_translations',
         'post'
     );
 }
 
-function references_management_add_meta_boxes_page_detail()
+function references_management_add_meta_boxes_page_detail($post)
 {
+    wp_nonce_field(
+        'references_management_add_meta_boxes_page_detail', 'references_management_add_meta_boxes_page_detail'
+    );
+    $multipage_report = get_post_meta($post->ID, 'references_management_page_detail_multipage_report', true);
+    $root = get_post_meta($post->ID, 'references_management_page_detail_root', true);
     ?>
     <table class="references_management_widget">
         <tr class="even">
-            <td class="narrow"><label for="">Multipage Report</label></td>
+            <td class="narrow">
+                <label for="references_management_page_detail_multipage_report">Multipage Report</label>
+            </td>
             <td>
-                <select id="" name="references_management_page_detail_multipage_report">
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
+                <select
+                    id="references_management_page_detail_multipage_report"
+                    name="references_management_page_detail_multipage_report"
+                    >
+                    <option <?php echo $multipage_report === "yes"? 'selected="selected"': ''; ?> value="yes">
+                        Yes
+                    </option>
+                    <option <?php echo $multipage_report === "no"? 'selected="selected"': ''; ?> value="no">
+                        No
+                    </option>
                 </select>
             </td>
         </tr>
         <tr class="even">
-            <td class="narrow"><label for="">Root</label></td>
+            <td class="narrow"><label for="references_management_page_detail_root">Root</label></td>
             <td>
-                <select id="" name="references_management_page_detail_root">
-                    <option value="">Select...</option>
+                <select id="references_management_page_detail_root" name="references_management_page_detail_root">
+                    <option <?php echo $root === ""? 'selected="selected"': ''; ?> value="">Select...</option>
+                    <option <?php echo $root === "0"? 'selected="selected"': ''; ?> value="0">None</option>
                 </select>
             </td>
         </tr>
@@ -1561,37 +1576,7 @@ function references_management_add_meta_boxes_page_detail()
     <?php
 }
 
-function references_management_add_meta_boxes_translations()
-{
-    ?>
-    <table class="references_management_widget">
-        <tr class="even">
-            <td class="narrow"><label for="">References</label></td>
-            <td>
-                <input
-                    id=""
-                    name="references_management_translations_references"
-                    type="text"
-                    value="References"
-                    >
-            </td>
-        </tr>
-        <tr class="even">
-            <td class="narrow"><label for="">Table of Contents</label></td>
-            <td>
-                <input
-                    id=""
-                    name="references_management_translations_table_of_contents"
-                    type="text"
-                    value="Table of Contents"
-                    >
-            </td>
-        </tr>
-    </table>
-    <?php
-}
-
-function references_management_add_meta_boxes_references()
+function references_management_add_meta_boxes_references($post)
 {
     ?>
     <table class="references_management_widget wide">
@@ -1617,8 +1602,14 @@ function references_management_add_meta_boxes_references()
     <?php
 }
 
-function references_management_add_meta_boxes_semantic_annotation()
+function references_management_add_meta_boxes_semantic_annotations($post)
 {
+    $annotations = json_decode(
+        get_post_meta(
+            $post->ID, 'references_management_semantic_annotations', true
+        ),
+        true
+    );
     ?>
     <table class="references_management_widget wide">
         <tr>
@@ -1627,22 +1618,120 @@ function references_management_add_meta_boxes_semantic_annotation()
             <th class="center">Property</th>
             <th class="center">Value</th>
         </tr>
-        <?php for ($index = 1; $index <= 6; $index = $index + 1): ?>
+        <?php if (!empty($annotations)): ?>
+            <?php foreach ($annotations AS $key => $value): ?>
+                <tr class="<?php echo ($key % 2 === 0)? 'even': 'odd'; ?>">
+                    <td>
+                        <select class="wide" name="references_management_semantic_annotations_ontologies[]">
+                            <option
+                                <?php echo ($annotations[$key]['ontologies'] === ""? 'selected="selected"': ''); ?>
+                                value=""
+                                >Select...</option>
+                            <option
+                                <?php echo ($annotations[$key]['ontologies'] === "DoCO"? 'selected="selected"': ''); ?>
+                                value="DoCO"
+                                >DoCO</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="wide" name="references_management_semantic_annotations_classes[]">
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === ""? 'selected="selected"': ''
+                                ); ?>
+                                value=""
+                                >Select...</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "Appendix"? 'selected="selected"': ''
+                                ); ?>
+                                value="Appendix"
+                                >Appendix</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "FrontMatter"? 'selected="selected"': ''
+                                ); ?>
+                                value="FrontMatter"
+                                >FrontMatter</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "Glossary"? 'selected="selected"': ''
+                                ); ?>
+                                value="Glossary"
+                                >Glossary</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "ListOfAuthors"? 'selected="selected"': ''
+                                ); ?>
+                                value="ListOfAuthors"
+                                >ListOfAuthors</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "ListOfFigures"? 'selected="selected"': ''
+                                ); ?>
+                                value="ListOfFigures"
+                                >ListOfFigures</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "ListOfOrganizations"? 'selected="selected"': ''
+                                ); ?>
+                                value="ListOfOrganizations"
+                                >ListOfOrganizations</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "ListOfTables"? 'selected="selected"': ''
+                                ); ?>
+                                value="ListOfTables"
+                                >ListOfTables</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "Preface"? 'selected="selected"': ''
+                                ); ?>
+                                value="Preface"
+                                >Preface</option>
+                            <option
+                                <?php echo (
+                                    $annotations[$key]['classes'] === "TableOfContents"? 'selected="selected"': ''
+                                ); ?>
+                                value="TableOfContents"
+                                >TableOfContents</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input
+                            class="wide"
+                            name="references_management_semantic_annotations_properties[]"
+                            type="text"
+                            value="<?php echo $annotations[$key]['properties']; ?>"
+                            >
+                    </td>
+                    <td>
+                        <input
+                            class="wide"
+                            name="references_management_semantic_annotations_values[]"
+                            type="text"
+                            value="<?php echo $annotations[$key]['values']; ?>"
+                            >
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        <?php endif; ?>
+        <?php for ($index = count($annotations? $annotations: array()) + 1; $index <= 6; $index = $index + 1): ?>
             <tr class="<?php echo ($index % 2 === 0)? 'even': 'odd'; ?>">
                 <td>
-                    <select class="wide" id="" name="references_management_semantic_annotation_ontologies[]">
+                    <select class="wide" name="references_management_semantic_annotations_ontologies[]">
                         <option value="">Select...</option>
-                        <option value="">DoCO</option>
+                        <option value="DoCO">DoCO</option>
                     </select>
                 </td>
                 <td>
-                    <select class="wide" id="" name="references_management_semantic_annotation_classes[]">
+                    <select class="wide" name="references_management_semantic_annotations_classes[]">
                         <option value="">Select...</option>
+                        <option value="Appendix">Appendix</option>
                         <option value="FrontMatter">FrontMatter</option>
                         <option value="Glossary">Glossary</option>
-                        <option value="Appendix">Appendix</option>
-                        <option value="ListOfFigures">ListOfFigures</option>
                         <option value="ListOfAuthors">ListOfAuthors</option>
+                        <option value="ListOfFigures">ListOfFigures</option>
                         <option value="ListOfOrganizations">ListOfOrganizations</option>
                         <option value="ListOfTables">ListOfTables</option>
                         <option value="Preface">Preface</option>
@@ -1652,8 +1741,7 @@ function references_management_add_meta_boxes_semantic_annotation()
                 <td>
                     <input
                         class="wide"
-                        id=""
-                        name="references_management_semantic_annotation_properties[]"
+                        name="references_management_semantic_annotations_properties[]"
                         type="text"
                         value=""
                         >
@@ -1661,8 +1749,7 @@ function references_management_add_meta_boxes_semantic_annotation()
                 <td>
                     <input
                         class="wide"
-                        id=""
-                        name="references_management_semantic_annotation_values[]"
+                        name="references_management_semantic_annotations_values[]"
                         type="text"
                         value=""
                         >
@@ -1673,6 +1760,111 @@ function references_management_add_meta_boxes_semantic_annotation()
     <?php
 }
 
+function references_management_add_meta_boxes_translations($post)
+{
+    $references = get_post_meta($post->ID, 'references_management_translations_references', true);
+    $table_of_contents = get_post_meta($post->ID, 'references_management_translations_table_of_contents', true);
+    ?>
+    <table class="references_management_widget">
+        <tr class="even">
+            <td class="narrow"><label for="references_management_translations_references">References</label></td>
+            <td>
+                <input
+                    id="references_management_translations_references"
+                    name="references_management_translations_references"
+                    type="text"
+                    value="<?php echo $references? $references: 'References'; ?>"
+                    >
+            </td>
+        </tr>
+        <tr class="even">
+            <td class="narrow">
+                <label for="references_management_translations_table_of_contents">Table of Contents</label>
+            </td>
+            <td>
+                <input
+                    id="references_management_translations_table_of_contents"
+                    name="references_management_translations_table_of_contents"
+                    type="text"
+                    value="<?php echo $table_of_contents? $table_of_contents: 'Table of Contents'; ?>"
+                    >
+            </td>
+        </tr>
+    </table>
+    <?php
+}
+
+function references_management_save_post($post_id)
+{
+    if (!isset($_POST['references_management_add_meta_boxes_page_detail'])) {
+        return $post_id;
+    }
+    if (
+        !wp_verify_nonce(
+            $_POST['references_management_add_meta_boxes_page_detail'],
+            'references_management_add_meta_boxes_page_detail'
+        )
+    ) {
+        return $post_id;
+    }
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return $post_id;
+    }
+    if ('page' === $_POST['post_type']) {
+        if (!current_user_can('edit_page', $post_id)) {
+            return $post_id;
+        }
+    } else {
+        if (!current_user_can('edit_post', $post_id)) {
+            return $post_id;
+        }
+    }
+    update_post_meta(
+        $post_id,
+        'references_management_page_detail_multipage_report',
+        $_POST['references_management_page_detail_multipage_report']
+    );
+    update_post_meta(
+        $post_id,
+        'references_management_page_detail_root',
+        $_POST['references_management_page_detail_root']
+    );
+    update_post_meta(
+        $post_id,
+        'references_management_translations_references',
+        $_POST['references_management_translations_references']
+    );
+    update_post_meta(
+        $post_id,
+        'references_management_translations_table_of_contents',
+        $_POST['references_management_translations_table_of_contents']
+    );
+    $annotations = array();
+    foreach ($_POST['references_management_semantic_annotations_ontologies'] AS $key => $_) {
+        if (
+            !empty($_POST['references_management_semantic_annotations_ontologies'][$key])
+            and
+            !empty($_POST['references_management_semantic_annotations_classes'][$key])
+            and
+            !empty($_POST['references_management_semantic_annotations_properties'][$key])
+            and
+            !empty($_POST['references_management_semantic_annotations_values'][$key])
+        ) {
+            $annotations[] = array(
+                'ontologies' => $_POST['references_management_semantic_annotations_ontologies'][$key],
+                'classes' => $_POST['references_management_semantic_annotations_classes'][$key],
+                'properties' => $_POST['references_management_semantic_annotations_properties'][$key],
+                'values' => $_POST['references_management_semantic_annotations_values'][$key],
+            );
+        }
+    }
+    update_post_meta(
+        $post_id,
+        'references_management_semantic_annotations',
+        json_encode($annotations)
+    );
+}
+
 register_activation_hook(__FILE__, 'references_management_register_activation_hook');
 register_deactivation_hook(__FILE__, 'references_management_register_deactivation_hook');
 
@@ -1681,5 +1873,6 @@ add_action('init', 'references_management_init');
 add_action('admin_init', 'references_management_admin_init');
 add_action('admin_menu', 'references_management_admin_menu');
 add_action('add_meta_boxes', 'references_management_add_meta_boxes');
+add_action('save_post', 'references_management_save_post');
 
 add_shortcode('references_management', 'references_management_shortcode');
