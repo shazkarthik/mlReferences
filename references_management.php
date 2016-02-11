@@ -617,7 +617,12 @@ function references_management_styles()
 function references_management_admin_menu()
 {
     add_menu_page(
-        'Semantic AP', 'Semantic AP', 'manage_options', '/references_management', 'references_management_dashboard', ''
+        'RM',
+        'RM',
+        'manage_options',
+        '/references_management',
+        'references_management_dashboard',
+        ''
     );
     add_submenu_page(
         '/references_management',
@@ -632,7 +637,7 @@ function references_management_admin_menu()
 function references_management_flashes()
 {
     ?>
-    <?php if (!empty($_SESSION['references_management']['flashes'])): ?>
+    <?php if (!empty($_SESSION['references_management']['flashes'])) : ?>
         <?php foreach ($_SESSION['references_management']['flashes'] AS $key => $value): ?>
             <div class="<?php echo $key; ?>">
                 <p><strong><?php echo $value; ?></strong></p>
@@ -653,731 +658,731 @@ function references_management_dashboard()
     <div class="references_management wrap">
         <?php
         switch ($action) {
-            case 'upload':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    list($errors, $items) = references_management_get_items(
-                        @file_get_contents($_FILES['file']['tmp_name'])
-                    );
-                    if ($errors) {
-                        $_SESSION['references_management']['flashes'] = array(
-                            'error' => 'The document was not uploaded successfully. Please try again.',
-                        );
-                        ?>
-                        <meta
-                            content="0;url=<?php echo admin_url(
-                                'admin.php?action=upload&page=references_management'
-                            ); ?>"
-                            http-equiv="refresh"
-                            >
-                        <?php
-                        die();
-                    }
-                    if (!$items) {
-                        $_SESSION['references_management']['flashes'] = array(
-                            'error' => 'The document was not uploaded successfully. Please try again.',
-                        );
-                        ?>
-                        <meta
-                            content="0;url=<?php echo admin_url(
-                                'admin.php?action=upload&page=references_management'
-                            ); ?>"
-                            http-equiv="refresh"
-                            >
-                        <?php
-                        die();
-                    }
-                    $GLOBALS['wpdb']->insert(
-                        sprintf('%sdocuments', references_management_get_prefix()),
-                        array(
-                            'name' => $_FILES['file']['name'],
-                        )
-                    );
-                    $document_id = $GLOBALS['wpdb']->insert_id;
-                    references_management_get_directory(array($document_id));
-                    copy(
-                        $_FILES['file']['tmp_name'],
-                        references_management_get_file(array($document_id, $_FILES['file']['name']))
-                    );
-                    foreach ($items AS $item) {
-                        $GLOBALS['wpdb']->insert(
-                            sprintf('%sarticles', references_management_get_prefix()),
-                            array(
-                                'document_id' => $document_id,
-                                'number' => $item['number'],
-                                'type' => $item['type'],
-                                'title_1' => $item['title_1'],
-                                'title_2' => $item['title_2'],
-                                'year' => $item['year'],
-                                'volume' => $item['volume'],
-                                'issue' => $item['issue'],
-                                'page' => $item['page'],
-                                'url' => $item['url'],
-                                'doi' => $item['doi'],
-                                'issn' => $item['issn'],
-                                'original_publication' => $item['original_publication'],
-                                'isbn' => $item['isbn'],
-                                'label' => $item['label'],
-                                'publisher' => $item['publisher'],
-                                'place_published' => $item['place_published'],
-                                'access_date' => $item['access_date'],
-                                'attachment' => $item['attachment'],
-                                'citations_first' => $item['citations_first'],
-                                'citations_subsequent' => $item['citations_subsequent'],
-                                'citations_parenthetical_first' => $item['citations_parenthetical_first'],
-                                'citations_parenthetical_subsequent' => $item['citations_parenthetical_subsequent'],
-                                'references_authors' => $item['references_authors'],
-                                'references_editors' => $item['references_editors'],
-                                'references_all' => $item['references_all'],
-                            )
-                        );
-                        $article_id = $GLOBALS['wpdb']->insert_id;
-                        foreach ($item['authors'] AS $author) {
-                            $query = <<<EOD
-SELECT *
-FROM `%sauthors`
-WHERE `document_id` = %%d AND `name` = %%s AND `first_name` = %%s
-EOD;
-                            $row = $GLOBALS['wpdb']->get_row(
-                                $GLOBALS['wpdb']->prepare(
-                                    sprintf($query, references_management_get_prefix()),
-                                    $document_id,
-                                    $author['name'],
-                                    $author['first_name']
-                                ),
-                                ARRAY_A
-                            );
-                            if ($row) {
-                                $author_id = $row['id'];
-                            } else {
-                                $GLOBALS['wpdb']->insert(
-                                    sprintf('%sauthors', references_management_get_prefix()),
-                                    array(
-                                        'document_id' => $document_id,
-                                        'name' => $author['name'],
-                                        'first_name' => $author['first_name'],
-                                        'url' => $author['url'],
-                                    )
-                                );
-                                $author_id = $GLOBALS['wpdb']->insert_id;
-                            }
-                            $GLOBALS['wpdb']->insert(
-                                sprintf('%sarticles_authors', references_management_get_prefix()),
-                                array(
-                                    'article_id' => $article_id,
-                                    'author_id' => $author_id,
-                                    'role' => $author['role'],
-                                )
-                            );
-                        }
-                    }
-                    $_SESSION['references_management']['flashes'] = array(
-                        'updated' => 'The document was uploaded successfully.',
-                    );
-                    ?>
-                    <meta
-                        content="0;url=<?php echo admin_url('admin.php?action=&page=references_management'); ?>"
-                        http-equiv="refresh"
-                        >
-                    <?php
-                    die();
-                } else {
-                    ?>
-                    <h1>Documents - Upload</h1>
-                    <form
-                        action="<?php echo admin_url('admin.php?action=upload&page=references_management'); ?>"
-                        enctype="multipart/form-data"
-                        method="post"
-                        >
-                        <table class="bordered widefat wp-list-table">
-                            <tr>
-                                <td class="narrow" class="top"><label for="file">File</label></td>
-                                <td><input id="file" name="file" type="file"></td>
-                            </tr>
-                        </table>
-                        <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
-                    </form>
-                    <?php
-                }
-                break;
-            case 'download':
-                $document = $GLOBALS['wpdb']->get_row(
-                    $GLOBALS['wpdb']->prepare(
-                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', references_management_get_prefix()),
-                        intval($_REQUEST['id'])
-                    ),
-                    ARRAY_A
+        case 'upload':
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                list($errors, $items) = references_management_get_items(
+                    @file_get_contents($_FILES['file']['tmp_name'])
                 );
-                $query = <<<EOD
-SELECT `%sauthors`.`name`
-FROM `%sauthors`
-INNER JOIN `%sarticles_authors` ON
-    `%sarticles_authors`.`article_id` = %%d AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
-WHERE `%sarticles_authors`.`role` = %%s
-LIMIT 1
-OFFSET %d
-EOD;
-                $xml = simplexml_load_file(references_management_get_file(array($_REQUEST['id'], $document['name'])));
-                foreach ($xml->xpath('//xml/records/record') AS $key => $value) {
-                    $number = (string) array_pop($value->xpath('rec-number'));
-                    $article = $GLOBALS['wpdb']->get_row(
-                        $GLOBALS['wpdb']->prepare(
-                            sprintf(
-                                'SELECT * FROM `%sarticles` WHERE `document_id` = %%d AND `number` = %%s',
-                                references_management_get_prefix()
-                            ),
-                            $document['id'],
-                            $number
-                        ),
-                        ARRAY_A
-                    );
-                    if (!$article) {
-                        continue;
-                    }
-                    $types = $value->xpath('ref-type');
-                    foreach ($types AS $type) {
-                        $dom = dom_import_simplexml($type);
-                        $dom->setAttribute('name', $article['type']);
-                    }
-                    $title_1s = $value->xpath('titles/title/style');
-                    foreach ($title_1s AS $title_1) {
-                        $dom = dom_import_simplexml($title_1);
-                        $dom->nodeValue = $article['title_1'];
-                    }
-                    $title_2s = $value->xpath('titles/secondary-title/style');
-                    foreach ($title_2s AS $title_2) {
-                        $dom = dom_import_simplexml($title_2);
-                        $dom->nodeValue = $article['title_2'];
-                    }
-                    $years = $value->xpath('dates/year/style');
-                    foreach ($years AS $year) {
-                        $dom = dom_import_simplexml($year);
-                        $dom->nodeValue = $article['year'];
-                    }
-                    $volumes = $value->xpath('volume/style');
-                    foreach ($volumes AS $volume) {
-                        $dom = dom_import_simplexml($volume);
-                        $dom->nodeValue = $article['volume'];
-                    }
-                    $issues = $value->xpath('number/style');
-                    foreach ($issues AS $issue) {
-                        $dom = dom_import_simplexml($issue);
-                        $dom->nodeValue = $article['issue'];
-                    }
-                    $pages = $value->xpath('pages/style');
-                    foreach ($pages AS $page) {
-                        $dom = dom_import_simplexml($page);
-                        $dom->nodeValue = $article['page'];
-                    }
-                    $urls = $value->xpath('urls/related-urls/url/style');
-                    foreach ($urls AS $url) {
-                        $dom = dom_import_simplexml($url);
-                        if (stristr($url, 'doi') === false) {
-                            $dom->nodeValue = $article['url'];
-                            break;
-                        }
-                    }
-                    foreach ($urls AS $url) {
-                        $dom = dom_import_simplexml($url);
-                        if (stristr($url, 'doi') !== false) {
-                            $dom->nodeValue = $article['doi'];
-                            break;
-                        }
-                    }
-                    $issns = $value->xpath('orig-pub/style');
-                    foreach ($issns AS $issn) {
-                        $dom = dom_import_simplexml($issn);
-                        $dom->nodeValue = $article['issn'];
-                    }
-                    $original_publications = $value->xpath('orig-pub/style');
-                    foreach ($original_publications AS $original_publication) {
-                        $dom = dom_import_simplexml($original_publication);
-                        $dom->nodeValue = $article['original_publication'];
-                    }
-                    $isbns = $value->xpath('isbn/style');
-                    foreach ($isbns AS $isbn) {
-                        $dom = dom_import_simplexml($isbn);
-                        $dom->nodeValue = $article['isbn'];
-                    }
-                    $labels = $value->xpath('label/style');
-                    foreach ($labels AS $label) {
-                        $dom = dom_import_simplexml($label);
-                        $dom->nodeValue = $article['label'];
-                    }
-                    $publishers = $value->xpath('publisher/style');
-                    foreach ($publishers AS $publisher) {
-                        $dom = dom_import_simplexml($publisher);
-                        $dom->nodeValue = $article['publisher'];
-                    }
-                    $places_published = $value->xpath('pub-location/style');
-                    foreach ($places_published AS $place_published) {
-                        $dom = dom_import_simplexml($place_published);
-                        $dom->nodeValue = $article['place_published'];
-                    }
-                    $access_dates = $value->xpath('access-date/style');
-                    foreach ($access_dates AS $access_date) {
-                        $dom = dom_import_simplexml($access_date);
-                        $dom->nodeValue = $article['access_date'];
-                    }
-                    $attachments = $value->xpath('urls/pdf-urls/url');
-                    foreach ($attachments AS $attachment) {
-                        $dom = dom_import_simplexml($attachment);
-                        $dom->nodeValue = sprintf('internal-pdf%s', $article['attachment']);
-                    }
-                    $authors = $value->xpath('contributors/authors/author/style');
-                    foreach ($authors AS $k => $v) {
-                        $author = $GLOBALS['wpdb']->get_row(
-                            $GLOBALS['wpdb']->prepare(
-                                sprintf(
-                                    $query,
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    $k
-                                ),
-                                $article['id'],
-                                'Author'
-                            ),
-                            ARRAY_A
-                        );
-                        if ($author) {
-                            $dom = dom_import_simplexml($v);
-                            $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
-                        }
-                    }
-                    $editors = $value->xpath('contributors/secondary-authors/author/style');
-                    foreach ($editors AS $k => $v) {
-                        $editor = $GLOBALS['wpdb']->get_row(
-                            $GLOBALS['wpdb']->prepare(
-                                sprintf(
-                                    $query,
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    references_management_get_prefix(),
-                                    $k
-                                ),
-                                $article['id'],
-                                'Editor'
-                            ),
-                            ARRAY_A
-                        );
-                        if ($editor) {
-                            $dom = dom_import_simplexml($v);
-                            $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
-                        }
-                    }
-                }
-                $contents = $xml->asXML();
-                ob_clean();
-                header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
-                header(sprintf('Content-Length: %d', strlen($contents)));
-                echo $contents;
-                break;
-            case 'delete':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    $directory = references_management_get_directory(array($_REQUEST['id']));
-                    references_management_delete($directory);
-                    rmdir($directory);
-                    $GLOBALS['wpdb']->delete(
-                        sprintf('%sdocuments', references_management_get_prefix()),
-                        array(
-                            'id' => $_REQUEST['id'],
-                        ),
-                        null,
-                        null
-                    );
+                if ($errors) {
                     $_SESSION['references_management']['flashes'] = array(
-                        'updated' => 'The document was deleted successfully.',
+                        'error' => 'The document was not uploaded successfully. Please try again.',
                     );
                     ?>
                     <meta
                         content="0;url=<?php echo admin_url(
-                            'admin.php?action=&deleted=deleted&page=references_management'
+                            'admin.php?action=upload&page=references_management'
                         ); ?>"
                         http-equiv="refresh"
                         >
                     <?php
                     die();
-                } else {
-                    ?>
-                    <h1>Documents - Delete</h1>
-                    <div class="error">
-                        <p><strong>Are you sure you want to delete this document?</strong></p>
-                    </div>
-                    <form
-                        action="<?php echo admin_url(
-                            sprintf('admin.php?action=delete&id=%d&page=references_management', $_REQUEST['id'])
-                        ); ?>"
-                        method="post"
-                        >
-                        <p class="submit">
-                            <input class="button-primary" type="submit" value="Yes">
-                            <a
-                                class="float-right"
-                                href="<?php echo admin_url('admin.php?action=&page=references_management'); ?>"
-                                >
-                                No
-                            </a>
-                        </p>
-                    </form>
-                    <?php
                 }
-                break;
-            case 'download_zip':
-                $document = $GLOBALS['wpdb']->get_row(
+                if (!$items) {
+                    $_SESSION['references_management']['flashes'] = array(
+                        'error' => 'The document was not uploaded successfully. Please try again.',
+                    );
+                    ?>
+                    <meta
+                        content="0;url=<?php echo admin_url(
+                            'admin.php?action=upload&page=references_management'
+                        ); ?>"
+                        http-equiv="refresh"
+                        >
+                    <?php
+                    die();
+                }
+                $GLOBALS['wpdb']->insert(
+                    sprintf('%sdocuments', references_management_get_prefix()),
+                    array(
+                        'name' => $_FILES['file']['name'],
+                    )
+                );
+                $document_id = $GLOBALS['wpdb']->insert_id;
+                references_management_get_directory(array($document_id));
+                copy(
+                    $_FILES['file']['tmp_name'],
+                    references_management_get_file(array($document_id, $_FILES['file']['name']))
+                );
+                foreach ($items AS $item) {
+                    $GLOBALS['wpdb']->insert(
+                        sprintf('%sarticles', references_management_get_prefix()),
+                        array(
+                            'document_id' => $document_id,
+                            'number' => $item['number'],
+                            'type' => $item['type'],
+                            'title_1' => $item['title_1'],
+                            'title_2' => $item['title_2'],
+                            'year' => $item['year'],
+                            'volume' => $item['volume'],
+                            'issue' => $item['issue'],
+                            'page' => $item['page'],
+                            'url' => $item['url'],
+                            'doi' => $item['doi'],
+                            'issn' => $item['issn'],
+                            'original_publication' => $item['original_publication'],
+                            'isbn' => $item['isbn'],
+                            'label' => $item['label'],
+                            'publisher' => $item['publisher'],
+                            'place_published' => $item['place_published'],
+                            'access_date' => $item['access_date'],
+                            'attachment' => $item['attachment'],
+                            'citations_first' => $item['citations_first'],
+                            'citations_subsequent' => $item['citations_subsequent'],
+                            'citations_parenthetical_first' => $item['citations_parenthetical_first'],
+                            'citations_parenthetical_subsequent' => $item['citations_parenthetical_subsequent'],
+                            'references_authors' => $item['references_authors'],
+                            'references_editors' => $item['references_editors'],
+                            'references_all' => $item['references_all'],
+                        )
+                    );
+                    $article_id = $GLOBALS['wpdb']->insert_id;
+                    foreach ($item['authors'] AS $author) {
+                        $query = <<<EOD
+SELECT *
+FROM `%sauthors`
+WHERE `document_id` = %%d AND `name` = %%s AND `first_name` = %%s
+EOD;
+                        $row = $GLOBALS['wpdb']->get_row(
+                            $GLOBALS['wpdb']->prepare(
+                                sprintf($query, references_management_get_prefix()),
+                                $document_id,
+                                $author['name'],
+                                $author['first_name']
+                            ),
+                            ARRAY_A
+                        );
+                        if ($row) {
+                            $author_id = $row['id'];
+                        } else {
+                            $GLOBALS['wpdb']->insert(
+                                sprintf('%sauthors', references_management_get_prefix()),
+                                array(
+                                    'document_id' => $document_id,
+                                    'name' => $author['name'],
+                                    'first_name' => $author['first_name'],
+                                    'url' => $author['url'],
+                                )
+                            );
+                            $author_id = $GLOBALS['wpdb']->insert_id;
+                        }
+                        $GLOBALS['wpdb']->insert(
+                            sprintf('%sarticles_authors', references_management_get_prefix()),
+                            array(
+                                'article_id' => $article_id,
+                                'author_id' => $author_id,
+                                'role' => $author['role'],
+                            )
+                        );
+                    }
+                }
+                $_SESSION['references_management']['flashes'] = array(
+                    'updated' => 'The document was uploaded successfully.',
+                );
+                ?>
+                <meta
+                    content="0;url=<?php echo admin_url('admin.php?action=&page=references_management'); ?>"
+                    http-equiv="refresh"
+                    >
+                <?php
+                die();
+            } else {
+                ?>
+                <h1>Documents - Upload</h1>
+                <form
+                    action="<?php echo admin_url('admin.php?action=upload&page=references_management'); ?>"
+                    enctype="multipart/form-data"
+                    method="post"
+                    >
+                    <table class="bordered widefat wp-list-table">
+                        <tr>
+                            <td class="narrow" class="top"><label for="file">File</label></td>
+                            <td><input id="file" name="file" type="file"></td>
+                        </tr>
+                    </table>
+                    <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
+                </form>
+                <?php
+            }
+            break;
+        case 'download':
+            $document = $GLOBALS['wpdb']->get_row(
+                $GLOBALS['wpdb']->prepare(
+                    sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', references_management_get_prefix()),
+                    intval($_REQUEST['id'])
+                ),
+                ARRAY_A
+            );
+            $query = <<<EOD
+SELECT `%sauthors`.`name`
+FROM `%sauthors`
+INNER JOIN `%sarticles_authors` ON
+`%sarticles_authors`.`article_id` = %%d AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
+WHERE `%sarticles_authors`.`role` = %%s
+LIMIT 1
+OFFSET %d
+EOD;
+            $xml = simplexml_load_file(references_management_get_file(array($_REQUEST['id'], $document['name'])));
+            foreach ($xml->xpath('//xml/records/record') AS $key => $value) {
+                $number = (string) array_pop($value->xpath('rec-number'));
+                $article = $GLOBALS['wpdb']->get_row(
                     $GLOBALS['wpdb']->prepare(
-                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', references_management_get_prefix()),
-                        intval($_REQUEST['id'])
+                        sprintf(
+                            'SELECT * FROM `%sarticles` WHERE `document_id` = %%d AND `number` = %%s',
+                            references_management_get_prefix()
+                        ),
+                        $document['id'],
+                        $number
                     ),
                     ARRAY_A
                 );
-                $query = <<<EOD
+                if (!$article) {
+                    continue;
+                }
+                $types = $value->xpath('ref-type');
+                foreach ($types AS $type) {
+                    $dom = dom_import_simplexml($type);
+                    $dom->setAttribute('name', $article['type']);
+                }
+                $title_1s = $value->xpath('titles/title/style');
+                foreach ($title_1s AS $title_1) {
+                    $dom = dom_import_simplexml($title_1);
+                    $dom->nodeValue = $article['title_1'];
+                }
+                $title_2s = $value->xpath('titles/secondary-title/style');
+                foreach ($title_2s AS $title_2) {
+                    $dom = dom_import_simplexml($title_2);
+                    $dom->nodeValue = $article['title_2'];
+                }
+                $years = $value->xpath('dates/year/style');
+                foreach ($years AS $year) {
+                    $dom = dom_import_simplexml($year);
+                    $dom->nodeValue = $article['year'];
+                }
+                $volumes = $value->xpath('volume/style');
+                foreach ($volumes AS $volume) {
+                    $dom = dom_import_simplexml($volume);
+                    $dom->nodeValue = $article['volume'];
+                }
+                $issues = $value->xpath('number/style');
+                foreach ($issues AS $issue) {
+                    $dom = dom_import_simplexml($issue);
+                    $dom->nodeValue = $article['issue'];
+                }
+                $pages = $value->xpath('pages/style');
+                foreach ($pages AS $page) {
+                    $dom = dom_import_simplexml($page);
+                    $dom->nodeValue = $article['page'];
+                }
+                $urls = $value->xpath('urls/related-urls/url/style');
+                foreach ($urls AS $url) {
+                    $dom = dom_import_simplexml($url);
+                    if (stristr($url, 'doi') === false) {
+                        $dom->nodeValue = $article['url'];
+                        break;
+                    }
+                }
+                foreach ($urls AS $url) {
+                    $dom = dom_import_simplexml($url);
+                    if (stristr($url, 'doi') !== false) {
+                        $dom->nodeValue = $article['doi'];
+                        break;
+                    }
+                }
+                $issns = $value->xpath('orig-pub/style');
+                foreach ($issns AS $issn) {
+                    $dom = dom_import_simplexml($issn);
+                    $dom->nodeValue = $article['issn'];
+                }
+                $original_publications = $value->xpath('orig-pub/style');
+                foreach ($original_publications AS $original_publication) {
+                    $dom = dom_import_simplexml($original_publication);
+                    $dom->nodeValue = $article['original_publication'];
+                }
+                $isbns = $value->xpath('isbn/style');
+                foreach ($isbns AS $isbn) {
+                    $dom = dom_import_simplexml($isbn);
+                    $dom->nodeValue = $article['isbn'];
+                }
+                $labels = $value->xpath('label/style');
+                foreach ($labels AS $label) {
+                    $dom = dom_import_simplexml($label);
+                    $dom->nodeValue = $article['label'];
+                }
+                $publishers = $value->xpath('publisher/style');
+                foreach ($publishers AS $publisher) {
+                    $dom = dom_import_simplexml($publisher);
+                    $dom->nodeValue = $article['publisher'];
+                }
+                $places_published = $value->xpath('pub-location/style');
+                foreach ($places_published AS $place_published) {
+                    $dom = dom_import_simplexml($place_published);
+                    $dom->nodeValue = $article['place_published'];
+                }
+                $access_dates = $value->xpath('access-date/style');
+                foreach ($access_dates AS $access_date) {
+                    $dom = dom_import_simplexml($access_date);
+                    $dom->nodeValue = $article['access_date'];
+                }
+                $attachments = $value->xpath('urls/pdf-urls/url');
+                foreach ($attachments AS $attachment) {
+                    $dom = dom_import_simplexml($attachment);
+                    $dom->nodeValue = sprintf('internal-pdf%s', $article['attachment']);
+                }
+                $authors = $value->xpath('contributors/authors/author/style');
+                foreach ($authors AS $k => $v) {
+                    $author = $GLOBALS['wpdb']->get_row(
+                        $GLOBALS['wpdb']->prepare(
+                            sprintf(
+                                $query,
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                $k
+                            ),
+                            $article['id'],
+                            'Author'
+                        ),
+                        ARRAY_A
+                    );
+                    if ($author) {
+                        $dom = dom_import_simplexml($v);
+                        $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
+                    }
+                }
+                $editors = $value->xpath('contributors/secondary-authors/author/style');
+                foreach ($editors AS $k => $v) {
+                    $editor = $GLOBALS['wpdb']->get_row(
+                        $GLOBALS['wpdb']->prepare(
+                            sprintf(
+                                $query,
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                references_management_get_prefix(),
+                                $k
+                            ),
+                            $article['id'],
+                            'Editor'
+                        ),
+                        ARRAY_A
+                    );
+                    if ($editor) {
+                        $dom = dom_import_simplexml($v);
+                        $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
+                    }
+                }
+            }
+            $contents = $xml->asXML();
+            ob_clean();
+            header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
+            header(sprintf('Content-Length: %d', strlen($contents)));
+            echo $contents;
+            break;
+        case 'delete':
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $directory = references_management_get_directory(array($_REQUEST['id']));
+                references_management_delete($directory);
+                rmdir($directory);
+                $GLOBALS['wpdb']->delete(
+                    sprintf('%sdocuments', references_management_get_prefix()),
+                    array(
+                        'id' => $_REQUEST['id'],
+                    ),
+                    null,
+                    null
+                );
+                $_SESSION['references_management']['flashes'] = array(
+                    'updated' => 'The document was deleted successfully.',
+                );
+                ?>
+                <meta
+                    content="0;url=<?php echo admin_url(
+                        'admin.php?action=&deleted=deleted&page=references_management'
+                    ); ?>"
+                    http-equiv="refresh"
+                    >
+                <?php
+                die();
+            } else {
+                ?>
+                <h1>Documents - Delete</h1>
+                <div class="error">
+                    <p><strong>Are you sure you want to delete this document?</strong></p>
+                </div>
+                <form
+                    action="<?php echo admin_url(
+                        sprintf('admin.php?action=delete&id=%d&page=references_management', $_REQUEST['id'])
+                    ); ?>"
+                    method="post"
+                    >
+                    <p class="submit">
+                        <input class="button-primary" type="submit" value="Yes">
+                        <a
+                            class="float-right"
+                            href="<?php echo admin_url('admin.php?action=&page=references_management'); ?>"
+                            >
+                            No
+                        </a>
+                    </p>
+                </form>
+                <?php
+            }
+            break;
+        case 'download_zip':
+            $document = $GLOBALS['wpdb']->get_row(
+                $GLOBALS['wpdb']->prepare(
+                    sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', references_management_get_prefix()),
+                    intval($_REQUEST['id'])
+                ),
+                ARRAY_A
+            );
+            $query = <<<EOD
 SELECT
-    id,
-    number,
-    type,
-    title_1,
-    title_2,
-    year,
-    volume,
-    issue,
-    page,
-    url,
-    doi,
-    issn,
-    original_publication,
-    isbn,
-    label,
-    publisher,
-    place_published,
-    access_date,
-    attachment,
-    citations_first,
-    citations_subsequent,
-    citations_parenthetical_first,
-    citations_parenthetical_subsequent,
-    references_authors,
-    references_editors,
-    references_all
+id,
+number,
+type,
+title_1,
+title_2,
+year,
+volume,
+issue,
+page,
+url,
+doi,
+issn,
+original_publication,
+isbn,
+label,
+publisher,
+place_published,
+access_date,
+attachment,
+citations_first,
+citations_subsequent,
+citations_parenthetical_first,
+citations_parenthetical_subsequent,
+references_authors,
+references_editors,
+references_all
 FROM `%sarticles`
 WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
 EOD;
-                $articles = $GLOBALS['wpdb']->get_results(
-                    $GLOBALS['wpdb']->prepare(sprintf($query, references_management_get_prefix()), $document['id']),
-                    ARRAY_A
-                );
-                $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-                @fputcsv(
-                    $resource,
-                    array(
-                        'id' => 'Identifier',
-                        'number' => 'Number',
-                        'type' => 'Type',
-                        'title_1' => 'Title',
-                        'title_2' => 'Title2',
-                        'year' => 'Year',
-                        'volume' => 'Volume',
-                        'issue' => 'Issue',
-                        'page' => 'Page',
-                        'url' => 'URL',
-                        'doi' => 'DOI',
-                        'issn' => 'ISSN',
-                        'original_publication' => 'Original Publication',
-                        'isbn' => 'ISBN',
-                        'label' => 'Label',
-                        'publisher' => 'Publisher',
-                        'place_published' => 'Place Published',
-                        'access_date' => 'Access Date',
-                        'attachment' => 'Attachment',
-                        'citations_first' => 'Authors Publish Text First',
-                        'citations_subsequent' => 'Authors Publish Text Subsequent',
-                        'citations_parenthetical_first' => 'Authors Publish Text First Parenthetical',
-                        'citations_parenthetical_subsequent' => 'Authors Publish Text Subsequent Parenthetical',
-                        'references_authors' => 'Authors Publish Reference',
-                        'references_editors' => 'Editors Publish Reference',
-                        'references_all' => 'Reference Entry',
-                    ),
-                    ';'
-                );
-                foreach ($articles AS $article) {
-                    @fputcsv($resource, $article, ';');
-                }
-                @rewind($resource);
-                $articles = stream_get_contents($resource);
-                @fclose($resource);
-                $query = <<<EOD
+            $articles = $GLOBALS['wpdb']->get_results(
+                $GLOBALS['wpdb']->prepare(sprintf($query, references_management_get_prefix()), $document['id']),
+                ARRAY_A
+            );
+            $resource = @fopen('php://temp/maxmemory:999999999', 'w');
+            @fputcsv(
+                $resource,
+                array(
+                    'id' => 'Identifier',
+                    'number' => 'Number',
+                    'type' => 'Type',
+                    'title_1' => 'Title',
+                    'title_2' => 'Title2',
+                    'year' => 'Year',
+                    'volume' => 'Volume',
+                    'issue' => 'Issue',
+                    'page' => 'Page',
+                    'url' => 'URL',
+                    'doi' => 'DOI',
+                    'issn' => 'ISSN',
+                    'original_publication' => 'Original Publication',
+                    'isbn' => 'ISBN',
+                    'label' => 'Label',
+                    'publisher' => 'Publisher',
+                    'place_published' => 'Place Published',
+                    'access_date' => 'Access Date',
+                    'attachment' => 'Attachment',
+                    'citations_first' => 'Authors Publish Text First',
+                    'citations_subsequent' => 'Authors Publish Text Subsequent',
+                    'citations_parenthetical_first' => 'Authors Publish Text First Parenthetical',
+                    'citations_parenthetical_subsequent' => 'Authors Publish Text Subsequent Parenthetical',
+                    'references_authors' => 'Authors Publish Reference',
+                    'references_editors' => 'Editors Publish Reference',
+                    'references_all' => 'Reference Entry',
+                ),
+                ';'
+            );
+            foreach ($articles AS $article) {
+                @fputcsv($resource, $article, ';');
+            }
+            @rewind($resource);
+            $articles = stream_get_contents($resource);
+            @fclose($resource);
+            $query = <<<EOD
 SELECT id, name, first_name, url
 FROM `%sauthors`
 WHERE `document_id` = %%d
 ORDER BY `id` ASC
 EOD;
-                $authors = $GLOBALS['wpdb']->get_results(
-                    $GLOBALS['wpdb']->prepare(sprintf($query, references_management_get_prefix()), $document['id']),
-                    ARRAY_A
-                );
-                $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-                @fputcsv(
-                    $resource,
-                    array(
-                        'id' => 'Identifier',
-                        'name' => 'Name',
-                        'first_name' => 'First Name',
-                        'url' => 'URL',
-                    ),
-                    ';'
-                );
-                foreach ($authors AS $author) {
-                    @fputcsv($resource, $author, ';');
-                }
-                @rewind($resource);
-                $authors = stream_get_contents($resource);
-                @fclose($resource);
-                $query = <<<EOD
+            $authors = $GLOBALS['wpdb']->get_results(
+                $GLOBALS['wpdb']->prepare(sprintf($query, references_management_get_prefix()), $document['id']),
+                ARRAY_A
+            );
+            $resource = @fopen('php://temp/maxmemory:999999999', 'w');
+            @fputcsv(
+                $resource,
+                array(
+                    'id' => 'Identifier',
+                    'name' => 'Name',
+                    'first_name' => 'First Name',
+                    'url' => 'URL',
+                ),
+                ';'
+            );
+            foreach ($authors AS $author) {
+                @fputcsv($resource, $author, ';');
+            }
+            @rewind($resource);
+            $authors = stream_get_contents($resource);
+            @fclose($resource);
+            $query = <<<EOD
 SELECT id, article_id, author_id, role
 FROM `%sarticles_authors`
 WHERE
-    `article_id` IN (
-        SELECT `id` FROM `%sarticles` WHERE `document_id` = %%d
-    )
-    AND
-    `author_id` IN (
-        SELECT `id` FROM `%sauthors` WHERE `document_id` = %%d
-    )
+`article_id` IN (
+    SELECT `id` FROM `%sarticles` WHERE `document_id` = %%d
+)
+AND
+`author_id` IN (
+    SELECT `id` FROM `%sauthors` WHERE `document_id` = %%d
+)
 ORDER BY `id` ASC
 EOD;
-                $articles_authors = $GLOBALS['wpdb']->get_results(
-                    $GLOBALS['wpdb']->prepare(
-                        sprintf($query, references_management_get_prefix(), references_management_get_prefix(), references_management_get_prefix()),
-                        $document['id'],
-                        $document['id']
-                    ),
-                    ARRAY_A
+            $articles_authors = $GLOBALS['wpdb']->get_results(
+                $GLOBALS['wpdb']->prepare(
+                    sprintf($query, references_management_get_prefix(), references_management_get_prefix(), references_management_get_prefix()),
+                    $document['id'],
+                    $document['id']
+                ),
+                ARRAY_A
+            );
+            $resource = @fopen('php://temp/maxmemory:999999999', 'w');
+            @fputcsv(
+                $resource,
+                array(
+                    'id' => 'Identifier',
+                    'article_id' => 'Article Identifier',
+                    'author_id' => 'Author Identifier',
+                    'role' => 'Role',
+                ),
+                ';'
+            );
+            foreach ($articles_authors AS $article_author) {
+                @fputcsv($resource, $article_author, ';');
+            }
+            @rewind($resource);
+            $articles_authors = stream_get_contents($resource);
+            @fclose($resource);
+
+            $tempnam = tempnam(sys_get_temp_dir(), 'references_management');
+            $zip = new ZipArchive();
+            $zip->open($tempnam, ZipArchive::CREATE);
+            $zip->addFromString('articles.csv', $articles);
+            $zip->addFromString('authors.csv', $authors);
+            $zip->addFromString('articles_authors.csv', $articles_authors);
+            $zip->close();
+            ob_clean();
+            header('Content-Type: application/zip');
+            header(sprintf('Content-Disposition: attachment; filename="%s.zip"', $document['name']));
+            header(sprintf('Content-Length: %d', filesize($tempnam)));
+            readfile($tempnam);
+            unlink($tempnam);
+            break;
+        case 'upload_zip':
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $articles = str_getcsv(
+                    @file_get_contents(sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'articles.csv')),
+                    "\n"
                 );
-                $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-                @fputcsv(
-                    $resource,
-                    array(
-                        'id' => 'Identifier',
-                        'article_id' => 'Article Identifier',
-                        'author_id' => 'Author Identifier',
-                        'role' => 'Role',
+                foreach ($articles AS $article) {
+                    $article = str_getcsv($article, ';');
+                    $GLOBALS['wpdb']->update(
+                        sprintf('%sarticles', references_management_get_prefix()),
+                        array(
+                            'type' => $article[2],
+                            'title_1' => $article[3],
+                            'title_2' => $article[4],
+                            'year' => $article[5],
+                            'volume' => $article[6],
+                            'issue' => $article[7],
+                            'page' => $article[8],
+                            'url' => $article[9],
+                            'doi' => $article[10],
+                            'issn' => $article[11],
+                            'original_publication' => $article[12],
+                            'isbn' => $article[13],
+                            'label' => $article[14],
+                            'publisher' => $article[15],
+                            'place_published' => $article[16],
+                            'access_date' => $article[17],
+                            'attachment' => $article[18],
+                            'citations_first' => $article[19],
+                            'citations_subsequent' => $article[20],
+                            'citations_parenthetical_first' => $article[21],
+                            'citations_parenthetical_subsequent' => $article[22],
+                            'references_authors' => $article[23],
+                            'references_editors' => $article[24],
+                            'references_all' => $article[25],
+                        ),
+                        array(
+                            'id' => $article[0]
+                        )
+                    );
+                }
+                $authors = str_getcsv(
+                    @file_get_contents(sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'authors.csv')),
+                    "\n"
+                );
+                foreach ($authors AS $author) {
+                    $author = str_getcsv($author, ';');
+                    $GLOBALS['wpdb']->update(
+                        sprintf('%sauthors', references_management_get_prefix()),
+                        array(
+                            'name' => $author[1],
+                            'first_name' => $author[2],
+                            'url' => $author[3],
+                        ),
+                        array(
+                            'id' => $author[0]
+                        )
+                    );
+                }
+                $articles_authors = str_getcsv(
+                    @file_get_contents(
+                        sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'articles_authors.csv')
                     ),
-                    ';'
+                    "\n"
                 );
                 foreach ($articles_authors AS $article_author) {
-                    @fputcsv($resource, $article_author, ';');
-                }
-                @rewind($resource);
-                $articles_authors = stream_get_contents($resource);
-                @fclose($resource);
-
-                $tempnam = tempnam(sys_get_temp_dir(), 'references_management');
-                $zip = new ZipArchive();
-                $zip->open($tempnam, ZipArchive::CREATE);
-                $zip->addFromString('articles.csv', $articles);
-                $zip->addFromString('authors.csv', $authors);
-                $zip->addFromString('articles_authors.csv', $articles_authors);
-                $zip->close();
-                ob_clean();
-                header('Content-Type: application/zip');
-                header(sprintf('Content-Disposition: attachment; filename="%s.zip"', $document['name']));
-                header(sprintf('Content-Length: %d', filesize($tempnam)));
-                readfile($tempnam);
-                unlink($tempnam);
-                break;
-            case 'upload_zip':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    $articles = str_getcsv(
-                        @file_get_contents(sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'articles.csv')),
-                        "\n"
-                    );
-                    foreach ($articles AS $article) {
-                        $article = str_getcsv($article, ';');
-                        $GLOBALS['wpdb']->update(
-                            sprintf('%sarticles', references_management_get_prefix()),
-                            array(
-                                'type' => $article[2],
-                                'title_1' => $article[3],
-                                'title_2' => $article[4],
-                                'year' => $article[5],
-                                'volume' => $article[6],
-                                'issue' => $article[7],
-                                'page' => $article[8],
-                                'url' => $article[9],
-                                'doi' => $article[10],
-                                'issn' => $article[11],
-                                'original_publication' => $article[12],
-                                'isbn' => $article[13],
-                                'label' => $article[14],
-                                'publisher' => $article[15],
-                                'place_published' => $article[16],
-                                'access_date' => $article[17],
-                                'attachment' => $article[18],
-                                'citations_first' => $article[19],
-                                'citations_subsequent' => $article[20],
-                                'citations_parenthetical_first' => $article[21],
-                                'citations_parenthetical_subsequent' => $article[22],
-                                'references_authors' => $article[23],
-                                'references_editors' => $article[24],
-                                'references_all' => $article[25],
-                            ),
-                            array(
-                                'id' => $article[0]
-                            )
-                        );
-                    }
-                    $authors = str_getcsv(
-                        @file_get_contents(sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'authors.csv')),
-                        "\n"
-                    );
-                    foreach ($authors AS $author) {
-                        $author = str_getcsv($author, ';');
-                        $GLOBALS['wpdb']->update(
-                            sprintf('%sauthors', references_management_get_prefix()),
-                            array(
-                                'name' => $author[1],
-                                'first_name' => $author[2],
-                                'url' => $author[3],
-                            ),
-                            array(
-                                'id' => $author[0]
-                            )
-                        );
-                    }
-                    $articles_authors = str_getcsv(
-                        @file_get_contents(
-                            sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'articles_authors.csv')
+                    $article_author = str_getcsv($article_author, ';');
+                    $GLOBALS['wpdb']->update(
+                        sprintf('%sarticles_authors', references_management_get_prefix()),
+                        array(
+                            'article_id' => $article_author[1],
+                            'author_id' => $article_author[2],
+                            'role' => $article_author[3],
                         ),
-                        "\n"
+                        array(
+                            'id' => $article_author[0]
+                        )
                     );
-                    foreach ($articles_authors AS $article_author) {
-                        $article_author = str_getcsv($article_author, ';');
-                        $GLOBALS['wpdb']->update(
-                            sprintf('%sarticles_authors', references_management_get_prefix()),
-                            array(
-                                'article_id' => $article_author[1],
-                                'author_id' => $article_author[2],
-                                'role' => $article_author[3],
-                            ),
-                            array(
-                                'id' => $article_author[0]
-                            )
-                        );
-                    }
-                    $_SESSION['references_management']['flashes'] = array(
-                        'updated' => 'The document was uploaded successfully.',
-                    );
-                    ?>
-                    <meta
-                        content="0;url=<?php echo admin_url('admin.php?action=&page=references_management'); ?>"
-                        http-equiv="refresh"
-                        >
-                    <?php
-                } else {
-                    ?>
-                    <h1>Zip file - Upload</h1>
-                    <form
-                        action="<?php echo admin_url(
-                            sprintf('admin.php?action=upload_zip&id=%d&page=references_management', $_REQUEST['id'])
-                        ); ?>"
-                        enctype="multipart/form-data"
-                        method="post"
-                        >
-                        <table class="bordered widefat wp-list-table">
-                            <tr>
-                                <td class="narrow" class="top"><label for="file">File</label></td>
-                                <td><input id="file" name="file" type="file"></td>
-                            </tr>
-                        </table>
-                        <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
-                    </form>
-                    <?php
                 }
-                break;
-            default:
-                $documents = $GLOBALS['wpdb']->get_results(
-                    sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', references_management_get_prefix()),
-                    ARRAY_A
+                $_SESSION['references_management']['flashes'] = array(
+                    'updated' => 'The document was uploaded successfully.',
                 );
                 ?>
-                <h1>
-                    Documents
-                    <a
-                        class="page-title-action"
-                        href="<?php echo admin_url('admin.php?action=upload&page=references_management'); ?>"
-                        >Upload</a>
-                </h1>
-                <?php references_management_flashes(); ?>
-                <?php if ($documents): ?>
+                <meta
+                    content="0;url=<?php echo admin_url('admin.php?action=&page=references_management'); ?>"
+                    http-equiv="refresh"
+                    >
+                <?php
+            } else {
+                ?>
+                <h1>Zip file - Upload</h1>
+                <form
+                    action="<?php echo admin_url(
+                        sprintf('admin.php?action=upload_zip&id=%d&page=references_management', $_REQUEST['id'])
+                    ); ?>"
+                    enctype="multipart/form-data"
+                    method="post"
+                    >
                     <table class="bordered widefat wp-list-table">
                         <tr>
-                            <th class="narrow right">Identifier</th>
-                            <th>Name</th>
-                            <th class="narrow center">ZIP</th>
-                            <th class="narrow center">XML</th>
-                            <th class="narrow center">Actions</th>
+                            <td class="narrow" class="top"><label for="file">File</label></td>
+                            <td><input id="file" name="file" type="file"></td>
                         </tr>
-                        <?php foreach ($documents AS $document): ?>
-                            <tr>
-                                <td class="narrow right"><?php echo $document['id']; ?></td>
-                                <td><?php echo $document['name']; ?></td>
-                                <td class="narrow center">
-                                    <a href="<?php
-                                    echo admin_url(
-                                        sprintf(
-                                            'admin.php?action=download_zip&id=%d&page=references_management',
-                                            $document['id']
-                                        )
-                                    );
-                                    ?>">Download</a>
-                                    -
-                                    <a href="<?php
-                                    echo admin_url(
-                                        sprintf(
-                                            'admin.php?action=upload_zip&id=%d&page=references_management',
-                                            $document['id']
-                                        )
-                                    );
-                                    ?>">Upload</a>
-                                </td>
-                                <td class="narrow center">
-                                    <a href="<?php
-                                    echo admin_url(
-                                        sprintf(
-                                            'admin.php?action=download&id=%d&page=references_management',
-                                            $document['id']
-                                        )
-                                    );
-                                    ?>">Download</a>
-                                </td>
-                                <td class="narrow center">
-                                    <a href="<?php
-                                    echo admin_url(
-                                        sprintf(
-                                            'admin.php?action=delete&id=%d&page=references_management',
-                                            $document['id']
-                                        )
-                                    );
-                                    ?>">Delete</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
                     </table>
-                <?php else: ?>
-                    <div class="error">
-                        <p><strong>There are no documents in the database.</strong></p>
-                    </div>
-                <?php endif; ?>
+                    <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
+                </form>
                 <?php
-                break;
+            }
+            break;
+        default:
+            $documents = $GLOBALS['wpdb']->get_results(
+                sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', references_management_get_prefix()),
+                ARRAY_A
+            );
+            ?>
+            <h1>
+                Documents
+                <a
+                    class="page-title-action"
+                    href="<?php echo admin_url('admin.php?action=upload&page=references_management'); ?>"
+                    >Upload</a>
+            </h1>
+            <?php references_management_flashes(); ?>
+            <?php if ($documents) : ?>
+                <table class="bordered widefat wp-list-table">
+                    <tr>
+                        <th class="narrow right">Identifier</th>
+                        <th>Name</th>
+                        <th class="narrow center">ZIP</th>
+                        <th class="narrow center">XML</th>
+                        <th class="narrow center">Actions</th>
+                    </tr>
+                    <?php foreach ($documents AS $document): ?>
+                        <tr>
+                            <td class="narrow right"><?php echo $document['id']; ?></td>
+                            <td><?php echo $document['name']; ?></td>
+                            <td class="narrow center">
+                                <a href="<?php
+                                echo admin_url(
+                                    sprintf(
+                                        'admin.php?action=download_zip&id=%d&page=references_management',
+                                        $document['id']
+                                    )
+                                );
+                                ?>">Download</a>
+                                -
+                                <a href="<?php
+                                echo admin_url(
+                                    sprintf(
+                                        'admin.php?action=upload_zip&id=%d&page=references_management',
+                                        $document['id']
+                                    )
+                                );
+                                ?>">Upload</a>
+                            </td>
+                            <td class="narrow center">
+                                <a href="<?php
+                                echo admin_url(
+                                    sprintf(
+                                        'admin.php?action=download&id=%d&page=references_management',
+                                        $document['id']
+                                    )
+                                );
+                                ?>">Download</a>
+                            </td>
+                            <td class="narrow center">
+                                <a href="<?php
+                                echo admin_url(
+                                    sprintf(
+                                        'admin.php?action=delete&id=%d&page=references_management',
+                                        $document['id']
+                                    )
+                                );
+                                ?>">Delete</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+            <?php else: ?>
+                <div class="error">
+                    <p><strong>There are no documents in the database.</strong></p>
+                </div>
+            <?php endif; ?>
+            <?php
+            break;
         }
         ?>
         </div>
@@ -1479,6 +1484,195 @@ function references_management_faq()
     <?php
 }
 
+function references_management_add_meta_boxes()
+{
+    add_meta_box(
+        'references_management_page_detail',
+        'References Management - Page Detail',
+        'references_management_add_meta_boxes_page_detail',
+        'page'
+    );
+    add_meta_box(
+        'references_management_page_detail',
+        'References Management - Page Detail',
+        'references_management_add_meta_boxes_page_detail',
+        'post'
+    );
+    add_meta_box(
+        'references_management_translations',
+        'References Management - Translations',
+        'references_management_add_meta_boxes_translations',
+        'page'
+    );
+    add_meta_box(
+        'references_management_translations',
+        'References Management - Translations',
+        'references_management_add_meta_boxes_translations',
+        'post'
+    );
+    add_meta_box(
+        'references_management_references',
+        'References Management - References',
+        'references_management_add_meta_boxes_references',
+        'page'
+    );
+    add_meta_box(
+        'references_management_references',
+        'References Management - References',
+        'references_management_add_meta_boxes_references',
+        'post'
+    );
+    add_meta_box(
+        'references_management_semantic_annotation',
+        'References Management - Semantic Annotation',
+        'references_management_add_meta_boxes_semantic_annotation',
+        'page'
+    );
+    add_meta_box(
+        'references_management_semantic_annotation',
+        'References Management - Semantic Annotation',
+        'references_management_add_meta_boxes_semantic_annotation',
+        'post'
+    );
+}
+
+function references_management_add_meta_boxes_page_detail()
+{
+    ?>
+    <table class="references_management_widget">
+        <tr class="even">
+            <td class="narrow"><label for="">Multipage Report</label></td>
+            <td>
+                <select id="" name="references_management_page_detail_multipage_report">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </td>
+        </tr>
+        <tr class="even">
+            <td class="narrow"><label for="">Root</label></td>
+            <td>
+                <select id="" name="references_management_page_detail_root">
+                    <option value="">Select...</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+    <?php
+}
+
+function references_management_add_meta_boxes_translations()
+{
+    ?>
+    <table class="references_management_widget">
+        <tr class="even">
+            <td class="narrow"><label for="">References</label></td>
+            <td>
+                <input
+                    id=""
+                    name="references_management_translations_references"
+                    type="text"
+                    value="References"
+                    >
+            </td>
+        </tr>
+        <tr class="even">
+            <td class="narrow"><label for="">Table of Contents</label></td>
+            <td>
+                <input
+                    id=""
+                    name="references_management_translations_table_of_contents"
+                    type="text"
+                    value="Table of Contents"
+                    >
+            </td>
+        </tr>
+    </table>
+    <?php
+}
+
+function references_management_add_meta_boxes_references()
+{
+    ?>
+    <table class="references_management_widget wide">
+        <tr>
+            <th class="center">ID</th>
+            <th class="center">Title</th>
+            <th class="center">Style 1</th>
+            <th class="center">Style 2</th>
+            <th class="center">Style 3</th>
+            <th class="center">Style 4</th>
+        </tr>
+        <?php for ($index = 1; $index <= 6; $index = $index + 1): ?>
+            <tr class="<?php echo ($index % 2 === 0)? 'even': 'odd'; ?>">
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+        <?php endfor; ?>
+    </table>
+    <?php
+}
+
+function references_management_add_meta_boxes_semantic_annotation()
+{
+    ?>
+    <table class="references_management_widget wide">
+        <tr>
+            <th class="center">Ontology</th>
+            <th class="center">Class</th>
+            <th class="center">Property</th>
+            <th class="center">Value</th>
+        </tr>
+        <?php for ($index = 1; $index <= 6; $index = $index + 1): ?>
+            <tr class="<?php echo ($index % 2 === 0)? 'even': 'odd'; ?>">
+                <td>
+                    <select class="wide" id="" name="references_management_semantic_annotation_ontologies[]">
+                        <option value="">Select...</option>
+                        <option value="">DoCO</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="wide" id="" name="references_management_semantic_annotation_classes[]">
+                        <option value="">Select...</option>
+                        <option value="FrontMatter">FrontMatter</option>
+                        <option value="Glossary">Glossary</option>
+                        <option value="Appendix">Appendix</option>
+                        <option value="ListOfFigures">ListOfFigures</option>
+                        <option value="ListOfAuthors">ListOfAuthors</option>
+                        <option value="ListOfOrganizations">ListOfOrganizations</option>
+                        <option value="ListOfTables">ListOfTables</option>
+                        <option value="Preface">Preface</option>
+                        <option value="TableOfContents">TableOfContents</option>
+                    </select>
+                </td>
+                <td>
+                    <input
+                        class="wide"
+                        id=""
+                        name="references_management_semantic_annotation_properties[]"
+                        type="text"
+                        value=""
+                        >
+                </td>
+                <td>
+                    <input
+                        class="wide"
+                        id=""
+                        name="references_management_semantic_annotation_values[]"
+                        type="text"
+                        value=""
+                        >
+                </td>
+            </tr>
+        <?php endfor; ?>
+    </table>
+    <?php
+}
+
 register_activation_hook(__FILE__, 'references_management_register_activation_hook');
 register_deactivation_hook(__FILE__, 'references_management_register_deactivation_hook');
 
@@ -1486,5 +1680,6 @@ add_action('init', 'references_management_init');
 
 add_action('admin_init', 'references_management_admin_init');
 add_action('admin_menu', 'references_management_admin_menu');
+add_action('add_meta_boxes', 'references_management_add_meta_boxes');
 
 add_shortcode('references_management', 'references_management_shortcode');
