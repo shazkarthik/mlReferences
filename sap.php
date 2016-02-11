@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plugin Name: EndNote
+ * Plugin Name: Semantic AP
  * Plugin URI: http://www.medialeg.ch
  * Description: ...coming soon...
  * Author: Reto Schneider
@@ -11,35 +11,35 @@
 
 libxml_use_internal_errors(true);
 
-$GLOBALS['endnote'] = array();
+$GLOBALS['sap'] = array();
 
-function endnote_filters_author($item)
+function sap_filters_author($item)
 {
     return $item['role'] === 'Author';
 }
 
-function endnote_filters_editor($item)
+function sap_filters_editor($item)
 {
     return $item['role'] === 'Editor';
 }
 
-function endnote_get_file($items)
+function sap_get_file($items)
 {
     array_unshift($items, 'files');
     array_unshift($items, rtrim(plugin_dir_path(__FILE__), '/'));
     return implode(DIRECTORY_SEPARATOR, $items);
 }
 
-function endnote_get_directory($items)
+function sap_get_directory($items)
 {
-    $directory = endnote_get_file($items);
+    $directory = sap_get_file($items);
     if (!@is_dir($directory)) {
         @mkdir($directory, 0777, true);
     }
     return $directory;
 }
 
-function endnote_get_initials($name)
+function sap_get_initials($name)
 {
     $initials = array();
     $name = explode(' ', $name);
@@ -51,22 +51,22 @@ function endnote_get_initials($name)
     return implode(' ', $initials);
 }
 
-function endnote_get_citations_first($authors, $year)
+function sap_get_citations_first($authors, $year)
 {
     $count = count($authors);
     if ($count === 0) {
         return '';
     }
     if ($count === 1) {
-        return sprintf('%s, %s (%s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+        return sprintf('%s, %s (%s)', $authors[0]['name'], sap_get_initials($authors[0]['first_name']), $year);
     }
     if ($count === 2) {
         return sprintf(
             '%s, %s & %s, %s (%s)',
             $authors[0]['name'],
-            endnote_get_initials($authors[0]['first_name']),
+            sap_get_initials($authors[0]['first_name']),
             $authors[1]['name'],
-            endnote_get_initials($authors[1]['first_name']),
+            sap_get_initials($authors[1]['first_name']),
             $year
         );
     }
@@ -82,53 +82,53 @@ function endnote_get_citations_first($authors, $year)
                     $separator = '';
                 }
                 $names[] = sprintf(
-                    '%s %s%s', $value['name'], endnote_get_initials($value['first_name']), $separator
+                    '%s %s%s', $value['name'], sap_get_initials($value['first_name']), $separator
                 );
             }
         }
         return sprintf('%s (%s)', implode(' ', $names), $year);
     }
-    return sprintf('%s, %s et al. (%s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+    return sprintf('%s, %s et al. (%s)', $authors[0]['name'], sap_get_initials($authors[0]['first_name']), $year);
 }
 
-function endnote_get_citations_subsequent($authors, $year)
+function sap_get_citations_subsequent($authors, $year)
 {
     $count = count($authors);
     if ($count === 0) {
         return '';
     }
     if ($count === 1) {
-        return sprintf('%s, %s (%s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+        return sprintf('%s, %s (%s)', $authors[0]['name'], sap_get_initials($authors[0]['first_name']), $year);
     }
     if ($count === 2) {
         return sprintf(
             '%s, %s & %s, %s (%s)',
             $authors[0]['name'],
-            endnote_get_initials($authors[0]['first_name']),
+            sap_get_initials($authors[0]['first_name']),
             $authors[1]['name'],
-            endnote_get_initials($authors[1]['first_name']),
+            sap_get_initials($authors[1]['first_name']),
             $year
         );
     }
-    return sprintf('%s, %s et al. (%s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+    return sprintf('%s, %s et al. (%s)', $authors[0]['name'], sap_get_initials($authors[0]['first_name']), $year);
 }
 
-function endnote_get_citations_parenthetical_first($authors, $year)
+function sap_get_citations_parenthetical_first($authors, $year)
 {
     $count = count($authors);
     if ($count === 0) {
         return '';
     }
     if ($count === 1) {
-        return sprintf('(%s, %s, %s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+        return sprintf('(%s, %s, %s)', $authors[0]['name'], sap_get_initials($authors[0]['first_name']), $year);
     }
     if ($count === 2) {
         return sprintf(
             '(%s, %s & %s, %s, %s)',
             $authors[0]['name'],
-            endnote_get_initials($authors[0]['first_name']),
+            sap_get_initials($authors[0]['first_name']),
             $authors[1]['name'],
-            endnote_get_initials($authors[1]['first_name']),
+            sap_get_initials($authors[1]['first_name']),
             $year
         );
     }
@@ -144,40 +144,40 @@ function endnote_get_citations_parenthetical_first($authors, $year)
                     $separator = '';
                 }
                 $names[] = sprintf(
-                    '%s %s%s', $value['name'], endnote_get_initials($value['first_name']), $separator
+                    '%s %s%s', $value['name'], sap_get_initials($value['first_name']), $separator
                 );
             }
         }
         return sprintf('(%s, %s)', implode(' ', $names), $year);
     }
-    return sprintf('(%s, %s et al., %s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+    return sprintf('(%s, %s et al., %s)', $authors[0]['name'], sap_get_initials($authors[0]['first_name']), $year);
 }
 
-function endnote_get_citations_parenthetical_subsequent($authors, $year)
+function sap_get_citations_parenthetical_subsequent($authors, $year)
 {
     $count = count($authors);
     if ($count === 0) {
         return '';
     }
     if ($count === 1) {
-        return sprintf('(%s, %s, %s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+        return sprintf('(%s, %s, %s)', $authors[0]['name'], sap_get_initials($authors[0]['first_name']), $year);
     }
     if ($count === 2) {
         return sprintf(
             '(%s, %s & %s, %s, %s)',
             $authors[0]['name'],
-            endnote_get_initials($authors[0]['first_name']),
+            sap_get_initials($authors[0]['first_name']),
             $authors[1]['name'],
-            endnote_get_initials($authors[1]['first_name']),
+            sap_get_initials($authors[1]['first_name']),
             $year
         );
     }
-    return sprintf('(%s, %s et al., %s)', $authors[0]['name'], endnote_get_initials($authors[0]['first_name']), $year);
+    return sprintf('(%s, %s et al., %s)', $authors[0]['name'], sap_get_initials($authors[0]['first_name']), $year);
 }
 
-function endnote_get_references_authors($authors)
+function sap_get_references_authors($authors)
 {
-    $authors = array_filter($authors, 'endnote_filters_author');
+    $authors = array_filter($authors, 'sap_filters_author');
     $count = count($authors);
     $names = array();
     if (!empty($authors)) {
@@ -189,15 +189,15 @@ function endnote_get_references_authors($authors)
             if ($key + 1 === $count) {
                 $separator = '';
             }
-            $names[] = sprintf('%s %s%s', $value['name'], endnote_get_initials($value['first_name']), $separator);
+            $names[] = sprintf('%s %s%s', $value['name'], sap_get_initials($value['first_name']), $separator);
         }
     }
     return implode(' ', $names);
 }
 
-function endnote_get_references_editors($authors)
+function sap_get_references_editors($authors)
 {
-    $authors = array_filter($authors, 'endnote_filters_editor');
+    $authors = array_filter($authors, 'sap_filters_editor');
     $count = count($authors);
     $names = array();
     if (!empty($authors)) {
@@ -209,17 +209,17 @@ function endnote_get_references_editors($authors)
             if ($key + 1 === $count) {
                 $separator = '';
             }
-            $names[] = sprintf('%s %s%s', $value['name'], endnote_get_initials($value['first_name']), $separator);
+            $names[] = sprintf('%s %s%s', $value['name'], sap_get_initials($value['first_name']), $separator);
         }
     }
     return implode(' ', $names);
 }
 
-function endnote_get_references_all($item)
+function sap_get_references_all($item)
 {
     return sprintf(
         '%s. %s: %s. %s: %s',
-        endnote_get_citations_first($item['authors'], $item['year']),
+        sap_get_citations_first($item['authors'], $item['year']),
         $item['title_1'],
         $item['title_2'],
         $item['place_published'],
@@ -227,12 +227,12 @@ function endnote_get_references_all($item)
     );
 }
 
-function endnote_get_prefix()
+function sap_get_prefix()
 {
-    return sprintf('%sendnote_', $GLOBALS['wpdb']->prefix);
+    return sprintf('%ssap_', $GLOBALS['wpdb']->prefix);
 }
 
-function endnote_get_url($first_name, $last_name)
+function sap_get_url($first_name, $last_name)
 {
     if (@$_SERVER['SERVER_NAME'] === '0.0.0.0') {
         return '';
@@ -259,7 +259,7 @@ function endnote_get_url($first_name, $last_name)
     return '';
 }
 
-function endnote_get_items($xml)
+function sap_get_items($xml)
 {
     $items = array();
     foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
@@ -344,7 +344,7 @@ function endnote_get_items($xml)
                     'name' => $explode[0],
                     'first_name' => $explode[1],
                     'role' => 'Author',
-                    'url' => endnote_get_url($explode[1], $explode[0]),
+                    'url' => sap_get_url($explode[1], $explode[0]),
                 );
             }
             foreach ($value->xpath('contributors/secondary-authors/author') AS $name) {
@@ -358,29 +358,29 @@ function endnote_get_items($xml)
                     'name' => $explode[0],
                     'first_name' => $explode[1],
                     'role' => 'Editor',
-                    'url' => endnote_get_url($explode[1], $explode[0]),
+                    'url' => sap_get_url($explode[1], $explode[0]),
                 );
             }
-            $item['citations_first'] = endnote_get_citations_first($item['authors'], $item['year']);
-            $item['citations_subsequent'] = endnote_get_citations_subsequent($item['authors'], $item['year']);
-            $item['citations_parenthetical_first'] = endnote_get_citations_parenthetical_first(
+            $item['citations_first'] = sap_get_citations_first($item['authors'], $item['year']);
+            $item['citations_subsequent'] = sap_get_citations_subsequent($item['authors'], $item['year']);
+            $item['citations_parenthetical_first'] = sap_get_citations_parenthetical_first(
                 $item['authors'], $item['year']
             );
-            $item['citations_parenthetical_subsequent'] = endnote_get_citations_parenthetical_subsequent(
+            $item['citations_parenthetical_subsequent'] = sap_get_citations_parenthetical_subsequent(
                 $item['authors'], $item['year']
             );
-            $item['references_authors'] = endnote_get_references_authors($item['authors']);
-            $item['references_editors'] = endnote_get_references_editors($item['authors']);
-            $item['references_all'] = endnote_get_references_all($item);
+            $item['references_authors'] = sap_get_references_authors($item['authors']);
+            $item['references_editors'] = sap_get_references_editors($item['authors']);
+            $item['references_all'] = sap_get_references_all($item);
             $items[] = $item;
         } catch (Exception $exception) {
-            return array(sprintf('endnote_get_items() - %s', $exception->getMessage()), array());
+            return array(sprintf('sap_get_items() - %s', $exception->getMessage()), array());
         }
     }
     return array(array(), $items);
 }
 
-function endnote_delete($directory)
+function sap_delete($directory)
 {
     $files = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
@@ -395,9 +395,9 @@ function endnote_delete($directory)
     }
 }
 
-function endnote_register_activation_hook()
+function sap_register_activation_hook()
 {
-    endnote_register_deactivation_hook();
+    sap_register_deactivation_hook();
 
     $query = <<<EOD
 CREATE TABLE IF NOT EXISTS `%sdocuments` (
@@ -407,7 +407,7 @@ CREATE TABLE IF NOT EXISTS `%sdocuments` (
     KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf($query, sap_get_prefix()));
 
     $query = <<<EOD
 CREATE TABLE IF NOT EXISTS `%sarticles` (
@@ -459,7 +459,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     KEY `attachment` (`attachment`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf($query, sap_get_prefix()));
 
     $query = <<<EOD
 CREATE TABLE IF NOT EXISTS `%sauthors` (
@@ -473,7 +473,7 @@ CREATE TABLE IF NOT EXISTS `%sauthors` (
     KEY `first_name` (`first_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf($query, sap_get_prefix()));
 
     $query = <<<EOD
 CREATE TABLE IF NOT EXISTS `%sarticles_authors` (
@@ -485,7 +485,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles_authors` (
     KEY `role` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci AUTO_INCREMENT=0;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf($query, sap_get_prefix()));
 
     $query = <<<EOD
 ALTER TABLE `%sarticles`
@@ -495,7 +495,7 @@ ALTER TABLE `%sarticles`
     ON DELETE CASCADE
     ON UPDATE CASCADE;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf($query, sap_get_prefix(), sap_get_prefix(), sap_get_prefix()));
 
     $query = <<<EOD
 ALTER TABLE `%sauthors`
@@ -505,7 +505,7 @@ ALTER TABLE `%sauthors`
     ON DELETE CASCADE
     ON UPDATE CASCADE;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf($query, sap_get_prefix(), sap_get_prefix(), sap_get_prefix()));
 
     $query = <<<EOD
 ALTER TABLE `%sarticles_authors`
@@ -515,7 +515,7 @@ ALTER TABLE `%sarticles_authors`
     ON DELETE CASCADE
     ON UPDATE CASCADE;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf($query, sap_get_prefix(), sap_get_prefix(), sap_get_prefix()));
 
     $query = <<<EOD
 ALTER TABLE `%sarticles_authors`
@@ -525,23 +525,23 @@ ALTER TABLE `%sarticles_authors`
     ON DELETE CASCADE
     ON UPDATE CASCADE;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf($query, sap_get_prefix(), sap_get_prefix(), sap_get_prefix()));
 
-    endnote_get_directory(array());
+    sap_get_directory(array());
 }
 
-function endnote_register_deactivation_hook()
+function sap_register_deactivation_hook()
 {
 
-    endnote_delete(endnote_get_directory(array()));
+    sap_delete(sap_get_directory(array()));
 
-    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles_authors`', endnote_get_prefix()));
-    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sauthors`', endnote_get_prefix()));
-    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles`', endnote_get_prefix()));
-    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sdocuments`', endnote_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles_authors`', sap_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sauthors`', sap_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles`', sap_get_prefix()));
+    $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sdocuments`', sap_get_prefix()));
 }
 
-function endnote_init()
+function sap_init()
 {
     if (!session_id()) {
         session_start();
@@ -562,98 +562,98 @@ function endnote_init()
         }
         unset($temporary);
     }
-    add_action('wp_enqueue_scripts', 'endnote_scripts');
-    add_action('wp_enqueue_scripts', 'endnote_styles');
+    add_action('wp_enqueue_scripts', 'sap_scripts');
+    add_action('wp_enqueue_scripts', 'sap_styles');
 }
 
-function endnote_admin_init()
+function sap_admin_init()
 {
-    add_action('admin_print_scripts', 'endnote_scripts');
-    add_action('admin_print_styles', 'endnote_styles');
+    add_action('admin_print_scripts', 'sap_scripts');
+    add_action('admin_print_styles', 'sap_styles');
 }
 
-function endnote_scripts()
+function sap_scripts()
 {
-    wp_enqueue_script('all_js', sprintf('%s/endnote.js', plugins_url('/endnote')), array('jquery'));
+    wp_enqueue_script('all_js', sprintf('%s/sap.js', plugins_url('/sap')), array('jquery'));
 }
 
-function endnote_styles()
+function sap_styles()
 {
-    wp_enqueue_style('all_css', sprintf('%s/endnote.css', plugins_url('/endnote')));
+    wp_enqueue_style('all_css', sprintf('%s/sap.css', plugins_url('/sap')));
 }
 
-function endnote_admin_menu()
+function sap_admin_menu()
 {
-    add_menu_page('EndNote', 'EndNote', 'manage_options', '/endnote', 'endnote_dashboard', '');
-    add_submenu_page('/endnote', 'F.A.Q', 'F.A.Q', 'manage_options', '/endnote/faq', 'endnote_faq');
+    add_menu_page('Semantic AP', 'Semantic AP', 'manage_options', '/sap', 'sap_dashboard', '');
+    add_submenu_page('/sap', 'F.A.Q', 'F.A.Q', 'manage_options', '/sap/faq', 'sap_faq');
 }
 
-function endnote_flashes()
+function sap_flashes()
 {
     ?>
-    <?php if (!empty($_SESSION['endnote']['flashes'])): ?>
-        <?php foreach ($_SESSION['endnote']['flashes'] AS $key => $value): ?>
+    <?php if (!empty($_SESSION['sap']['flashes'])): ?>
+        <?php foreach ($_SESSION['sap']['flashes'] AS $key => $value): ?>
             <div class="<?php echo $key; ?>">
                 <p><strong><?php echo $value; ?></strong></p>
             </div>
         <?php endforeach; ?>
-        <?php $_SESSION['endnote']['flashes'] = array(); ?>
+        <?php $_SESSION['sap']['flashes'] = array(); ?>
     <?php endif; ?>
     <?php
 }
 
-function endnote_dashboard()
+function sap_dashboard()
 {
     if (!current_user_can('manage_options')) {
         wp_die('You do not have permissions to access this page.');
     }
     $action = $_REQUEST['action']? $_REQUEST['action']: '';
     ?>
-    <div class="endnote wrap">
+    <div class="sap wrap">
         <?php
         switch ($action) {
             case 'upload':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    list($errors, $items) = endnote_get_items(@file_get_contents($_FILES['file']['tmp_name']));
+                    list($errors, $items) = sap_get_items(@file_get_contents($_FILES['file']['tmp_name']));
                     if ($errors) {
-                        $_SESSION['endnote']['flashes'] = array(
+                        $_SESSION['sap']['flashes'] = array(
                             'error' => 'The document was not uploaded successfully. Please try again.',
                         );
                         ?>
                         <meta
-                            content="0;url=<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
+                            content="0;url=<?php echo admin_url('admin.php?action=upload&page=sap'); ?>"
                             http-equiv="refresh"
                             >
                         <?php
                         die();
                     }
                     if (!$items) {
-                        $_SESSION['endnote']['flashes'] = array(
+                        $_SESSION['sap']['flashes'] = array(
                             'error' => 'The document was not uploaded successfully. Please try again.',
                         );
                         ?>
                         <meta
-                            content="0;url=<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
+                            content="0;url=<?php echo admin_url('admin.php?action=upload&page=sap'); ?>"
                             http-equiv="refresh"
                             >
                         <?php
                         die();
                     }
                     $GLOBALS['wpdb']->insert(
-                        sprintf('%sdocuments', endnote_get_prefix()),
+                        sprintf('%sdocuments', sap_get_prefix()),
                         array(
                             'name' => $_FILES['file']['name'],
                         )
                     );
                     $document_id = $GLOBALS['wpdb']->insert_id;
-                    endnote_get_directory(array($document_id));
+                    sap_get_directory(array($document_id));
                     copy(
                         $_FILES['file']['tmp_name'],
-                        endnote_get_file(array($document_id, $_FILES['file']['name']))
+                        sap_get_file(array($document_id, $_FILES['file']['name']))
                     );
                     foreach ($items AS $item) {
                         $GLOBALS['wpdb']->insert(
-                            sprintf('%sarticles', endnote_get_prefix()),
+                            sprintf('%sarticles', sap_get_prefix()),
                             array(
                                 'document_id' => $document_id,
                                 'number' => $item['number'],
@@ -692,7 +692,7 @@ WHERE `document_id` = %%d AND `name` = %%s AND `first_name` = %%s
 EOD;
                             $row = $GLOBALS['wpdb']->get_row(
                                 $GLOBALS['wpdb']->prepare(
-                                    sprintf($query, endnote_get_prefix()),
+                                    sprintf($query, sap_get_prefix()),
                                     $document_id,
                                     $author['name'],
                                     $author['first_name']
@@ -703,7 +703,7 @@ EOD;
                                 $author_id = $row['id'];
                             } else {
                                 $GLOBALS['wpdb']->insert(
-                                    sprintf('%sauthors', endnote_get_prefix()),
+                                    sprintf('%sauthors', sap_get_prefix()),
                                     array(
                                         'document_id' => $document_id,
                                         'name' => $author['name'],
@@ -714,7 +714,7 @@ EOD;
                                 $author_id = $GLOBALS['wpdb']->insert_id;
                             }
                             $GLOBALS['wpdb']->insert(
-                                sprintf('%sarticles_authors', endnote_get_prefix()),
+                                sprintf('%sarticles_authors', sap_get_prefix()),
                                 array(
                                     'article_id' => $article_id,
                                     'author_id' => $author_id,
@@ -723,12 +723,12 @@ EOD;
                             );
                         }
                     }
-                    $_SESSION['endnote']['flashes'] = array(
+                    $_SESSION['sap']['flashes'] = array(
                         'updated' => 'The document was uploaded successfully.',
                     );
                     ?>
                     <meta
-                        content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>"
+                        content="0;url=<?php echo admin_url('admin.php?action=&page=sap'); ?>"
                         http-equiv="refresh"
                         >
                     <?php
@@ -737,7 +737,7 @@ EOD;
                     ?>
                     <h1>Documents - Upload</h1>
                     <form
-                        action="<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
+                        action="<?php echo admin_url('admin.php?action=upload&page=sap'); ?>"
                         enctype="multipart/form-data"
                         method="post"
                         >
@@ -755,7 +755,7 @@ EOD;
             case 'download':
                 $document = $GLOBALS['wpdb']->get_row(
                     $GLOBALS['wpdb']->prepare(
-                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', endnote_get_prefix()),
+                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', sap_get_prefix()),
                         intval($_REQUEST['id'])
                     ),
                     ARRAY_A
@@ -769,14 +769,14 @@ WHERE `%sarticles_authors`.`role` = %%s
 LIMIT 1
 OFFSET %d
 EOD;
-                $xml = simplexml_load_file(endnote_get_file(array($_REQUEST['id'], $document['name'])));
+                $xml = simplexml_load_file(sap_get_file(array($_REQUEST['id'], $document['name'])));
                 foreach ($xml->xpath('//xml/records/record') AS $key => $value) {
                     $number = (string) array_pop($value->xpath('rec-number'));
                     $article = $GLOBALS['wpdb']->get_row(
                         $GLOBALS['wpdb']->prepare(
                             sprintf(
                                 'SELECT * FROM `%sarticles` WHERE `document_id` = %%d AND `number` = %%s',
-                                endnote_get_prefix()
+                                sap_get_prefix()
                             ),
                             $document['id'],
                             $number
@@ -882,13 +882,13 @@ EOD;
                             $GLOBALS['wpdb']->prepare(
                                 sprintf(
                                     $query,
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
                                     $k
                                 ),
                                 $article['id'],
@@ -907,13 +907,13 @@ EOD;
                             $GLOBALS['wpdb']->prepare(
                                 sprintf(
                                     $query,
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
-                                    endnote_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
+                                    sap_get_prefix(),
                                     $k
                                 ),
                                 $article['id'],
@@ -935,23 +935,23 @@ EOD;
                 break;
             case 'delete':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    $directory = endnote_get_directory(array($_REQUEST['id']));
-                    endnote_delete($directory);
+                    $directory = sap_get_directory(array($_REQUEST['id']));
+                    sap_delete($directory);
                     rmdir($directory);
                     $GLOBALS['wpdb']->delete(
-                        sprintf('%sdocuments', endnote_get_prefix()),
+                        sprintf('%sdocuments', sap_get_prefix()),
                         array(
                             'id' => $_REQUEST['id'],
                         ),
                         null,
                         null
                     );
-                    $_SESSION['endnote']['flashes'] = array(
+                    $_SESSION['sap']['flashes'] = array(
                         'updated' => 'The document was deleted successfully.',
                     );
                     ?>
                     <meta
-                        content="0;url=<?php echo admin_url('admin.php?action=&deleted=deleted&page=endnote'); ?>"
+                        content="0;url=<?php echo admin_url('admin.php?action=&deleted=deleted&page=sap'); ?>"
                         http-equiv="refresh"
                         >
                     <?php
@@ -964,13 +964,13 @@ EOD;
                     </div>
                     <form
                         action="<?php echo admin_url(
-                            sprintf('admin.php?action=delete&id=%d&page=endnote', $_REQUEST['id'])
+                            sprintf('admin.php?action=delete&id=%d&page=sap', $_REQUEST['id'])
                         ); ?>"
                         method="post"
                         >
                         <p class="submit">
                             <input class="button-primary" type="submit" value="Yes">
-                            <a class="float-right" href="<?php echo admin_url('admin.php?action=&page=endnote'); ?>">
+                            <a class="float-right" href="<?php echo admin_url('admin.php?action=&page=sap'); ?>">
                                 No
                             </a>
                         </p>
@@ -981,7 +981,7 @@ EOD;
             case 'download_zip':
                 $document = $GLOBALS['wpdb']->get_row(
                     $GLOBALS['wpdb']->prepare(
-                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', endnote_get_prefix()),
+                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', sap_get_prefix()),
                         intval($_REQUEST['id'])
                     ),
                     ARRAY_A
@@ -1019,7 +1019,7 @@ WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
 EOD;
                 $articles = $GLOBALS['wpdb']->get_results(
-                    $GLOBALS['wpdb']->prepare(sprintf($query, endnote_get_prefix()), $document['id']), ARRAY_A
+                    $GLOBALS['wpdb']->prepare(sprintf($query, sap_get_prefix()), $document['id']), ARRAY_A
                 );
                 $resource = @fopen('php://temp/maxmemory:999999999', 'w');
                 @fputcsv(
@@ -1067,7 +1067,7 @@ WHERE `document_id` = %%d
 ORDER BY `id` ASC
 EOD;
                 $authors = $GLOBALS['wpdb']->get_results(
-                    $GLOBALS['wpdb']->prepare(sprintf($query, endnote_get_prefix()), $document['id']), ARRAY_A
+                    $GLOBALS['wpdb']->prepare(sprintf($query, sap_get_prefix()), $document['id']), ARRAY_A
                 );
                 $resource = @fopen('php://temp/maxmemory:999999999', 'w');
                 @fputcsv(
@@ -1101,7 +1101,7 @@ ORDER BY `id` ASC
 EOD;
                 $articles_authors = $GLOBALS['wpdb']->get_results(
                     $GLOBALS['wpdb']->prepare(
-                        sprintf($query, endnote_get_prefix(), endnote_get_prefix(), endnote_get_prefix()),
+                        sprintf($query, sap_get_prefix(), sap_get_prefix(), sap_get_prefix()),
                         $document['id'],
                         $document['id']
                     ),
@@ -1125,7 +1125,7 @@ EOD;
                 $articles_authors = stream_get_contents($resource);
                 @fclose($resource);
 
-                $tempnam = tempnam(sys_get_temp_dir(), 'endnote');
+                $tempnam = tempnam(sys_get_temp_dir(), 'sap');
                 $zip = new ZipArchive();
                 $zip->open($tempnam, ZipArchive::CREATE);
                 $zip->addFromString('articles.csv', $articles);
@@ -1148,7 +1148,7 @@ EOD;
                     foreach ($articles AS $article) {
                         $article = str_getcsv($article, ';');
                         $GLOBALS['wpdb']->update(
-                            sprintf('%sarticles', endnote_get_prefix()),
+                            sprintf('%sarticles', sap_get_prefix()),
                             array(
                                 'type' => $article[2],
                                 'title_1' => $article[3],
@@ -1187,7 +1187,7 @@ EOD;
                     foreach ($authors AS $author) {
                         $author = str_getcsv($author, ';');
                         $GLOBALS['wpdb']->update(
-                            sprintf('%sauthors', endnote_get_prefix()),
+                            sprintf('%sauthors', sap_get_prefix()),
                             array(
                                 'name' => $author[1],
                                 'first_name' => $author[2],
@@ -1207,7 +1207,7 @@ EOD;
                     foreach ($articles_authors AS $article_author) {
                         $article_author = str_getcsv($article_author, ';');
                         $GLOBALS['wpdb']->update(
-                            sprintf('%sarticles_authors', endnote_get_prefix()),
+                            sprintf('%sarticles_authors', sap_get_prefix()),
                             array(
                                 'article_id' => $article_author[1],
                                 'author_id' => $article_author[2],
@@ -1218,12 +1218,12 @@ EOD;
                             )
                         );
                     }
-                    $_SESSION['endnote']['flashes'] = array(
+                    $_SESSION['sap']['flashes'] = array(
                         'updated' => 'The document was uploaded successfully.',
                     );
                     ?>
                     <meta
-                        content="0;url=<?php echo admin_url('admin.php?action=&page=endnote'); ?>"
+                        content="0;url=<?php echo admin_url('admin.php?action=&page=sap'); ?>"
                         http-equiv="refresh"
                         >
                     <?php
@@ -1232,7 +1232,7 @@ EOD;
                     <h1>Zip file - Upload</h1>
                     <form
                         action="<?php echo admin_url(
-                            sprintf('admin.php?action=upload_zip&id=%d&page=endnote', $_REQUEST['id'])
+                            sprintf('admin.php?action=upload_zip&id=%d&page=sap', $_REQUEST['id'])
                         ); ?>"
                         enctype="multipart/form-data"
                         method="post"
@@ -1250,17 +1250,17 @@ EOD;
                 break;
             default:
                 $documents = $GLOBALS['wpdb']->get_results(
-                    sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', endnote_get_prefix()), ARRAY_A
+                    sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', sap_get_prefix()), ARRAY_A
                 );
                 ?>
                 <h1>
                     Documents
                     <a
                         class="page-title-action"
-                        href="<?php echo admin_url('admin.php?action=upload&page=endnote'); ?>"
+                        href="<?php echo admin_url('admin.php?action=upload&page=sap'); ?>"
                         >Upload</a>
                 </h1>
-                <?php endnote_flashes(); ?>
+                <?php sap_flashes(); ?>
                 <?php if ($documents): ?>
                     <table class="bordered widefat wp-list-table">
                         <tr>
@@ -1277,27 +1277,27 @@ EOD;
                                 <td class="narrow center">
                                     <a href="<?php
                                     echo admin_url(
-                                        sprintf('admin.php?action=download_zip&id=%d&page=endnote', $document['id'])
+                                        sprintf('admin.php?action=download_zip&id=%d&page=sap', $document['id'])
                                     );
                                     ?>">Download</a>
                                     -
                                     <a href="<?php
                                     echo admin_url(
-                                        sprintf('admin.php?action=upload_zip&id=%d&page=endnote', $document['id'])
+                                        sprintf('admin.php?action=upload_zip&id=%d&page=sap', $document['id'])
                                     );
                                     ?>">Upload</a>
                                 </td>
                                 <td class="narrow center">
                                     <a href="<?php
                                     echo admin_url(
-                                        sprintf('admin.php?action=download&id=%d&page=endnote', $document['id'])
+                                        sprintf('admin.php?action=download&id=%d&page=sap', $document['id'])
                                     );
                                     ?>">Download</a>
                                 </td>
                                 <td class="narrow center">
                                     <a href="<?php
                                     echo admin_url(
-                                        sprintf('admin.php?action=delete&id=%d&page=endnote', $document['id'])
+                                        sprintf('admin.php?action=delete&id=%d&page=sap', $document['id'])
                                     );
                                     ?>">Delete</a>
                                 </td>
@@ -1318,13 +1318,13 @@ EOD;
     <?php
 }
 
-function endnote_faq()
+function sap_faq()
 {
     if (!current_user_can('manage_options')) {
         wp_die('You do not have permissions to access this page.');
     }
     ?>
-    <div class="endnote wrap">
+    <div class="sap wrap">
         <h1>Frequently Asked Questions</h1>
         <div class="welcome-panel">
             <p><strong>Steps</strong></p>
@@ -1412,12 +1412,12 @@ function endnote_faq()
     <?php
 }
 
-register_activation_hook(__FILE__, 'endnote_register_activation_hook');
-register_deactivation_hook(__FILE__, 'endnote_register_deactivation_hook');
+register_activation_hook(__FILE__, 'sap_register_activation_hook');
+register_deactivation_hook(__FILE__, 'sap_register_deactivation_hook');
 
-add_action('init', 'endnote_init');
+add_action('init', 'sap_init');
 
-add_action('admin_init', 'endnote_admin_init');
-add_action('admin_menu', 'endnote_admin_menu');
+add_action('admin_init', 'sap_admin_init');
+add_action('admin_menu', 'sap_admin_menu');
 
-add_shortcode('endnote', 'endnote_shortcode');
+add_shortcode('sap', 'sap_shortcode');

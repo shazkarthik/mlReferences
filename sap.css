@@ -1,102 +1,102 @@
-.endnote {
+.sap {
     margin: 0 20px 0 0 !important;
 }
 
-.endnote h1 {
+.sap h1 {
     margin: 20px 0 0 0 !important;
     padding: 0 !important;
 }
 
-.endnote hr {
+.sap hr {
     border: 0 !important;
     border-bottom: 1px solid #e5e5e5 !important;
     margin-top: 20px !important;
 }
 
-.endnote ol {
+.sap ol {
     margin: 20px 0 0 20px !important;
 }
 
-.endnote ol li {
+.sap ol li {
     font-size: 12px !important;
     margin: 0 !important;
 }
 
-.endnote ol li ul {
+.sap ol li ul {
     margin: 10px 0 10px 15px !important;
 }
 
-.endnote ol li ul li {
+.sap ol li ul li {
     list-style-type: disc !important;
 }
 
-.endnote p {
+.sap p {
     margin: 20px 0 0 0 !important;
 }
 
-.endnote .bordered {
+.sap .bordered {
     border-collapse: collapse !important;
     margin-top: 20px !important;
 }
 
-.endnote .bordered td {
+.sap .bordered td {
     border: 1px solid #e5e5e5 !important;
     vertical-align: middle !important;
 }
 
-.endnote .bordered th {
+.sap .bordered th {
     border: 1px solid #e5e5e5 !important;
     font-size: 13px !important;
     font-weight: bold !important;
     vertical-align: middle !important;
 }
 
-.endnote .button-primary + a {
+.sap .button-primary + a {
     line-height: 28px !important;
 }
 
-.endnote .center {
+.sap .center {
     text-align: center !important;
 }
 
-.endnote .error,
-.endnote .updated {
+.sap .error,
+.sap .updated {
     margin: 20px 0 0 0 !important;
 }
 
-.endnote .error p,
-.endnote .updated p {
+.sap .error p,
+.sap .updated p {
     margin: 10px 0 !important;
     padding: 0 !important;
 }
 
-.endnote .float-left {
+.sap .float-left {
     float: left !important;
 }
 
-.endnote .float-right {
+.sap .float-right {
     float: right !important;
 }
 
-.endnote .narrow {
+.sap .narrow {
     white-space: nowrap !important;
     width: 1px !important;
 }
 
-.endnote .right {
+.sap .right {
     text-align: right !important;
 }
 
-.endnote .submit {
+.sap .submit {
     margin: 20px 0 !important;
     padding: 0 !important;
 }
 
-.endnote .updated {
+.sap .updated {
     margin: 20px 0 0 0 !important;
 }
 
-.endnote .welcome-panel {
+.sap .welcome-panel {
     margin-top: 20px !important;
     padding: 0 20px 20px 20px !important;
 }
