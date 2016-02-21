@@ -106,13 +106,27 @@
     padding: 0 20px 20px 20px !important;
 }
 
+.references_management_container {
+    margin-top: 12px !important;
+    max-height: 250px !important;
+    overflow: auto !important;
+}
+
+.references_management_container .references_management_widget {
+    margin-top: 0 !important;
+    width: 100% !important;
+}
+
 .references_management_widget {
+    border-collapse: collapse !important;
     margin-top: 12px !important;
     width: 100% !important;
 }
 
 .references_management_widget th {
     background-color: #eee !important;
+    border-left: 1px solid #fff !important;
+    border-right: 1px solid #fff !important;
     padding: 12px 6px !important;
 }
 
@@ -126,12 +140,20 @@
     text-align: right !important;
 }
 
+.references_management_widget td input {
+    width: 100% !important;
+}
+
 .references_management_widget .center {
     text-align: center !important;
 }
 
 .references_management_widget .even {
     background-color: #f9f9f9 !important;
+}
+
+.references_management_widget .hide {
+    display: none !important;
 }
 
 .references_management_widget .label {
@@ -146,6 +168,10 @@
 
 .references_management_widget .odd {
     border-bottom: 1px solid #f9f9f9 !important;
+}
+
+.references_management_widget .right {
+    text-align: right !important;
 }
 
 .references_management_widget .wide {
