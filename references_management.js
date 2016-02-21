@@ -1,7 +1,15 @@
 jQuery(function () {
+    jQuery('.references_management_widget').on('keydown', '.keywords', function (event) {
+        if (event.keyCode == 13) {
+            event.preventDefault();
+            event.stopPropagation();
+            jQuery('.references_management_widget .search').click();
+        }
+    });
+
     jQuery('.references_management_widget').on('click', '.search', function () {
         var table_1 = jQuery(this).parents('table');
-        var keywords = table_1.find('[name="references_management_4_keywords"]').val().toLowerCase();
+        var keywords = table_1.find('.keywords').val().toLowerCase();
         var table_2 = table_1.next().find('table');
         jQuery.each(table_2.find('tr.article'), function () {
             var $this = jQuery(this);

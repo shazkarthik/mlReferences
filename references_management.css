@@ -117,6 +117,10 @@
     width: 100% !important;
 }
 
+.references_management_container .references_management_widget th {
+    text-align: left !important;
+}
+
 .references_management_widget {
     border-collapse: collapse !important;
     margin-top: 12px !important;

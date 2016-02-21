@@ -1758,7 +1758,12 @@ function references_management_add_meta_boxes_4($post)
     <table class="references_management_widget">
         <tr class="even">
             <td>
-                <input id="references_management_4_keywords" name="references_management_4_keywords" type="text">
+                <input
+                    class="keywords"
+                    id="references_management_4_keywords"
+                    name="references_management_4_keywords"
+                    type="text"
+                    >
             </td>
             <td class="label"><input class="button-primary search" type="button" value="Search"></td>
         </tr>
@@ -1768,19 +1773,29 @@ function references_management_add_meta_boxes_4($post)
             <tr>
                 <th class="narrow right">ID</th>
                 <th>Title</th>
-                <th>Style 1</th>
-                <th>Style 2</th>
-                <th>Style 3</th>
-                <th>Style 4</th>
+                <th class="narrow">Style 1</th>
+                <th class="narrow">Style 2</th>
+                <th class="narrow">Style 3</th>
+                <th class="narrow">Style 4</th>
             </tr>
             <?php foreach ($articles AS $key => $value) : ?>
                 <tr class="article <?php echo ($key % 2 === 0)? 'even': 'odd'; ?>">
                     <td class="narrow right"><?php echo $value['id']; ?></td>
-                    <td><?php echo $value['title_1']; ?></td>
-                    <td><?php echo $value['title_1']; ?></td>
-                    <td><?php echo $value['title_1']; ?></td>
-                    <td><?php echo $value['title_1']; ?></td>
-                    <td><?php echo $value['title_1']; ?></td>
+                    <td title="<?php echo $value['title_1']; ?>">
+                        <?php echo substr($value['title_1'], 0, 15); ?>...
+                    </td>
+                    <td class="narrow" title="<?php echo $value['title_1']; ?>">
+                        <?php echo substr($value['title_1'], 0, 10); ?>...
+                    </td>
+                    <td class="narrow" title="<?php echo $value['title_1']; ?>">
+                        <?php echo substr($value['title_1'], 0, 10); ?>...
+                    </td>
+                    <td class="narrow" title="<?php echo $value['title_1']; ?>">
+                        <?php echo substr($value['title_1'], 0, 10); ?>...
+                    </td>
+                    <td class="narrow" title="<?php echo $value['title_1']; ?>">
+                        <?php echo substr($value['title_1'], 0, 10); ?>...
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </table>
