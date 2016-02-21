@@ -1499,14 +1499,14 @@ function references_management_add_meta_boxes()
         'page'
     );
     add_meta_box(
-        'references_management_references',
-        'References Management - References',
+        'references_management_3',
+        'References Management - Semantic Annotations',
         'references_management_add_meta_boxes_3',
         'page'
     );
     add_meta_box(
-        'references_management_semantic_4',
-        'References Management - Semantic Annotations',
+        'references_management_4',
+        'References Management - References',
         'references_management_add_meta_boxes_4',
         'page'
     );
@@ -1607,33 +1607,7 @@ function references_management_add_meta_boxes_2($post)
 
 function references_management_add_meta_boxes_3($post)
 {
-    ?>
-    <table class="references_management_widget wide">
-        <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Style 1</th>
-            <th>Style 2</th>
-            <th>Style 3</th>
-            <th>Style 4</th>
-        </tr>
-        <?php for ($index = 1; $index <= 1; $index = $index + 1) : ?>
-            <tr class="<?php echo ($index % 2 === 0)? 'even': 'odd'; ?>">
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-            </tr>
-        <?php endfor; ?>
-    </table>
-    <?php
-}
-
-function references_management_add_meta_boxes_4($post)
-{
-    $annotations = json_decode(get_post_meta($post->ID, 'references_management_semantic_4', true), true);
+    $annotations = json_decode(get_post_meta($post->ID, 'references_management_3', true), true);
     ?>
     <table class="references_management_widget wide">
         <tr>
@@ -1646,7 +1620,7 @@ function references_management_add_meta_boxes_4($post)
             <?php foreach ($annotations AS $key => $value) : ?>
                 <tr class="<?php echo ($key % 2 === 0)? 'even': 'odd'; ?>">
                     <td>
-                        <select class="wide" name="references_management_semantic_4_ontologies[]">
+                        <select class="wide" name="references_management_3_ontologies[]">
                             <option
                                 <?php echo ($annotations[$key]['ontologies'] === ""? 'selected="selected"': ''); ?>
                                 value=""
@@ -1658,7 +1632,7 @@ function references_management_add_meta_boxes_4($post)
                         </select>
                     </td>
                     <td>
-                        <select class="wide" name="references_management_semantic_4_classes[]">
+                        <select class="wide" name="references_management_3_classes[]">
                             <option
                                 <?php echo (
                                     $annotations[$key]['classes'] === ""? 'selected="selected"': ''
@@ -1724,7 +1698,7 @@ function references_management_add_meta_boxes_4($post)
                     <td>
                         <input
                             class="wide"
-                            name="references_management_semantic_4_properties[]"
+                            name="references_management_3_properties[]"
                             type="text"
                             value="<?php echo $annotations[$key]['properties']; ?>"
                             >
@@ -1732,7 +1706,7 @@ function references_management_add_meta_boxes_4($post)
                     <td>
                         <input
                             class="wide"
-                            name="references_management_semantic_4_values[]"
+                            name="references_management_3_values[]"
                             type="text"
                             value="<?php echo $annotations[$key]['values']; ?>"
                             >
@@ -1743,13 +1717,13 @@ function references_management_add_meta_boxes_4($post)
         <?php for ($index = count($annotations? $annotations: array()) + 1; $index <= 6; $index = $index + 1) : ?>
             <tr class="<?php echo ($index % 2 === 0)? 'even': 'odd'; ?>">
                 <td>
-                    <select class="wide" name="references_management_semantic_4_ontologies[]">
+                    <select class="wide" name="references_management_3_ontologies[]">
                         <option value="">Select...</option>
                         <option value="DoCO">DoCO</option>
                     </select>
                 </td>
                 <td>
-                    <select class="wide" name="references_management_semantic_4_classes[]">
+                    <select class="wide" name="references_management_3_classes[]">
                         <option value="">Select...</option>
                         <option value="Appendix">Appendix</option>
                         <option value="FrontMatter">FrontMatter</option>
@@ -1763,11 +1737,37 @@ function references_management_add_meta_boxes_4($post)
                     </select>
                 </td>
                 <td>
-                    <input class="wide" name="references_management_semantic_4_properties[]" type="text" value="">
+                    <input class="wide" name="references_management_3_properties[]" type="text" value="">
                 </td>
                 <td>
-                    <input class="wide" name="references_management_semantic_4_values[]" type="text" value="">
+                    <input class="wide" name="references_management_3_values[]" type="text" value="">
                 </td>
+            </tr>
+        <?php endfor; ?>
+    </table>
+    <?php
+}
+
+function references_management_add_meta_boxes_4($post)
+{
+    ?>
+    <table class="references_management_widget wide">
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Style 1</th>
+            <th>Style 2</th>
+            <th>Style 3</th>
+            <th>Style 4</th>
+        </tr>
+        <?php for ($index = 1; $index <= 1; $index = $index + 1) : ?>
+            <tr class="<?php echo ($index % 2 === 0)? 'even': 'odd'; ?>">
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
             </tr>
         <?php endfor; ?>
     </table>
@@ -1795,21 +1795,21 @@ function references_management_save_post($post_id)
         }
     }
     $annotations = array();
-    foreach ($_POST['references_management_semantic_4_ontologies'] AS $key => $_) {
+    foreach ($_POST['references_management_3_ontologies'] AS $key => $_) {
         if (
-            !empty($_POST['references_management_semantic_4_ontologies'][$key])
+            !empty($_POST['references_management_3_ontologies'][$key])
             and
-            !empty($_POST['references_management_semantic_4_classes'][$key])
+            !empty($_POST['references_management_3_classes'][$key])
             and
-            !empty($_POST['references_management_semantic_4_properties'][$key])
+            !empty($_POST['references_management_3_properties'][$key])
             and
-            !empty($_POST['references_management_semantic_4_values'][$key])
+            !empty($_POST['references_management_3_values'][$key])
         ) {
             $annotations[] = array(
-                'ontologies' => $_POST['references_management_semantic_4_ontologies'][$key],
-                'classes' => $_POST['references_management_semantic_4_classes'][$key],
-                'properties' => $_POST['references_management_semantic_4_properties'][$key],
-                'values' => $_POST['references_management_semantic_4_values'][$key],
+                'ontologies' => $_POST['references_management_3_ontologies'][$key],
+                'classes' => $_POST['references_management_3_classes'][$key],
+                'properties' => $_POST['references_management_3_properties'][$key],
+                'values' => $_POST['references_management_3_values'][$key],
             );
         }
     }
@@ -1826,7 +1826,7 @@ function references_management_save_post($post_id)
         $post_id, 'references_management_2_table_of_contents', $_POST['references_management_2_table_of_contents']
     );
     update_post_meta(
-        $post_id, 'references_management_semantic_4', json_encode($annotations)
+        $post_id, 'references_management_3', json_encode($annotations)
     );
 }
 
