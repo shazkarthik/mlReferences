@@ -1612,21 +1612,48 @@ function references_management_add_meta_boxes_2($post)
 function references_management_add_meta_boxes_3($post)
 {
     $annotations = json_decode(get_post_meta($post->ID, 'references_management_3', true), true);
+    if (empty($annotations)) {
+        $annotations = array();
+        $annotations[] = array(
+            'ontology' => 'DoCO',
+            'class' => 'Chapter',
+            'property' => $_POST['references_management_3_properties'][$key],
+            'value' => $_POST['references_management_3_values'][$key],
+        );
+        $annotations[] = array(
+            'ontology' => 'DoCO',
+            'class' => 'ChapterTitle',
+            'property' => $_POST['references_management_3_properties'][$key],
+            'value' => $_POST['references_management_3_values'][$key],
+        );
+        $annotations[] = array(
+            'ontology' => 'dc',
+            'class' => 'subject',
+            'property' => $_POST['references_management_3_properties'][$key],
+            'value' => $_POST['references_management_3_values'][$key],
+        );
+    }
     $ontologies = array(
-        '' => 'Select...',
+        'dc' => 'dc',
         'DoCO' => 'DoCO',
     );
     $classes = array(
-        '' => 'Select...',
-        'Appendix' => 'Appendix',
-        'FrontMatter' => 'FrontMatter',
-        'Glossary' => 'Glossary',
-        'ListOfAuthors' => 'ListOfAuthors',
-        'ListOfFigures' => 'ListOfFigures',
-        'ListOfOrganizations' => 'ListOfOrganizations',
-        'ListOfTables' => 'ListOfTables',
-        'Preface' => 'Preface',
-        'TableOfContents' => 'TableOfContents',
+        'dc' => array(
+            'subject' => 'subject',
+        ),
+        'DoCO' => array(
+            'Appendix' => 'Appendix',
+            'Chapter' => 'Chapter',
+            'ChapterTitle' => 'ChapterTitle',
+            'FrontMatter' => 'FrontMatter',
+            'Glossary' => 'Glossary',
+            'ListOfAuthors' => 'ListOfAuthors',
+            'ListOfFigures' => 'ListOfFigures',
+            'ListOfOrganizations' => 'ListOfOrganizations',
+            'ListOfTables' => 'ListOfTables',
+            'Preface' => 'Preface',
+            'TableOfContents' => 'TableOfContents',
+        ),
     );
     ?>
     <div class="references_management_3">
@@ -1645,10 +1672,14 @@ function references_management_add_meta_boxes_3($post)
                 <td>
                     <select class="wide" name="references_management_3_classes[]">
                         <% _.forEach(classes, function (value, key) { %>
-                            <option
-                                <% if (key === annotation.class) { %>selected="selected"<% } %>
-                                value="<%= key %>"
-                                ><%= value %></option>
+                            <optgroup label="<%= key %>">
+                                <% _.forEach(value, function (v, k) { %>
+                                    <option
+                                        <% if (k === annotation.class) { %>selected="selected"<% } %>
+                                        value="<%= k %>"
+                                        ><%= v %></option>
+                                <% }); %>
+                            </optgroup>
                         <% }); %>
                     </select>
                 </td>
@@ -1661,7 +1692,7 @@ function references_management_add_meta_boxes_3($post)
                         >
                 </td>
                 <td>
-                    <a class="dashicons dashicons-no-alt delete"></a>
+                    <a class="dashicons dashicons-no-alt delete" title="Delete"></a>
                     <input
                         class="wide"
                         name="references_management_3_values[]"
@@ -1679,7 +1710,7 @@ function references_management_add_meta_boxes_3($post)
             >
             <tr>
                 <th>
-                    <a class="dashicons dashicons-plus add float-right"></a>
+                    <a class="dashicons dashicons-plus add float-right" title="Add"></a>
                     Ontology
                 </th>
                 <th>Class</th>
@@ -1731,19 +1762,19 @@ function references_management_add_meta_boxes_4($post)
                         <?php echo substr($value['title_1'], 0, 15); ?>...
                     </td>
                     <td class="narrow" data-style="1" title="<?php echo $value['title_1']; ?>">
-                        <a class="dashicons dashicons-plus add float-right"></a>
+                        <a class="dashicons dashicons-plus add float-right" title="Add"></a>
                         <?php echo substr($value['title_1'], 0, 10); ?>...
                     </td>
                     <td class="narrow" data-style="2" title="<?php echo $value['title_1']; ?>">
-                        <a class="dashicons dashicons-plus add float-right"></a>
+                        <a class="dashicons dashicons-plus add float-right" title="Add"></a>
                         <?php echo substr($value['title_1'], 0, 10); ?>...
                     </td>
                     <td class="narrow" data-style="3" title="<?php echo $value['title_1']; ?>">
-                        <a class="dashicons dashicons-plus add float-right"></a>
+                        <a class="dashicons dashicons-plus add float-right" title="Add"></a>
                         <?php echo substr($value['title_1'], 0, 10); ?>...
                     </td>
                     <td class="narrow" data-style="4" title="<?php echo $value['title_1']; ?>">
-                        <a class="dashicons dashicons-plus add float-right"></a>
+                        <a class="dashicons dashicons-plus add float-right" title="Add"></a>
                         <?php echo substr($value['title_1'], 0, 10); ?>...
                     </td>
                 </tr>
