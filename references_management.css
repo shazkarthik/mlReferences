@@ -127,6 +127,10 @@
     width: 100% !important;
 }
 
+.references_management_widget a {
+    cursor: pointer !important;
+}
+
 .references_management_widget th {
     background-color: #eee !important;
     border-left: 1px solid #fff !important;
@@ -154,6 +158,10 @@
 
 .references_management_widget .even {
     background-color: #f9f9f9 !important;
+}
+
+.references_management_widget .float-right {
+    float: right !important;
 }
 
 .references_management_widget .hide {

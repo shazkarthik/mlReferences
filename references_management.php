@@ -1608,7 +1608,61 @@ function references_management_add_meta_boxes_2($post)
 function references_management_add_meta_boxes_3($post)
 {
     $annotations = json_decode(get_post_meta($post->ID, 'references_management_3', true), true);
+    $ontologies = array(
+        '' => 'Select...',
+        'DoCO' => 'DoCO',
+    );
+    $classes = array(
+        '' => 'Select...',
+        'Appendix' => 'Appendix',
+        'FrontMatter' => 'FrontMatter',
+        'Glossary' => 'Glossary',
+        'ListOfAuthors' => 'ListOfAuthors',
+        'ListOfFigures' => 'ListOfFigures',
+        'ListOfOrganizations' => 'ListOfOrganizations',
+        'ListOfTables' => 'ListOfTables',
+        'Preface' => 'Preface',
+        'TableOfContents' => 'TableOfContents',
+    );
     ?>
+    <script type="text/template">
+        <tr>
+            <td>
+                <select class="wide" name="references_management_3_ontologies[]">
+                    <% _.forEach(ontologies, function (value, key) { %>
+                        <option <% if (key === '') { %>selected="selected"<% } %> value="<%= key %>">
+                            <%= value %>
+                        </option>
+                    <% }); %>
+                </select>
+            </td>
+            <td>
+                <select class="wide" name="references_management_3_classes[]">
+                    <% _.forEach(classes, function (value, key) { %>
+                        <option <% if (key === '') { %>selected="selected"<% } %> value="<%= key %>">
+                            <%= value %>
+                        </option>
+                    <% }); %>
+                </select>
+            </td>
+            <td>
+                <input
+                    class="wide"
+                    name="references_management_3_properties[]"
+                    type="text"
+                    value=""
+                    >
+            </td>
+            <td>
+                <input
+                    class="wide"
+                    name="references_management_3_values[]"
+                    type="text"
+                    value=""
+                    >
+            </td>
+        </tr>
+    </script>
     <table class="references_management_widget wide">
         <tr>
             <th>Ontology</th>
@@ -1616,134 +1670,6 @@ function references_management_add_meta_boxes_3($post)
             <th>Property</th>
             <th>Value</th>
         </tr>
-        <?php if (!empty($annotations)) : ?>
-            <?php foreach ($annotations AS $key => $value) : ?>
-                <tr class="<?php echo ($key % 2 === 0)? 'even': 'odd'; ?>">
-                    <td>
-                        <select class="wide" name="references_management_3_ontologies[]">
-                            <option
-                                <?php echo ($annotations[$key]['ontologies'] === ""? 'selected="selected"': ''); ?>
-                                value=""
-                                >Select...</option>
-                            <option
-                                <?php echo ($annotations[$key]['ontologies'] === "DoCO"? 'selected="selected"': ''); ?>
-                                value="DoCO"
-                                >DoCO</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="wide" name="references_management_3_classes[]">
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === ""? 'selected="selected"': ''
-                                ); ?>
-                                value=""
-                                >Select...</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "Appendix"? 'selected="selected"': ''
-                                ); ?>
-                                value="Appendix"
-                                >Appendix</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "FrontMatter"? 'selected="selected"': ''
-                                ); ?>
-                                value="FrontMatter"
-                                >FrontMatter</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "Glossary"? 'selected="selected"': ''
-                                ); ?>
-                                value="Glossary"
-                                >Glossary</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "ListOfAuthors"? 'selected="selected"': ''
-                                ); ?>
-                                value="ListOfAuthors"
-                                >ListOfAuthors</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "ListOfFigures"? 'selected="selected"': ''
-                                ); ?>
-                                value="ListOfFigures"
-                                >ListOfFigures</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "ListOfOrganizations"? 'selected="selected"': ''
-                                ); ?>
-                                value="ListOfOrganizations"
-                                >ListOfOrganizations</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "ListOfTables"? 'selected="selected"': ''
-                                ); ?>
-                                value="ListOfTables"
-                                >ListOfTables</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "Preface"? 'selected="selected"': ''
-                                ); ?>
-                                value="Preface"
-                                >Preface</option>
-                            <option
-                                <?php echo (
-                                    $annotations[$key]['classes'] === "TableOfContents"? 'selected="selected"': ''
-                                ); ?>
-                                value="TableOfContents"
-                                >TableOfContents</option>
-                        </select>
-                    </td>
-                    <td>
-                        <input
-                            class="wide"
-                            name="references_management_3_properties[]"
-                            type="text"
-                            value="<?php echo $annotations[$key]['properties']; ?>"
-                            >
-                    </td>
-                    <td>
-                        <input
-                            class="wide"
-                            name="references_management_3_values[]"
-                            type="text"
-                            value="<?php echo $annotations[$key]['values']; ?>"
-                            >
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        <?php for ($index = count($annotations? $annotations: array()) + 1; $index <= 6; $index = $index + 1) : ?>
-            <tr class="<?php echo ($index % 2 === 0)? 'even': 'odd'; ?>">
-                <td>
-                    <select class="wide" name="references_management_3_ontologies[]">
-                        <option value="">Select...</option>
-                        <option value="DoCO">DoCO</option>
-                    </select>
-                </td>
-                <td>
-                    <select class="wide" name="references_management_3_classes[]">
-                        <option value="">Select...</option>
-                        <option value="Appendix">Appendix</option>
-                        <option value="FrontMatter">FrontMatter</option>
-                        <option value="Glossary">Glossary</option>
-                        <option value="ListOfAuthors">ListOfAuthors</option>
-                        <option value="ListOfFigures">ListOfFigures</option>
-                        <option value="ListOfOrganizations">ListOfOrganizations</option>
-                        <option value="ListOfTables">ListOfTables</option>
-                        <option value="Preface">Preface</option>
-                        <option value="TableOfContents">TableOfContents</option>
-                    </select>
-                </td>
-                <td>
-                    <input class="wide" name="references_management_3_properties[]" type="text" value="">
-                </td>
-                <td>
-                    <input class="wide" name="references_management_3_values[]" type="text" value="">
-                </td>
-            </tr>
-        <?php endfor; ?>
     </table>
     <?php
 }
@@ -1779,21 +1705,28 @@ function references_management_add_meta_boxes_4($post)
                 <th class="narrow">Style 4</th>
             </tr>
             <?php foreach ($articles AS $key => $value) : ?>
-                <tr class="article <?php echo ($key % 2 === 0)? 'even': 'odd'; ?>">
+                <tr
+                    class="article <?php echo ($key % 2 === 0)? 'even': 'odd'; ?>"
+                    data-id="<?php echo $value['id']; ?>"
+                    >
                     <td class="narrow right"><?php echo $value['id']; ?></td>
                     <td title="<?php echo $value['title_1']; ?>">
                         <?php echo substr($value['title_1'], 0, 15); ?>...
                     </td>
-                    <td class="narrow" title="<?php echo $value['title_1']; ?>">
+                    <td class="narrow" data-style="1" title="<?php echo $value['title_1']; ?>">
+                        <a class="dashicons dashicons-plus add float-right"></a>
                         <?php echo substr($value['title_1'], 0, 10); ?>...
                     </td>
-                    <td class="narrow" title="<?php echo $value['title_1']; ?>">
+                    <td class="narrow" data-style="2" title="<?php echo $value['title_1']; ?>">
+                        <a class="dashicons dashicons-plus add float-right"></a>
                         <?php echo substr($value['title_1'], 0, 10); ?>...
                     </td>
-                    <td class="narrow" title="<?php echo $value['title_1']; ?>">
+                    <td class="narrow" data-style="3" title="<?php echo $value['title_1']; ?>">
+                        <a class="dashicons dashicons-plus add float-right"></a>
                         <?php echo substr($value['title_1'], 0, 10); ?>...
                     </td>
-                    <td class="narrow" title="<?php echo $value['title_1']; ?>">
+                    <td class="narrow" data-style="4" title="<?php echo $value['title_1']; ?>">
+                        <a class="dashicons dashicons-plus add float-right"></a>
                         <?php echo substr($value['title_1'], 0, 10); ?>...
                     </td>
                 </tr>
