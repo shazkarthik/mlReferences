@@ -106,18 +106,27 @@
     padding: 0 20px 20px 20px !important;
 }
 
-.references_management_container {
-    margin-top: 12px !important;
+.references_management_3 td {
+    position: relative !important;
+}
+
+.references_management_3 td .delete {
+    position: absolute !important;
+    top: 11px !important;
+    right: 10px !important;
+}
+
+.references_management_4 {
     max-height: 250px !important;
     overflow: auto !important;
 }
 
-.references_management_container .references_management_widget {
+.references_management_4 .references_management_widget {
     margin-top: 0 !important;
     width: 100% !important;
 }
 
-.references_management_container .references_management_widget th {
+.references_management_4 .references_management_widget th {
     text-align: left !important;
 }
 
@@ -139,6 +148,7 @@
 }
 
 .references_management_widget td {
+    border: 1px solid #fff !important;
     padding: 6px !important;
 }
 

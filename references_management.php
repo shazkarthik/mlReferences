@@ -1535,39 +1535,41 @@ function references_management_add_meta_boxes_1($post)
         'sort_order' => 'asc',
     ));
     ?>
-    <table class="references_management_widget">
-        <tr class="even">
-            <td class="label">
-                <label for="references_management_1_multipage_report">Multipage Report</label>
-            </td>
-            <td>
-                <select id="references_management_1_multipage_report" name="references_management_1_multipage_report">
-                    <option <?php echo $multipage_report === "Yes"? 'selected="selected"': ''; ?> value="Yes">
-                        Yes
-                    </option>
-                    <option <?php echo $multipage_report === "No"? 'selected="selected"': ''; ?> value="No">
-                        No
-                    </option>
-                </select>
-            </td>
-        </tr>
-        <tr class="even">
-            <td class="label"><label for="references_management_1_root">Root</label></td>
-            <td>
-                <select id="references_management_1_root" name="references_management_1_root">
-                    <option <?php echo $root === 0? 'selected="selected"': ''; ?> value="0">None</option>
-                    <?php foreach ($pages AS $page) : ?>
-                        <option
-                            <?php echo $root === $page->ID? 'selected="selected"': ''; ?>
-                            value="<?php echo $page->ID; ?>"
-                            >
-                            <?php echo $page->post_title; ?>
+    <div class="references_management_1">
+        <table class="references_management_widget">
+            <tr class="even">
+                <td class="label">
+                    <label for="references_management_1_multipage_report">Multipage Report</label>
+                </td>
+                <td>
+                    <select id="references_management_1_multipage_report" name="references_management_1_multipage_report">
+                        <option <?php echo $multipage_report === "Yes"? 'selected="selected"': ''; ?> value="Yes">
+                            Yes
                         </option>
-                    <?php endforeach; ?>
-                </select>
-            </td>
-        </tr>
-    </table>
+                        <option <?php echo $multipage_report === "No"? 'selected="selected"': ''; ?> value="No">
+                            No
+                        </option>
+                    </select>
+                </td>
+            </tr>
+            <tr class="even">
+                <td class="label"><label for="references_management_1_root">Root</label></td>
+                <td>
+                    <select id="references_management_1_root" name="references_management_1_root">
+                        <option <?php echo $root === 0? 'selected="selected"': ''; ?> value="0">None</option>
+                        <?php foreach ($pages AS $page) : ?>
+                            <option
+                                <?php echo $root === $page->ID? 'selected="selected"': ''; ?>
+                                value="<?php echo $page->ID; ?>"
+                                >
+                                <?php echo $page->post_title; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
     <?php
 }
 
@@ -1576,32 +1578,34 @@ function references_management_add_meta_boxes_2($post)
     $references = get_post_meta($post->ID, 'references_management_2_references', true);
     $table_of_contents = get_post_meta($post->ID, 'references_management_2_table_of_contents', true);
     ?>
-    <table class="references_management_widget">
-        <tr class="even">
-            <td class="label"><label for="references_management_2_references">References</label></td>
-            <td>
-                <input
-                    id="references_management_2_references"
-                    name="references_management_2_references"
-                    type="text"
-                    value="<?php echo $references? $references: 'References'; ?>"
-                    >
-            </td>
-        </tr>
-        <tr class="even">
-            <td class="label">
-                <label for="references_management_2_table_of_contents">Table of Contents</label>
-            </td>
-            <td>
-                <input
-                    id="references_management_2_table_of_contents"
-                    name="references_management_2_table_of_contents"
-                    type="text"
-                    value="<?php echo $table_of_contents? $table_of_contents: 'Table of Contents'; ?>"
-                    >
-            </td>
-        </tr>
-    </table>
+    <div class="references_management_2">
+        <table class="references_management_widget">
+            <tr class="even">
+                <td class="label"><label for="references_management_2_references">References</label></td>
+                <td>
+                    <input
+                        id="references_management_2_references"
+                        name="references_management_2_references"
+                        type="text"
+                        value="<?php echo $references? $references: 'References'; ?>"
+                        >
+                </td>
+            </tr>
+            <tr class="even">
+                <td class="label">
+                    <label for="references_management_2_table_of_contents">Table of Contents</label>
+                </td>
+                <td>
+                    <input
+                        id="references_management_2_table_of_contents"
+                        name="references_management_2_table_of_contents"
+                        type="text"
+                        value="<?php echo $table_of_contents? $table_of_contents: 'Table of Contents'; ?>"
+                        >
+                </td>
+            </tr>
+        </table>
+    </div>
     <?php
 }
 
@@ -1625,52 +1629,65 @@ function references_management_add_meta_boxes_3($post)
         'TableOfContents' => 'TableOfContents',
     );
     ?>
-    <script type="text/template">
-        <tr>
-            <td>
-                <select class="wide" name="references_management_3_ontologies[]">
-                    <% _.forEach(ontologies, function (value, key) { %>
-                        <option <% if (key === '') { %>selected="selected"<% } %> value="<%= key %>">
-                            <%= value %>
-                        </option>
-                    <% }); %>
-                </select>
-            </td>
-            <td>
-                <select class="wide" name="references_management_3_classes[]">
-                    <% _.forEach(classes, function (value, key) { %>
-                        <option <% if (key === '') { %>selected="selected"<% } %> value="<%= key %>">
-                            <%= value %>
-                        </option>
-                    <% }); %>
-                </select>
-            </td>
-            <td>
-                <input
-                    class="wide"
-                    name="references_management_3_properties[]"
-                    type="text"
-                    value=""
-                    >
-            </td>
-            <td>
-                <input
-                    class="wide"
-                    name="references_management_3_values[]"
-                    type="text"
-                    value=""
-                    >
-            </td>
-        </tr>
-    </script>
-    <table class="references_management_widget wide">
-        <tr>
-            <th>Ontology</th>
-            <th>Class</th>
-            <th>Property</th>
-            <th>Value</th>
-        </tr>
-    </table>
+    <div class="references_management_3">
+        <script class="template" type="text/template">
+            <tr>
+                <td>
+                    <select class="wide" name="references_management_3_ontologies[]">
+                        <% _.forEach(ontologies, function (value, key) { %>
+                            <option
+                                <% if (key === annotation.ontology) { %>selected="selected"<% } %>
+                                value="<%= key %>"
+                                ><%= value %></option>
+                        <% }); %>
+                    </select>
+                </td>
+                <td>
+                    <select class="wide" name="references_management_3_classes[]">
+                        <% _.forEach(classes, function (value, key) { %>
+                            <option
+                                <% if (key === annotation.class) { %>selected="selected"<% } %>
+                                value="<%= key %>"
+                                ><%= value %></option>
+                        <% }); %>
+                    </select>
+                </td>
+                <td>
+                    <input
+                        class="wide"
+                        name="references_management_3_properties[]"
+                        type="text"
+                        value="<%= annotation.property %>"
+                        >
+                </td>
+                <td>
+                    <a class="dashicons dashicons-no-alt delete"></a>
+                    <input
+                        class="wide"
+                        name="references_management_3_values[]"
+                        type="text"
+                        value="<%= annotation.value %>"
+                        >
+                </td>
+            </tr>
+        </script>
+        <table
+            class="references_management_widget wide"
+            data-annotations="<?php echo htmlspecialchars(json_encode($annotations), ENT_QUOTES, 'UTF-8'); ?>"
+            data-classes="<?php echo htmlspecialchars(json_encode($classes), ENT_QUOTES, 'UTF-8'); ?>"
+            data-ontologies="<?php echo htmlspecialchars(json_encode($ontologies), ENT_QUOTES, 'UTF-8'); ?>"
+            >
+            <tr>
+                <th>
+                    <a class="dashicons dashicons-plus add float-right"></a>
+                    Ontology
+                </th>
+                <th>Class</th>
+                <th>Property</th>
+                <th>Value</th>
+            </tr>
+        </table>
+    </div>
     <?php
 }
 
@@ -1681,20 +1698,20 @@ function references_management_add_meta_boxes_4($post)
         ARRAY_A
     );
     ?>
-    <table class="references_management_widget">
-        <tr class="even">
-            <td>
-                <input
-                    class="keywords"
-                    id="references_management_4_keywords"
-                    name="references_management_4_keywords"
-                    type="text"
-                    >
-            </td>
-            <td class="label"><input class="button-primary search" type="button" value="Search"></td>
-        </tr>
-    </table>
-    <div class="references_management_container">
+    <div class="references_management_4">
+        <table class="references_management_widget">
+            <tr class="even">
+                <td>
+                    <input
+                        class="keywords"
+                        id="references_management_4_keywords"
+                        name="references_management_4_keywords"
+                        type="text"
+                        >
+                </td>
+                <td class="label"><input class="button-primary search" type="button" value="Search"></td>
+            </tr>
+        </table>
         <table class="references_management_widget wide">
             <tr>
                 <th class="narrow right">ID</th>
@@ -1768,10 +1785,10 @@ function references_management_save_post($post_id)
             !empty($_POST['references_management_3_values'][$key])
         ) {
             $annotations[] = array(
-                'ontologies' => $_POST['references_management_3_ontologies'][$key],
-                'classes' => $_POST['references_management_3_classes'][$key],
-                'properties' => $_POST['references_management_3_properties'][$key],
-                'values' => $_POST['references_management_3_values'][$key],
+                'ontology' => $_POST['references_management_3_ontologies'][$key],
+                'class' => $_POST['references_management_3_classes'][$key],
+                'property' => $_POST['references_management_3_properties'][$key],
+                'value' => $_POST['references_management_3_values'][$key],
             );
         }
     }
