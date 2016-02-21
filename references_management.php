@@ -1750,27 +1750,41 @@ function references_management_add_meta_boxes_3($post)
 
 function references_management_add_meta_boxes_4($post)
 {
+    $articles = $GLOBALS['wpdb']->get_results(
+        sprintf('SELECT `id`, `title_1` FROM `%sarticles` ORDER BY `id` ASC', references_management_get_prefix()),
+        ARRAY_A
+    );
     ?>
-    <table class="references_management_widget wide">
-        <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Style 1</th>
-            <th>Style 2</th>
-            <th>Style 3</th>
-            <th>Style 4</th>
+    <table class="references_management_widget">
+        <tr class="even">
+            <td>
+                <input id="references_management_4_keywords" name="references_management_4_keywords" type="text">
+            </td>
+            <td class="label"><input class="button-primary search" type="button" value="Search"></td>
         </tr>
-        <?php for ($index = 1; $index <= 1; $index = $index + 1) : ?>
-            <tr class="<?php echo ($index % 2 === 0)? 'even': 'odd'; ?>">
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-                <td>&nbsp;</td>
-            </tr>
-        <?php endfor; ?>
     </table>
+    <div class="references_management_container">
+        <table class="references_management_widget wide">
+            <tr>
+                <th class="narrow right">ID</th>
+                <th>Title</th>
+                <th>Style 1</th>
+                <th>Style 2</th>
+                <th>Style 3</th>
+                <th>Style 4</th>
+            </tr>
+            <?php foreach ($articles AS $key => $value) : ?>
+                <tr class="article <?php echo ($key % 2 === 0)? 'even': 'odd'; ?>">
+                    <td class="narrow right"><?php echo $value['id']; ?></td>
+                    <td><?php echo $value['title_1']; ?></td>
+                    <td><?php echo $value['title_1']; ?></td>
+                    <td><?php echo $value['title_1']; ?></td>
+                    <td><?php echo $value['title_1']; ?></td>
+                    <td><?php echo $value['title_1']; ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+    </div>
     <?php
 }
 
