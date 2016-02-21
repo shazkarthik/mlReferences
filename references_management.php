@@ -1724,10 +1724,19 @@ function references_management_add_meta_boxes_3($post)
 
 function references_management_add_meta_boxes_4($post)
 {
-    $articles = $GLOBALS['wpdb']->get_results(
-        sprintf('SELECT `id`, `title_1` FROM `%sarticles` ORDER BY `title_1` ASC', references_management_get_prefix()),
-        ARRAY_A
-    );
+    $query = <<<EOD
+SELECT
+    `id`,
+    `title_1`,
+    `year`,
+    `citations_first`,
+    `citations_subsequent`,
+    `citations_parenthetical_first`,
+    `citations_parenthetical_subsequent`
+FROM `%sarticles`
+ORDER BY `title_1` ASC
+EOD;
+    $articles = $GLOBALS['wpdb']->get_results(sprintf($query, references_management_get_prefix()), ARRAY_A);
     ?>
     <div class="references_management_4">
         <table class="references_management_widget">
@@ -1761,21 +1770,37 @@ function references_management_add_meta_boxes_4($post)
                     <td title="<?php echo $value['title_1']; ?>">
                         <?php echo substr($value['title_1'], 0, 15); ?>...
                     </td>
-                    <td class="narrow" data-style="1" title="<?php echo $value['title_1']; ?>">
+                    <td
+                        class="narrow"
+                        data-style="citations_first"
+                        title="<?php echo $value['citations_first']; ?>"
+                        >
                         <a class="dashicons dashicons-plus add float-right" title="Add"></a>
-                        <?php echo substr($value['title_1'], 0, 10); ?>...
+                        <?php echo substr($value['citations_first'], 0, 10); ?>...
                     </td>
-                    <td class="narrow" data-style="2" title="<?php echo $value['title_1']; ?>">
+                    <td
+                        class="narrow"
+                        data-style="citations_subsequent"
+                        title="<?php echo $value['citations_subsequent']; ?>"
+                        >
                         <a class="dashicons dashicons-plus add float-right" title="Add"></a>
-                        <?php echo substr($value['title_1'], 0, 10); ?>...
+                        <?php echo substr($value['citations_subsequent'], 0, 10); ?>...
                     </td>
-                    <td class="narrow" data-style="3" title="<?php echo $value['title_1']; ?>">
+                    <td
+                        class="narrow"
+                        data-style="citations_parenthetical_first"
+                        title="<?php echo $value['citations_parenthetical_first']; ?>"
+                        >
                         <a class="dashicons dashicons-plus add float-right" title="Add"></a>
-                        <?php echo substr($value['title_1'], 0, 10); ?>...
+                        <?php echo substr($value['citations_parenthetical_first'], 0, 10); ?>...
                     </td>
-                    <td class="narrow" data-style="4" title="<?php echo $value['title_1']; ?>">
+                    <td
+                        class="narrow"
+                        data-style="citations_parenthetical_subsequent"
+                        title="<?php echo $value['citations_parenthetical_subsequent']; ?>"
+                        >
                         <a class="dashicons dashicons-plus add float-right" title="Add"></a>
-                        <?php echo substr($value['title_1'], 0, 10); ?>...
+                        <?php echo substr($value['citations_parenthetical_subsequent'], 0, 10); ?>...
                     </td>
                 </tr>
             <?php endforeach; ?>
