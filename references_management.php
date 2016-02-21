@@ -1694,7 +1694,7 @@ function references_management_add_meta_boxes_3($post)
 function references_management_add_meta_boxes_4($post)
 {
     $articles = $GLOBALS['wpdb']->get_results(
-        sprintf('SELECT `id`, `title_1` FROM `%sarticles` ORDER BY `id` ASC', references_management_get_prefix()),
+        sprintf('SELECT `id`, `title_1` FROM `%sarticles` ORDER BY `title_1` ASC', references_management_get_prefix()),
         ARRAY_A
     );
     ?>
