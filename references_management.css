@@ -78,6 +78,11 @@
     float: right !important;
 }
 
+.references_management .label {
+    white-space: nowrap !important;
+    width: 200px !important;
+}
+
 .references_management .narrow {
     white-space: nowrap !important;
     width: 1px !important;
@@ -129,8 +134,14 @@
     background-color: #f9f9f9 !important;
 }
 
-.references_management_widget .narrow {
+.references_management_widget .label {
+    white-space: nowrap !important;
     width: 200px !important;
+}
+
+.references_management_widget .narrow {
+    white-space: nowrap !important;
+    width: 1px !important;
 }
 
 .references_management_widget .odd {
