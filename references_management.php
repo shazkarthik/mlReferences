@@ -11,7 +11,9 @@
 
 libxml_use_internal_errors(true);
 
-$GLOBALS['references_management'] = array();
+$GLOBALS['references_management'] = array(
+    'items' => array(),
+);
 
 function references_management_filters_author($item)
 {
@@ -1865,6 +1867,43 @@ function references_management_save_post($post_id)
     );
 }
 
+function references_management_the_content($content)
+{
+    $items = array();
+    if (!empty($GLOBALS['references_management']['items'])) {
+        $items[] = '<p><strong>References:</strong></p>';
+        $items[] = '<ol>';
+        foreach ($GLOBALS['references_management']['items'] as $key => $value) {
+            $items[] = sprintf('<li id="references_management_%s">%s</li>', $key + 1, $value);
+        }
+        $items[] = '</ol>';
+    }
+    $items = implode('', $items);
+    return $content . $items;
+}
+
+function references_management_shortcode($attributes)
+{
+    $attributes = shortcode_atts(
+        array(
+            'id' => 0,
+            'style' => '',
+        ),
+        $attributes,
+        'references_management'
+    );
+    $article = $GLOBALS['wpdb']->get_row(
+        $GLOBALS['wpdb']->prepare(
+            sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
+            intval($attributes['id'])
+        ),
+        ARRAY_A
+    );
+    $GLOBALS['references_management']['items'][] = $article[$attributes['style']];
+    $index = count($GLOBALS['references_management']['items']);
+    return sprintf('<a href="#references_management_%s">%s</a>', $index, $index);
+}
+
 register_activation_hook(__FILE__, 'references_management_register_activation_hook');
 register_deactivation_hook(__FILE__, 'references_management_register_deactivation_hook');
 
@@ -1874,5 +1913,7 @@ add_action('admin_init', 'references_management_admin_init');
 add_action('admin_menu', 'references_management_admin_menu');
 add_action('add_meta_boxes', 'references_management_add_meta_boxes');
 add_action('save_post', 'references_management_save_post');
+
+add_filter('the_content', 'references_management_the_content', 90);
 
 add_shortcode('references_management', 'references_management_shortcode');

@@ -48,7 +48,7 @@ jQuery(function () {
             var $this = jQuery(this);
             var id = $this.parent().parent().attr('data-id');
             var style = $this.parent().attr('data-style');
-            var shortcode = '[references_management mode="references" id="' + id + '" style="' + style + '"]';
+            var shortcode = '[references_management id="' + id + '" style="' + style + '"]';
             if (jQuery('div#wp-content-wrap').length && jQuery('div#wp-content-wrap').hasClass('html-active')) {
                 var text = jQuery('textarea#content').val();
                 jQuery('textarea#content').val(text + ' ' + shortcode);
