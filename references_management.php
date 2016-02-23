@@ -11,10 +11,6 @@
 
 libxml_use_internal_errors(true);
 
-$GLOBALS['references_management'] = array(
-    'items' => array(),
-);
-
 function references_management_filters_author($item)
 {
     return $item['role'] === 'Author';
@@ -1522,7 +1518,7 @@ function references_management_add_meta_boxes_1($post)
     $pages = get_pages(array(
         'authors' => '',
         'child_of' => 0,
-        'exclude' => '',
+        'exclude' => $post->ID,
         'exclude_tree' => '',
         'hierarchical' => 0,
         'include' => '',
@@ -1545,11 +1541,11 @@ function references_management_add_meta_boxes_1($post)
                 </td>
                 <td>
                     <select id="references_management_1_multipage_report" name="references_management_1_multipage_report">
-                        <option <?php echo $multipage_report === "Yes"? 'selected="selected"': ''; ?> value="Yes">
-                            Yes
-                        </option>
                         <option <?php echo $multipage_report === "No"? 'selected="selected"': ''; ?> value="No">
                             No
+                        </option>
+                        <option <?php echo $multipage_report === "Yes"? 'selected="selected"': ''; ?> value="Yes">
+                            Yes
                         </option>
                     </select>
                 </td>
@@ -1867,41 +1863,72 @@ function references_management_save_post($post_id)
     );
 }
 
-function references_management_the_content($content)
+function references_management_uasort($one, $two)
 {
-    $items = array();
-    if (!empty($GLOBALS['references_management']['items'])) {
-        $items[] = '<p><strong>References:</strong></p>';
-        $items[] = '<ol>';
-        foreach ($GLOBALS['references_management']['items'] as $key => $value) {
-            $items[] = sprintf('<li id="references_management_%s">%s</li>', $key + 1, $value);
-        }
-        $items[] = '</ol>';
+    preg_match("|[a-zA-Z]|", $one, $match);
+    $one = $match[0];
+    preg_match("|[a-zA-Z]|", $two, $match);
+    $two = $match[0];
+    if ($one === $two) {
+        return 0;
     }
-    $items = implode('', $items);
-    return $content . $items;
+    return ($one < $two)? -1: 1;
 }
 
-function references_management_shortcode($attributes)
+function references_management_the_content($contents)
 {
-    $attributes = shortcode_atts(
-        array(
-            'id' => 0,
-            'style' => '',
-        ),
-        $attributes,
-        'references_management'
+    $id = get_the_ID();
+    $references_management_1_multipage_report = get_post_meta($id, 'references_management_1_multipage_report', true);
+    $url = (
+        $references_management_1_multipage_report === 'Yes'?
+        get_permalink(get_post_meta($id, 'references_management_1_root', true)):
+        ''
     );
-    $article = $GLOBALS['wpdb']->get_row(
-        $GLOBALS['wpdb']->prepare(
-            sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
-            intval($attributes['id'])
-        ),
-        ARRAY_A
+    $anchors = array();
+    preg_match_all(
+        "|\[references_management id=(&#8221;)?(\")?(.*?)(&#8221;)?(\")? style=(&#8221;)?(\")?(.*?)(&#8221;)?(\")?\]|",
+        $contents,
+        $matches,
+        PREG_SET_ORDER
     );
-    $GLOBALS['references_management']['items'][] = $article[$attributes['style']];
-    $index = count($GLOBALS['references_management']['items']);
-    return sprintf('<a href="#references_management_%s">%s</a>', $index, $index);
+    if (!empty($matches)) {
+        foreach ($matches as $match) {
+            $article = $GLOBALS['wpdb']->get_row(
+                $GLOBALS['wpdb']->prepare(
+                    sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
+                    intval($match[3])
+                ),
+                ARRAY_A
+            );
+            $anchors[$match[0]] = $article[$match[8]];
+        }
+    }
+    if (!empty($anchors)) {
+        uasort($anchors, 'references_management_uasort');
+        $index = 0;
+        foreach ($anchors as $key => $value) {
+            $index++;
+            $contents = str_replace(
+                $key,
+                sprintf('[<a href="%s#references_management_%s_%s">%s</a>]', $url, $id, $index, $index),
+                $contents
+            );
+        };
+    }
+    if ($references_management_1_multipage_report === 'No') {
+        if (!empty($anchors)) {
+            $items[] = '<p><strong>References:</strong></p>';
+            $items[] = '<ol>';
+            foreach ($anchors as $key => $value) {
+                $index++;
+                $items[] = sprintf('<li id="references_management_%s_%s">%s</li>', $id, $index, $value);
+            }
+            $items[] = '</ol>';
+            $items = implode('', $items);
+            $contents .= $items;
+        }
+    }
+    return $contents;
 }
 
 register_activation_hook(__FILE__, 'references_management_register_activation_hook');
@@ -1915,5 +1942,3 @@ add_action('add_meta_boxes', 'references_management_add_meta_boxes');
 add_action('save_post', 'references_management_save_post');
 
 add_filter('the_content', 'references_management_the_content', 90);
-
-add_shortcode('references_management', 'references_management_shortcode');

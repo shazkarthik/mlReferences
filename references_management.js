@@ -51,10 +51,10 @@ jQuery(function () {
             var shortcode = '[references_management id="' + id + '" style="' + style + '"]';
             if (jQuery('div#wp-content-wrap').length && jQuery('div#wp-content-wrap').hasClass('html-active')) {
                 var text = jQuery('textarea#content').val();
-                jQuery('textarea#content').val(text + ' ' + shortcode);
+                jQuery('textarea#content').val(text + shortcode);
             } else {
                 if (typeof tinyMCE === 'object') {
-                    tinyMCE.execCommand('mceInsertRawHTML', false, ' ' + shortcode);
+                    tinyMCE.execCommand('mceInsertRawHTML', false, shortcode);
                 }
             }
         });
