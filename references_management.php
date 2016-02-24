@@ -11,6 +11,21 @@
 
 libxml_use_internal_errors(true);
 
+function references_management_delete($directory)
+{
+    $files = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($files AS $file) {
+        if ($file->isDir()) {
+            rmdir($file->getRealPath());
+        } else {
+            unlink($file->getRealPath());
+        }
+    }
+}
+
 function references_management_filters_author($item)
 {
     return $item['role'] === 'Author';
@@ -19,6 +34,42 @@ function references_management_filters_author($item)
 function references_management_filters_editor($item)
 {
     return $item['role'] === 'Editor';
+}
+
+function references_management_uasort($one, $two)
+{
+    preg_match("|[a-zA-Z]|", $one, $match);
+    $one = $match[0];
+    preg_match("|[a-zA-Z]|", $two, $match);
+    $two = $match[0];
+    if ($one === $two) {
+        return 0;
+    }
+    return ($one < $two)? -1: 1;
+}
+
+function references_management_get_anchors($contents)
+{
+    $anchors = array();
+    preg_match_all(
+        "|\[references_management id=(&#8221;)?(\")?(.*?)(&#8221;)?(\")? style=(&#8221;)?(\")?(.*?)(&#8221;)?(\")?\]|",
+        $contents,
+        $matches,
+        PREG_SET_ORDER
+    );
+    if (!empty($matches)) {
+        foreach ($matches as $match) {
+            $article = $GLOBALS['wpdb']->get_row(
+                $GLOBALS['wpdb']->prepare(
+                    sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
+                    intval($match[3])
+                ),
+                ARRAY_A
+            );
+            $anchors[$match[0]] = $article[$match[8]];
+        }
+    }
+    return $anchors;
 }
 
 function references_management_get_file($items)
@@ -404,21 +455,6 @@ function references_management_get_items($xml)
         }
     }
     return array(array(), $items);
-}
-
-function references_management_delete($directory)
-{
-    $files = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::CHILD_FIRST
-    );
-    foreach ($files AS $file) {
-        if ($file->isDir()) {
-            rmdir($file->getRealPath());
-        } else {
-            unlink($file->getRealPath());
-        }
-    }
 }
 
 function references_management_register_activation_hook()
@@ -1510,15 +1546,15 @@ function references_management_add_meta_boxes()
     );
 }
 
-function references_management_add_meta_boxes_1($post)
+function references_management_add_meta_boxes_1($page)
 {
     wp_nonce_field('references_management_add_meta_boxes_1', 'references_management_add_meta_boxes_1');
-    $multipage_report = get_post_meta($post->ID, 'references_management_1_multipage_report', true);
-    $root = intval(get_post_meta($post->ID, 'references_management_1_root', true));
+    $multipage_report = get_post_meta($page->ID, 'references_management_1_multipage_report', true);
+    $root = intval(get_post_meta($page->ID, 'references_management_1_root', true));
     $pages = get_pages(array(
         'authors' => '',
         'child_of' => 0,
-        'exclude' => $post->ID,
+        'exclude' => $page->ID,
         'exclude_tree' => '',
         'hierarchical' => 0,
         'include' => '',
@@ -1571,24 +1607,13 @@ function references_management_add_meta_boxes_1($post)
     <?php
 }
 
-function references_management_add_meta_boxes_2($post)
+function references_management_add_meta_boxes_2($page)
 {
-    $references = get_post_meta($post->ID, 'references_management_2_references', true);
-    $table_of_contents = get_post_meta($post->ID, 'references_management_2_table_of_contents', true);
+    $table_of_contents = get_post_meta($page->ID, 'references_management_2_table_of_contents', true);
+    $references = get_post_meta($page->ID, 'references_management_2_references', true);
     ?>
     <div class="references_management_2">
         <table class="references_management_widget">
-            <tr class="even">
-                <td class="label"><label for="references_management_2_references">References</label></td>
-                <td>
-                    <input
-                        id="references_management_2_references"
-                        name="references_management_2_references"
-                        type="text"
-                        value="<?php echo $references? $references: 'References'; ?>"
-                        >
-                </td>
-            </tr>
             <tr class="even">
                 <td class="label">
                     <label for="references_management_2_table_of_contents">Table of Contents</label>
@@ -1602,14 +1627,25 @@ function references_management_add_meta_boxes_2($post)
                         >
                 </td>
             </tr>
+            <tr class="even">
+                <td class="label"><label for="references_management_2_references">References</label></td>
+                <td>
+                    <input
+                        id="references_management_2_references"
+                        name="references_management_2_references"
+                        type="text"
+                        value="<?php echo $references? $references: 'References'; ?>"
+                        >
+                </td>
+            </tr>
         </table>
     </div>
     <?php
 }
 
-function references_management_add_meta_boxes_3($post)
+function references_management_add_meta_boxes_3($page)
 {
-    $annotations = json_decode(get_post_meta($post->ID, 'references_management_3', true), true);
+    $annotations = json_decode(get_post_meta($page->ID, 'references_management_3', true), true);
     if (empty($annotations)) {
         $annotations = array();
         $annotations[] = array(
@@ -1720,7 +1756,7 @@ function references_management_add_meta_boxes_3($post)
     <?php
 }
 
-function references_management_add_meta_boxes_4($post)
+function references_management_add_meta_boxes_4($page)
 {
     $query = <<<EOD
 SELECT
@@ -1807,24 +1843,24 @@ EOD;
     <?php
 }
 
-function references_management_save_post($post_id)
+function references_management_save_post($page_id)
 {
     if (!isset($_POST['references_management_add_meta_boxes_1'])) {
-        return $post_id;
+        return $page_id;
     }
     if (!wp_verify_nonce($_POST['references_management_add_meta_boxes_1'], 'references_management_add_meta_boxes_1')) {
-        return $post_id;
+        return $page_id;
     }
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-        return $post_id;
+        return $page_id;
     }
     if ('page' === $_POST['post_type']) {
-        if (!current_user_can('edit_page', $post_id)) {
-            return $post_id;
+        if (!current_user_can('edit_page', $page_id)) {
+            return $page_id;
         }
     } else {
-        if (!current_user_can('edit_post', $post_id)) {
-            return $post_id;
+        if (!current_user_can('edit_post', $page_id)) {
+            return $page_id;
         }
     }
     $annotations = array();
@@ -1847,86 +1883,117 @@ function references_management_save_post($post_id)
         }
     }
     update_post_meta(
-        $post_id, 'references_management_1_multipage_report', $_POST['references_management_1_multipage_report']
+        $page_id, 'references_management_1_multipage_report', $_POST['references_management_1_multipage_report']
     );
     update_post_meta(
-        $post_id, 'references_management_1_root', $_POST['references_management_1_root']
+        $page_id, 'references_management_1_root', $_POST['references_management_1_root']
     );
     update_post_meta(
-        $post_id, 'references_management_2_references', $_POST['references_management_2_references']
+        $page_id, 'references_management_2_table_of_contents', $_POST['references_management_2_table_of_contents']
     );
     update_post_meta(
-        $post_id, 'references_management_2_table_of_contents', $_POST['references_management_2_table_of_contents']
+        $page_id, 'references_management_2_references', $_POST['references_management_2_references']
     );
     update_post_meta(
-        $post_id, 'references_management_3', json_encode($annotations)
+        $page_id, 'references_management_3', json_encode($annotations)
     );
-}
-
-function references_management_uasort($one, $two)
-{
-    preg_match("|[a-zA-Z]|", $one, $match);
-    $one = $match[0];
-    preg_match("|[a-zA-Z]|", $two, $match);
-    $two = $match[0];
-    if ($one === $two) {
-        return 0;
-    }
-    return ($one < $two)? -1: 1;
 }
 
 function references_management_the_content($contents)
 {
     $id = get_the_ID();
     $references_management_1_multipage_report = get_post_meta($id, 'references_management_1_multipage_report', true);
+    $table_of_contents = get_post_meta($id, 'references_management_2_table_of_contents', true);
+    $table_of_contents = $table_of_contents? $table_of_contents: 'Table of Contents';
+    $references = get_post_meta($id, 'references_management_2_references', true);
+    $references = $references? $references: 'References';
     $url = (
         $references_management_1_multipage_report === 'Yes'?
         get_permalink(get_post_meta($id, 'references_management_1_root', true)):
         ''
     );
-    $anchors = array();
-    preg_match_all(
-        "|\[references_management id=(&#8221;)?(\")?(.*?)(&#8221;)?(\")? style=(&#8221;)?(\")?(.*?)(&#8221;)?(\")?\]|",
-        $contents,
-        $matches,
-        PREG_SET_ORDER
-    );
-    if (!empty($matches)) {
-        foreach ($matches as $match) {
-            $article = $GLOBALS['wpdb']->get_row(
-                $GLOBALS['wpdb']->prepare(
-                    sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
-                    intval($match[3])
-                ),
-                ARRAY_A
-            );
-            $anchors[$match[0]] = $article[$match[8]];
+    $pages = get_pages(array(
+        'authors' => '',
+        'child_of' => 0,
+        'exclude' => $id,
+        'exclude_tree' => '',
+        'hierarchical' => 0,
+        'include' => '',
+        'meta_key' => 'references_management_1_root',
+        'meta_value' => $id,
+        'number' => '',
+        'offset' => 0,
+        'parent' => -1,
+        'post_status' => 'publish',
+        'post_type' => 'page',
+        'sort_column' => 'post_title',
+        'sort_order' => 'asc',
+    ));
+    if (!empty($pages)) {
+        $contents = array();
+        $contents[] = sprintf('<p><strong>%s:</strong></p>', $table_of_contents);
+        $items = array();
+        $items[] = '<ul>';
+        foreach ($pages as $page) {
+            $anchors = references_management_get_anchors($page->post_content);
+            if (!empty($anchors)) {
+                $items[] = sprintf('<li><a href="%s">%s</a></li>', get_permalink($page->ID), get_the_title($page->ID));
+            }
         }
-    }
-    if (!empty($anchors)) {
-        uasort($anchors, 'references_management_uasort');
-        $index = 0;
-        foreach ($anchors as $key => $value) {
-            $index++;
-            $contents = str_replace(
-                $key,
-                sprintf('[<a href="%s#references_management_%s_%s">%s</a>]', $url, $id, $index, $index),
-                $contents
-            );
-        };
-    }
-    if ($references_management_1_multipage_report === 'No') {
+        $items[] = '</ul>';
+        $contents[] = implode('', $items);
+        $contents[] = sprintf('<p><strong>%s:</strong></p>', $references);
+        $items = array();
+        $items[] = '<ul>';
+        foreach ($pages as $page) {
+            $anchors = references_management_get_anchors($page->post_content);
+            if (!empty($anchors)) {
+                uasort($anchors, 'references_management_uasort');
+                $index = 0;
+                foreach ($anchors as $key => $value) {
+                    $index++;
+                    $items[] = sprintf(
+                        '<li id="references_management_%s_%s">%d.%s. %s</li>',
+                        $page->ID,
+                        $index,
+                        $page->ID,
+                        $index,
+                        $value
+                    );
+                }
+            }
+        }
+        $items[] = '</ul>';
+        $contents[] = implode('', $items);
+        $contents = implode('', $contents);
+    } else {
+        $anchors = references_management_get_anchors($contents);
         if (!empty($anchors)) {
-            $items[] = '<p><strong>References:</strong></p>';
-            $items[] = '<ol>';
+            uasort($anchors, 'references_management_uasort');
             $index = 0;
             foreach ($anchors as $key => $value) {
                 $index++;
-                $items[] = sprintf('<li id="references_management_%s_%s">%s</li>', $id, $index, $value);
+                $contents = str_replace(
+                    $key,
+                    sprintf('[<a href="%s#references_management_%s_%s">%s</a>]', $url, $id, $index, $index),
+                    $contents
+                );
+            };
+            if ($references_management_1_multipage_report === 'No' or 1) {
+                $items = array();
+                $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
+                $items[] = '<ul>';
+                $index = 0;
+                foreach ($anchors as $key => $value) {
+                    $index++;
+                    $items[] = sprintf(
+                        '<li id="references_management_%s_%s">%s. %s</li>', $id, $index, $index, $value
+                    );
+                }
+                $items[] = '</ul>';
+                $items = implode('', $items);
+                $contents .= $items;
             }
-            $items[] = '</ol>';
-            $items = implode('', $items);
-            $contents .= $items;
         }
     }
     return $contents;
