@@ -1899,6 +1899,22 @@ function references_management_save_post($page_id)
     );
 }
 
+function references_management_wp_head()
+{
+    $page = get_post(get_queried_object_id());
+    $anchors = references_management_get_anchors($page->post_content);
+    if (!empty($anchors)) {
+        $user = get_userdata($page->post_author);
+        echo sprintf('<meta content="References for %s" name="Biro.BibliographicCollection">', $page->post_title);
+        echo sprintf('<meta content="%s" name="DC.creator">', $user->display_name);
+        echo sprintf('<meta content="%s" name="DC.date">', $page->post_date);
+        echo sprintf('<meta content="%s" name="DC.description">', $page->post_title);
+        echo sprintf('<meta content="%s" name="DC.title">', $page->post_title);
+        echo sprintf('<meta content="%s" name="Doco.BackMatter">', $page->post_title);
+        echo sprintf('<meta content="%s" name="Doco.Bibliography">', $page->post_title);
+    }
+}
+
 function references_management_the_content($contents)
 {
     $id = get_the_ID();
@@ -1954,14 +1970,17 @@ function references_management_the_content($contents)
                 foreach ($anchors as $key => $value) {
                     $index++;
                     $items[sprintf('%s_%d_%d', $value, $page->ID, $index)] = sprintf(
-                        '<li id="references_management_%s_%s">%s</li>', $page->ID, $index, $value
+                        '<li id="references_management_%s_%s" role="doc-biblioentry">%s</li>',
+                        $page->ID,
+                        $index,
+                        $value
                     );
                 }
             }
         }
         ksort($items);
         if (!empty($items)) {
-            $contents[] = '<ul>';
+            $contents[] = '<ul role="doc-bibliography">';
             $contents[] = implode('', array_values($items));
             $contents[] = '</ul>';
         }
@@ -1982,11 +2001,16 @@ function references_management_the_content($contents)
             if ($references_management_1_multipage_report === 'No') {
                 $items = array();
                 $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
-                $items[] = '<ul>';
+                $items[] = '<ul role="doc-bibliography">';
                 $index = 0;
                 foreach ($anchors as $key => $value) {
                     $index++;
-                    $items[] = sprintf('<li id="references_management_%s_%s">%s</li>', $id, $index, $value);
+                    $items[] = sprintf(
+                        '<li id="references_management_%s_%s" role="doc-biblioentry">%s</li>',
+                        $id,
+                        $index,
+                        $value
+                    );
                 }
                 $items[] = '</ul>';
                 $items = implode('', $items);
@@ -2006,5 +2030,6 @@ add_action('admin_init', 'references_management_admin_init');
 add_action('admin_menu', 'references_management_admin_menu');
 add_action('add_meta_boxes', 'references_management_add_meta_boxes');
 add_action('save_post', 'references_management_save_post');
+add_action('wp_head', 'references_management_wp_head', 90);
 
 add_filter('the_content', 'references_management_the_content', 90);

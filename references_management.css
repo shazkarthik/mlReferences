@@ -130,6 +130,12 @@
     text-align: left !important;
 }
 
+.references_management_highlight {
+    color: #007acc !important;
+    font-weight: bold !important;
+    text-decoration: underline !important;
+}
+
 .references_management_widget {
     border-collapse: collapse !important;
     margin-top: 12px !important;
