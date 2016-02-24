@@ -1933,18 +1933,19 @@ function references_management_the_content($contents)
         $contents = array();
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $table_of_contents);
         $items = array();
-        $items[] = '<ul>';
         foreach ($pages as $page) {
             $anchors = references_management_get_anchors($page->post_content);
             if (!empty($anchors)) {
                 $items[] = sprintf('<li><a href="%s">%s</a></li>', get_permalink($page->ID), get_the_title($page->ID));
             }
         }
-        $items[] = '</ul>';
-        $contents[] = implode('', $items);
+        if (!empty($items)) {
+            $contents[] = '<ul>';
+            $contents[] = implode('', $items);
+            $contents[] = '</ul>';
+        }
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $references);
         $items = array();
-        $items[] = '<ul>';
         foreach ($pages as $page) {
             $anchors = references_management_get_anchors($page->post_content);
             if (!empty($anchors)) {
@@ -1952,19 +1953,18 @@ function references_management_the_content($contents)
                 $index = 0;
                 foreach ($anchors as $key => $value) {
                     $index++;
-                    $items[] = sprintf(
-                        '<li id="references_management_%s_%s">%d.%s. %s</li>',
-                        $page->ID,
-                        $index,
-                        $page->ID,
-                        $index,
-                        $value
+                    $items[sprintf('%s_%d_%d', $value, $page->ID, $index)] = sprintf(
+                        '<li id="references_management_%s_%s">%s</li>', $page->ID, $index, $value
                     );
                 }
             }
         }
-        $items[] = '</ul>';
-        $contents[] = implode('', $items);
+        ksort($items);
+        if (!empty($items)) {
+            $contents[] = '<ul>';
+            $contents[] = implode('', array_values($items));
+            $contents[] = '</ul>';
+        }
         $contents = implode('', $contents);
     } else {
         $anchors = references_management_get_anchors($contents);
@@ -1986,9 +1986,7 @@ function references_management_the_content($contents)
                 $index = 0;
                 foreach ($anchors as $key => $value) {
                     $index++;
-                    $items[] = sprintf(
-                        '<li id="references_management_%s_%s">%s. %s</li>', $id, $index, $index, $value
-                    );
+                    $items[] = sprintf('<li id="references_management_%s_%s">%s</li>', $id, $index, $value);
                 }
                 $items[] = '</ul>';
                 $items = implode('', $items);
