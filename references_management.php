@@ -1998,24 +1998,22 @@ function references_management_the_content($contents)
                     $contents
                 );
             };
-            if ($references_management_1_multipage_report === 'No') {
-                $items = array();
-                $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
-                $items[] = '<ul role="doc-bibliography">';
-                $index = 0;
-                foreach ($anchors as $key => $value) {
-                    $index++;
-                    $items[] = sprintf(
-                        '<li id="references_management_%s_%s" role="doc-biblioentry">%s</li>',
-                        $id,
-                        $index,
-                        $value
-                    );
-                }
-                $items[] = '</ul>';
-                $items = implode('', $items);
-                $contents .= $items;
+            $items = array();
+            $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
+            $items[] = '<ul role="doc-bibliography">';
+            $index = 0;
+            foreach ($anchors as $key => $value) {
+                $index++;
+                $items[] = sprintf(
+                    '<li id="references_management_%s_%s" role="doc-biblioentry">%s</li>',
+                    $id,
+                    $index,
+                    $value
+                );
             }
+            $items[] = '</ul>';
+            $items = implode('', $items);
+            $contents .= $items;
         }
     }
     return $contents;
