@@ -84,6 +84,7 @@ jQuery(function () {
         });
     }
     if (window.location.hash.indexOf('references_management') !== -1) {
+        jQuery('.references_management_highlight').removeClass('references_management_highlight');
         jQuery(window.location.hash).addClass('references_management_highlight');
     }
 });
