@@ -38,38 +38,14 @@ function references_management_filters_editor($item)
 
 function references_management_uasort($one, $two)
 {
-    preg_match("|[a-zA-Z]|", $one, $match);
+    preg_match("|[a-zA-Z]|", $one['string'], $match);
     $one = $match[0];
-    preg_match("|[a-zA-Z]|", $two, $match);
+    preg_match("|[a-zA-Z]|", $two['string'], $match);
     $two = $match[0];
     if ($one === $two) {
         return 0;
     }
     return ($one < $two)? -1: 1;
-}
-
-function references_management_get_anchors($contents)
-{
-    $anchors = array();
-    preg_match_all(
-        "|\[references_management id=(&#8221;)?(\")?(.*?)(&#8221;)?(\")? style=(&#8221;)?(\")?(.*?)(&#8221;)?(\")?\]|",
-        $contents,
-        $matches,
-        PREG_SET_ORDER
-    );
-    if (!empty($matches)) {
-        foreach ($matches as $match) {
-            $article = $GLOBALS['wpdb']->get_row(
-                $GLOBALS['wpdb']->prepare(
-                    sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
-                    intval($match[3])
-                ),
-                ARRAY_A
-            );
-            $anchors[$match[0]] = $article[$match[8]];
-        }
-    }
-    return $anchors;
 }
 
 function references_management_get_file($items)
@@ -246,6 +222,11 @@ function references_management_get_citations_parenthetical_subsequent($authors, 
     );
 }
 
+function references_management_get_prefix()
+{
+    return sprintf('%sreferences_management_', $GLOBALS['wpdb']->prefix);
+}
+
 function references_management_get_references_authors($authors)
 {
     $authors = array_filter($authors, 'references_management_filters_author');
@@ -302,9 +283,39 @@ function references_management_get_references_all($item)
     );
 }
 
-function references_management_get_prefix()
+function references_management_get_shortcodes($contents)
 {
-    return sprintf('%sreferences_management_', $GLOBALS['wpdb']->prefix);
+    $items = array();
+    preg_match_all(
+        "~\[references_management\s*id=(?:(?:&#.*?;)|\")(.*?)(?:(?:&#.*?;)|\")\s*style=(?:(?:&#.*?;)|\")(.*?)".
+        "(?:(?:&#.*?;)|\")\]~",
+        $contents,
+        $matches,
+        PREG_SET_ORDER
+    );
+    if (!empty($matches)) {
+        $number = 0;
+        foreach ($matches as $match) {
+            $number++;
+            $article = $GLOBALS['wpdb']->get_row(
+                $GLOBALS['wpdb']->prepare(
+                    sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
+                    intval($match[1])
+                ),
+                ARRAY_A
+            );
+            if (empty($items[$match[0]])) {
+                $items[$match[0]] = array(
+                    'id' => $match[1],
+                    'style' => $match[2],
+                    'numbers' => array(),
+                    'string' => $article[$match[2]],
+                );
+            }
+            $items[$match[0]]['numbers'][] = $number;
+        }
+    }
+    return $items;
 }
 
 function references_management_get_url($first_name, $last_name)
@@ -1902,8 +1913,7 @@ function references_management_save_post($page_id)
 function references_management_wp_head()
 {
     $page = get_post(get_queried_object_id());
-    $anchors = references_management_get_anchors($page->post_content);
-    if (!empty($anchors)) {
+    if (!empty(references_management_get_shortcodes($page->post_content))) {
         $user = get_userdata($page->post_author);
         echo sprintf('<meta content="References for %s" name="Biro.BibliographicCollection">', $page->post_title);
         echo sprintf('<meta content="%s" name="DC.creator">', $user->display_name);
@@ -1923,11 +1933,6 @@ function references_management_the_content($contents)
     $table_of_contents = $table_of_contents? $table_of_contents: 'Table of Contents';
     $references = get_post_meta($id, 'references_management_2_references', true);
     $references = $references? $references: 'References';
-    $url = (
-        $references_management_1_multipage_report === 'Yes'?
-        get_permalink(get_post_meta($id, 'references_management_1_root', true)):
-        ''
-    );
     $pages = get_pages(array(
         'authors' => '',
         'child_of' => 0,
@@ -1950,8 +1955,8 @@ function references_management_the_content($contents)
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $table_of_contents);
         $items = array();
         foreach ($pages as $page) {
-            $anchors = references_management_get_anchors($page->post_content);
-            if (!empty($anchors)) {
+            $shortcodes = references_management_get_shortcodes($page->post_content);
+            if (!empty($shortcodes)) {
                 $items[] = sprintf('<li><a href="%s">%s</a></li>', get_permalink($page->ID), get_the_title($page->ID));
             }
         }
@@ -1963,52 +1968,79 @@ function references_management_the_content($contents)
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $references);
         $items = array();
         foreach ($pages as $page) {
-            $anchors = references_management_get_anchors($page->post_content);
-            if (!empty($anchors)) {
-                uasort($anchors, 'references_management_uasort');
-                $index = 0;
-                foreach ($anchors as $key => $value) {
-                    $index++;
-                    $items[sprintf('%s_%d_%d', $value, $page->ID, $index)] = sprintf(
-                        '<li id="references_management_%s_%s" role="doc-biblioentry">%s</li>',
-                        $page->ID,
-                        $index,
-                        $value
-                    );
+            $shortcodes = references_management_get_shortcodes($page->post_content);
+            if (!empty($shortcodes)) {
+                uasort($shortcodes, 'references_management_uasort');
+                foreach ($shortcodes as $key => $value) {
+                    if (empty($items[$value['string']])) {
+                        $items[$value['string']] = array(
+                            'id' => $value['id'],
+                            'style' => $value['style'],
+                            'string' => $value['string'],
+                            'numbers' => array(),
+                        );
+                    }
+                    if (!empty($value['numbers'])) {
+                        foreach ($value['numbers'] as $number) {
+                            $items[$value['string']]['numbers'][] = sprintf('%d.%d', $page->ID, $number);
+                        }
+                    }
                 }
             }
         }
-        ksort($items);
+        $items = array_values($items);
+        uasort($items, 'references_management_uasort');
         if (!empty($items)) {
             $contents[] = '<ul role="doc-bibliography">';
-            $contents[] = implode('', array_values($items));
+            foreach ($items as $item) {
+                $numbers = array();
+                if (!empty($item['numbers'])) {
+                    foreach ($item['numbers'] as $number) {
+                        $numbers[] = sprintf('[%s]', $number);
+                    }
+                }
+                $numbers = implode(' ', $numbers);
+                $contents[] = sprintf(
+                    '<li id="references_management_%s_%s" role="doc-biblioentry">%s %s</li>',
+                    $item['id'],
+                    $item['style'],
+                    $item['string'],
+                    $numbers
+                );
+            }
             $contents[] = '</ul>';
         }
         $contents = implode('', $contents);
     } else {
-        $anchors = references_management_get_anchors($contents);
-        if (!empty($anchors)) {
-            uasort($anchors, 'references_management_uasort');
+        $shortcodes = references_management_get_shortcodes($contents);
+        if (!empty($shortcodes)) {
             $index = 0;
-            foreach ($anchors as $key => $value) {
+            foreach ($shortcodes as $key => $value) {
                 $index++;
                 $contents = str_replace(
                     $key,
-                    sprintf('[<a href="%s#references_management_%s_%s">%s</a>]', $url, $id, $index, $index),
+                    sprintf('[<a href="#references_management_%s_%s">%s</a>]', $value['id'], $value['style'], $index),
                     $contents
                 );
             };
+            uasort($shortcodes, 'references_management_uasort');
             $items = array();
             $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
             $items[] = '<ul role="doc-bibliography">';
-            $index = 0;
-            foreach ($anchors as $key => $value) {
-                $index++;
+            foreach ($shortcodes as $key => $value) {
+                $numbers = array();
+                if (!empty($value['numbers'])) {
+                    foreach ($value['numbers'] as $number) {
+                        $numbers[] = sprintf('[%d]', $number);
+                    }
+                }
+                $numbers = implode(' ', $numbers);
                 $items[] = sprintf(
-                    '<li id="references_management_%s_%s" role="doc-biblioentry">%s</li>',
-                    $id,
-                    $index,
-                    $value
+                    '<li id="references_management_%s_%s" role="doc-biblioentry">%s %s</li>',
+                    $value['id'],
+                    $value['style'],
+                    $value['string'],
+                    $numbers
                 );
             }
             $items[] = '</ul>';
