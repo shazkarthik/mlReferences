@@ -1979,7 +1979,7 @@ function references_management_the_content($contents)
                     $contents
                 );
             };
-            if ($references_management_1_multipage_report === 'No' or 1) {
+            if ($references_management_1_multipage_report === 'No') {
                 $items = array();
                 $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
                 $items[] = '<ul>';
