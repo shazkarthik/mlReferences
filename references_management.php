@@ -1919,6 +1919,7 @@ function references_management_the_content($contents)
         if (!empty($anchors)) {
             $items[] = '<p><strong>References:</strong></p>';
             $items[] = '<ol>';
+            $index = 0;
             foreach ($anchors as $key => $value) {
                 $index++;
                 $items[] = sprintf('<li id="references_management_%s_%s">%s</li>', $id, $index, $value);
