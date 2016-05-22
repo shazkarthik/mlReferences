@@ -83,19 +83,10 @@ function references_management_get_citations_first($authors, $year)
         return '';
     }
     if ($count === 1) {
-        return sprintf(
-            '%s, %s (%s)', $authors[0]['name'], references_management_get_initials($authors[0]['first_name']), $year
-        );
+        return sprintf('%s (%s)', $authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf(
-            '%s, %s & %s, %s (%s)',
-            $authors[0]['name'],
-            references_management_get_initials($authors[0]['first_name']),
-            $authors[1]['name'],
-            references_management_get_initials($authors[1]['first_name']),
-            $year
-        );
+        return sprintf('%s & %s (%s)', $authors[0]['name'], $authors[1]['name'], $year);
     }
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
@@ -108,16 +99,12 @@ function references_management_get_citations_first($authors, $year)
                 if ($key + 1 === $count) {
                     $separator = '';
                 }
-                $names[] = sprintf(
-                    '%s %s%s', $value['name'], references_management_get_initials($value['first_name']), $separator
-                );
+                $names[] = sprintf('%s%s', $value['name'], $separator);
             }
         }
         return sprintf('%s (%s)', implode(' ', $names), $year);
     }
-    return sprintf(
-        '%s, %s et al. (%s)', $authors[0]['name'], references_management_get_initials($authors[0]['first_name']), $year
-    );
+    return sprintf('%s et al. (%s)', $authors[0]['name'], $year);
 }
 
 function references_management_get_citations_subsequent($authors, $year)
@@ -127,23 +114,12 @@ function references_management_get_citations_subsequent($authors, $year)
         return '';
     }
     if ($count === 1) {
-        return sprintf(
-            '%s, %s (%s)', $authors[0]['name'], references_management_get_initials($authors[0]['first_name']), $year
-        );
+        return sprintf('%s (%s)', $authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf(
-            '%s, %s & %s, %s (%s)',
-            $authors[0]['name'],
-            references_management_get_initials($authors[0]['first_name']),
-            $authors[1]['name'],
-            references_management_get_initials($authors[1]['first_name']),
-            $year
-        );
+        return sprintf('%s & %s (%s)', $authors[0]['name'], $authors[1]['name'], $year);
     }
-    return sprintf(
-        '%s, %s et al. (%s)', $authors[0]['name'], references_management_get_initials($authors[0]['first_name']), $year
-    );
+    return sprintf('%s et al. (%s)', $authors[0]['name'], $year);
 }
 
 function references_management_get_citations_parenthetical_first($authors, $year)
@@ -153,19 +129,10 @@ function references_management_get_citations_parenthetical_first($authors, $year
         return '';
     }
     if ($count === 1) {
-        return sprintf(
-            '(%s, %s, %s)', $authors[0]['name'], references_management_get_initials($authors[0]['first_name']), $year
-        );
+        return sprintf('(%s, %s)', $authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf(
-            '(%s, %s & %s, %s, %s)',
-            $authors[0]['name'],
-            references_management_get_initials($authors[0]['first_name']),
-            $authors[1]['name'],
-            references_management_get_initials($authors[1]['first_name']),
-            $year
-        );
+        return sprintf('(%s & %s, %s)', $authors[0]['name'], $authors[1]['name'], $year);
     }
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
@@ -178,19 +145,12 @@ function references_management_get_citations_parenthetical_first($authors, $year
                 if ($key + 1 === $count) {
                     $separator = '';
                 }
-                $names[] = sprintf(
-                    '%s %s%s', $value['name'], references_management_get_initials($value['first_name']), $separator
-                );
+                $names[] = sprintf('%s%s', $value['name'], $separator);
             }
         }
         return sprintf('(%s, %s)', implode(' ', $names), $year);
     }
-    return sprintf(
-        '(%s, %s et al., %s)',
-        $authors[0]['name'],
-        references_management_get_initials($authors[0]['first_name']),
-        $year
-    );
+    return sprintf('(%s et al., %s)', $authors[0]['name'], $year);
 }
 
 function references_management_get_citations_parenthetical_subsequent($authors, $year)
@@ -200,26 +160,12 @@ function references_management_get_citations_parenthetical_subsequent($authors, 
         return '';
     }
     if ($count === 1) {
-        return sprintf(
-            '(%s, %s, %s)', $authors[0]['name'], references_management_get_initials($authors[0]['first_name']), $year
-        );
+        return sprintf('(%s, %s)', $authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf(
-            '(%s, %s & %s, %s, %s)',
-            $authors[0]['name'],
-            references_management_get_initials($authors[0]['first_name']),
-            $authors[1]['name'],
-            references_management_get_initials($authors[1]['first_name']),
-            $year
-        );
+        return sprintf('(%s & %s, %s)', $authors[0]['name'], $authors[1]['name'], $year);
     }
-    return sprintf(
-        '(%s, %s et al., %s)',
-        $authors[0]['name'],
-        references_management_get_initials($authors[0]['first_name']),
-        $year
-    );
+    return sprintf('(%s et al., %s)', $authors[0]['name'], $year);
 }
 
 function references_management_get_prefix()
@@ -241,9 +187,7 @@ function references_management_get_references_authors($authors)
             if ($key + 1 === $count) {
                 $separator = '';
             }
-            $names[] = sprintf(
-                '%s %s%s', $value['name'], references_management_get_initials($value['first_name']), $separator
-            );
+            $names[] = sprintf('%s%s', $value['name'], $separator);
         }
     }
     return implode(' ', $names);
@@ -263,9 +207,7 @@ function references_management_get_references_editors($authors)
             if ($key + 1 === $count) {
                 $separator = '';
             }
-            $names[] = sprintf(
-                '%s %s%s', $value['name'], references_management_get_initials($value['first_name']), $separator
-            );
+            $names[] = sprintf('%s%s', $value['name'], $separator);
         }
     }
     return implode(' ', $names);
