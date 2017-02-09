@@ -729,7 +729,7 @@ function references_management_dashboard()
                         $query = <<<EOD
 SELECT *
 FROM `%sauthors`
-WHERE `document_id` = %%d AND `name` = %%s AND `first_name` = %%s
+WHERE `name` = %%s AND `first_name` = %%s
 EOD;
                         $row = $GLOBALS['wpdb']->get_row(
                             $GLOBALS['wpdb']->prepare(
