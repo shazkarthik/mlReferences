@@ -8,8 +8,10 @@
  * Version: 1.0
  * Author URI: http://www.medialeg.ch
  */
-include "Dialect.php";
-include "Writer.php";
+
+require_once 'vendors/php-csv-utils-0.3/Csv/Dialect.php';
+require_once 'vendors/php-csv-utils-0.3/Csv/Writer.php';
+
 libxml_use_internal_errors(true);
 
 function references_management_delete($directory)
