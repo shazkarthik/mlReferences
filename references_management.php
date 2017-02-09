@@ -734,7 +734,6 @@ EOD;
                         $row = $GLOBALS['wpdb']->get_row(
                             $GLOBALS['wpdb']->prepare(
                                 sprintf($query, references_management_get_prefix()),
-                                $document_id,
                                 $author['name'],
                                 $author['first_name']
                             ),
