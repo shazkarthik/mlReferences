@@ -8,7 +8,8 @@
  * Version: 1.0
  * Author URI: http://www.medialeg.ch
  */
-
+include "Dialect.php";
+include "Writer.php";
 libxml_use_internal_errors(true);
 
 function references_management_delete($directory)
@@ -1066,8 +1067,10 @@ EOD;
                 ARRAY_A
             );
             $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            @fputcsv(
-                $resource,
+            $writer = new Csv_Writer(
+                $resource, new Csv_Dialect(array('delimiter' => ';', 'quoting' => Csv_Dialect::QUOTE_ALL))
+            );
+            $writer->writeRow(
                 array(
                     'id' => 'Identifier',
                     'number' => 'Number',
@@ -1095,12 +1098,13 @@ EOD;
                     'references_authors' => 'Authors Publish Reference',
                     'references_editors' => 'Editors Publish Reference',
                     'references_all' => 'Reference Entry',
-                ),
-                ';'
+                )
             );
+
             foreach ($articles AS $article) {
-                @fputcsv($resource, $article, ';');
+                $writer->writeRow($article);
             }
+
             @rewind($resource);
             $articles = stream_get_contents($resource);
             @fclose($resource);
@@ -1115,18 +1119,19 @@ EOD;
                 ARRAY_A
             );
             $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            @fputcsv(
-                $resource,
+            $writer = new Csv_Writer(
+                $resource, new Csv_Dialect(array('delimiter' => ';', 'quoting' => Csv_Dialect::QUOTE_ALL))
+            );
+            $writer->writeRow(
                 array(
                     'id' => 'Identifier',
                     'name' => 'Name',
                     'first_name' => 'First Name',
                     'url' => 'URL',
-                ),
-                ';'
+                )
             );
             foreach ($authors AS $author) {
-                @fputcsv($resource, $author, ';');
+                $writer->writeRow($author);
             }
             @rewind($resource);
             $authors = stream_get_contents($resource);
@@ -1153,8 +1158,10 @@ EOD;
                 ARRAY_A
             );
             $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            @fputcsv(
-                $resource,
+            $writer = new Csv_Writer(
+                $resource, new Csv_Dialect(array('delimiter' => ';', 'quoting' => Csv_Dialect::QUOTE_ALL))
+            );
+            $writer->writeRow(
                 array(
                     'id' => 'Identifier',
                     'article_id' => 'Article Identifier',
@@ -1164,7 +1171,7 @@ EOD;
                 ';'
             );
             foreach ($articles_authors AS $article_author) {
-                @fputcsv($resource, $article_author, ';');
+                $writer->writeRow($article_author);
             }
             @rewind($resource);
             $articles_authors = stream_get_contents($resource);
