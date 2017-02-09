@@ -481,7 +481,6 @@ EOD;
     $query = <<<EOD
 CREATE TABLE IF NOT EXISTS `%sauthors` (
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `document_id` INT(11) UNSIGNED NOT NULL,
     `name` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `first_name` VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
     `url` TEXT COLLATE utf8_unicode_ci NOT NULL,
@@ -507,16 +506,6 @@ EOD;
     $query = <<<EOD
 ALTER TABLE `%sarticles`
     ADD CONSTRAINT `%sarticles_document_id`
-    FOREIGN KEY (`document_id`)
-    REFERENCES `%sdocuments` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE;
-EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, references_management_get_prefix(), references_management_get_prefix(), references_management_get_prefix()));
-
-    $query = <<<EOD
-ALTER TABLE `%sauthors`
-    ADD CONSTRAINT `%sauthors_document_id`
     FOREIGN KEY (`document_id`)
     REFERENCES `%sdocuments` (`id`)
     ON DELETE CASCADE
@@ -745,7 +734,6 @@ EOD;
                             $GLOBALS['wpdb']->insert(
                                 sprintf('%sauthors', references_management_get_prefix()),
                                 array(
-                                    'document_id' => $document_id,
                                     'name' => $author['name'],
                                     'first_name' => $author['first_name'],
                                     'url' => $author['url'],
@@ -801,7 +789,7 @@ EOD;
                 ARRAY_A
             );
             $query = <<<EOD
-SELECT `%sauthors`.`name`
+SELECT `%sauthors`.`name`, `%sauthors`.`first_name`
 FROM `%sauthors`
 INNER JOIN `%sarticles_authors` ON
 `%sarticles_authors`.`article_id` = %%d AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
@@ -929,6 +917,7 @@ EOD;
                                 references_management_get_prefix(),
                                 references_management_get_prefix(),
                                 references_management_get_prefix(),
+                                references_management_get_prefix(),
                                 $k
                             ),
                             $article['id'],
@@ -947,6 +936,7 @@ EOD;
                         $GLOBALS['wpdb']->prepare(
                             sprintf(
                                 $query,
+                                references_management_get_prefix(),
                                 references_management_get_prefix(),
                                 references_management_get_prefix(),
                                 references_management_get_prefix(),
@@ -1112,13 +1102,9 @@ EOD;
             $query = <<<EOD
 SELECT id, name, first_name, url
 FROM `%sauthors`
-WHERE `document_id` = %%d
 ORDER BY `id` ASC
 EOD;
-            $authors = $GLOBALS['wpdb']->get_results(
-                $GLOBALS['wpdb']->prepare(sprintf($query, references_management_get_prefix()), $document['id']),
-                ARRAY_A
-            );
+            $authors = $GLOBALS['wpdb']->get_results(sprintf($query, references_management_get_prefix()), ARRAY_A);
             $resource = @fopen('php://temp/maxmemory:999999999', 'w');
             $writer = new Csv_Writer(
                 $resource, new Csv_Dialect(array('delimiter' => ';', 'quoting' => Csv_Dialect::QUOTE_ALL))
@@ -1146,14 +1132,13 @@ WHERE
 )
 AND
 `author_id` IN (
-    SELECT `id` FROM `%sauthors` WHERE `document_id` = %%d
+    SELECT `id` FROM `%sauthors`
 )
 ORDER BY `id` ASC
 EOD;
             $articles_authors = $GLOBALS['wpdb']->get_results(
                 $GLOBALS['wpdb']->prepare(
                     sprintf($query, references_management_get_prefix(), references_management_get_prefix(), references_management_get_prefix()),
-                    $document['id'],
                     $document['id']
                 ),
                 ARRAY_A
