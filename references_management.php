@@ -293,9 +293,10 @@ function references_management_get_url($first_name, $last_name)
 function references_management_get_items($xml, $text)
 {
     $items = array();
-    if (!empty($text)) {
-        $text = explode("\n", $text);
+    if (empty($text)) {
+        $text = '';
     }
+    $text = explode("\n", $text);
     foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
         try {
             $item = array();
@@ -409,38 +410,35 @@ function references_management_get_items($xml, $text)
             $item['references_editors'] = references_management_get_references_editors($item['authors']);
             $item['references_all'] = references_management_get_references_all($item);
             $item['endnote'] = '';
-            if (is_array($text)) {
-                foreach ($text as $index => $line) {
-                    if (
-                        (
-                            !empty($item['title_1'])
-                            &&
-                            !empty($item['year'])
-                            &&
-                            strpos($line, $item['title_1']) !== false
-                            &&
-                            strpos($line, $item['year']) !== false
-                        )
-                        ||
-                        (
-                            !empty($item['url'])
-                            &&
-                            strpos($line, $item['url']) !== false
-                        )
-                    ) {
+            foreach ($text as $line) {
+                if (
+                    (
+                        !empty($item['title_1'])
+                        &&
+                        !empty($item['year'])
+                        &&
+                        strpos($line, $item['title_1']) !== false
+                        &&
+                        strpos($line, $item['year']) !== false
+                    )
+                    ||
+                    (
+                        !empty($item['url'])
+                        &&
+                        strpos($line, $item['url']) !== false
+                    )
+                ) {
+                        $item['endnote'] = $line;
+                } else {
+                    foreach ($item['authors'] as $author) {
+                        if (strpos($line, $author['name']) !== false) {
                             $item['endnote'] = $line;
-                            break;
-                    } else {
-                        foreach ($item['authors'] as $author) {
-                            if (strpos($line, $author['name']) !== false) {
-                                $item['endnote'] = $line;
-                                break;
-                            }
-                        }
-                        if (!empty($item['endnote'])) {
                             break;
                         }
                     }
+                }
+                if (!empty($item['endnote'])) {
+                    break;
                 }
             }
             $items[] = $item;
@@ -819,7 +817,7 @@ EOD;
                         </tr>
                         <tr>
                             <td class="label">
-                                <label for="file_2">txt File</label>
+                                <label for="file_2">TXT File</label>
                             </td>
                             <td><input id="file" name="file_2" type="file"></td>
                         </tr>
