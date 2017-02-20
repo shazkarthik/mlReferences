@@ -290,9 +290,12 @@ function references_management_get_url($first_name, $last_name)
     return '';
 }
 
-function references_management_get_items($xml)
+function references_management_get_items($xml, $text)
 {
     $items = array();
+    if (!empty($text)) {
+        $text = explode("\n", $text);
+    }
     foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
         try {
             $item = array();
@@ -405,6 +408,41 @@ function references_management_get_items($xml)
             $item['references_authors'] = references_management_get_references_authors($item['authors']);
             $item['references_editors'] = references_management_get_references_editors($item['authors']);
             $item['references_all'] = references_management_get_references_all($item);
+            $item['endnote'] = '';
+            if (is_array($text)) {
+                foreach ($text as $index => $line) {
+                    if (
+                        (
+                            !empty($item['title_1'])
+                            &&
+                            !empty($item['year'])
+                            &&
+                            strpos($line, $item['title_1']) !== false
+                            &&
+                            strpos($line, $item['year']) !== false
+                        )
+                        ||
+                        (
+                            !empty($item['url'])
+                            &&
+                            strpos($line, $item['url']) !== false
+                        )
+                    ) {
+                            $item['endnote'] = $line;
+                            break;
+                    } else {
+                        foreach ($item['authors'] as $author) {
+                            if (strpos($line, $author['name']) !== false) {
+                                $item['endnote'] = $line;
+                                break;
+                            }
+                        }
+                        if (!empty($item['endnote'])) {
+                            break;
+                        }
+                    }
+                }
+            }
             $items[] = $item;
         } catch (Exception $exception) {
             return array(sprintf('references_management_get_items() - %s', $exception->getMessage()), array());
@@ -456,6 +494,7 @@ CREATE TABLE IF NOT EXISTS `%sarticles` (
     `references_authors` TEXT COLLATE utf8_unicode_ci NOT NULL,
     `references_editors` TEXT COLLATE utf8_unicode_ci NOT NULL,
     `references_all` TEXT COLLATE utf8_unicode_ci NOT NULL,
+    `endnote` TEXT COLLATE utf8_unicode_ci,
     PRIMARY KEY (`id`),
     KEY `number` (`number`),
     KEY `type` (`type`),
@@ -639,7 +678,8 @@ function references_management_dashboard()
         case 'upload':
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 list($errors, $items) = references_management_get_items(
-                    file_get_contents($_FILES['file']['tmp_name'])
+                    file_get_contents($_FILES['file_1']['tmp_name']),
+                    !empty($_FILES['file_2']['name']) ? file_get_contents($_FILES['file_2']['tmp_name']): null
                 );
                 if ($errors) {
                     $_SESSION['references_management']['flashes'] = array(
@@ -672,14 +712,14 @@ function references_management_dashboard()
                 $GLOBALS['wpdb']->insert(
                     sprintf('%sdocuments', references_management_get_prefix()),
                     array(
-                        'name' => $_FILES['file']['name'],
+                        'name' => $_FILES['file_1']['name'],
                     )
                 );
                 $document_id = $GLOBALS['wpdb']->insert_id;
                 references_management_get_directory(array($document_id));
                 copy(
-                    $_FILES['file']['tmp_name'],
-                    references_management_get_file(array($document_id, $_FILES['file']['name']))
+                    $_FILES['file_1']['tmp_name'],
+                    references_management_get_file(array($document_id, $_FILES['file_1']['name']))
                 );
                 foreach ($items AS $item) {
                     $GLOBALS['wpdb']->insert(
@@ -711,6 +751,7 @@ function references_management_dashboard()
                             'references_authors' => $item['references_authors'],
                             'references_editors' => $item['references_editors'],
                             'references_all' => $item['references_all'],
+                            'endnote' => $item['endnote'],
                         )
                     );
                     $article_id = $GLOBALS['wpdb']->insert_id;
@@ -771,8 +812,16 @@ EOD;
                     >
                     <table class="bordered widefat wp-list-table">
                         <tr>
-                            <td class="label"><label for="file">File</label></td>
-                            <td><input id="file" name="file" type="file"></td>
+                            <td class="label">
+                                <label for="file_1">XML File</label>
+                            </td>
+                            <td><input id="file" name="file_1" type="file"></td>
+                        </tr>
+                        <tr>
+                            <td class="label">
+                                <label for="file_2">txt File</label>
+                            </td>
+                            <td><input id="file" name="file_2" type="file"></td>
                         </tr>
                     </table>
                     <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
@@ -1048,7 +1097,8 @@ citations_parenthetical_first,
 citations_parenthetical_subsequent,
 references_authors,
 references_editors,
-references_all
+references_all,
+endnote
 FROM `%sarticles`
 WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
@@ -1089,6 +1139,7 @@ EOD;
                     'references_authors' => 'Authors Publish Reference',
                     'references_editors' => 'Editors Publish Reference',
                     'references_all' => 'Reference Entry',
+                    'endnote' => 'EndNote',
                 )
             );
 
@@ -1212,6 +1263,7 @@ EOD;
                             'references_authors' => $article[23],
                             'references_editors' => $article[24],
                             'references_all' => $article[25],
+                            'endnote' => $article[26],
                         ),
                         array(
                             'id' => $article[0]
@@ -1711,7 +1763,8 @@ SELECT
     `citations_first`,
     `citations_subsequent`,
     `citations_parenthetical_first`,
-    `citations_parenthetical_subsequent`
+    `citations_parenthetical_subsequent`,
+    `endnote`
 FROM `%sarticles`
 ORDER BY `title_1` ASC
 EOD;
@@ -1739,6 +1792,7 @@ EOD;
                 <th class="narrow">Style 2</th>
                 <th class="narrow">Style 3</th>
                 <th class="narrow">Style 4</th>
+                <th class="narrow">Style 5</th>
             </tr>
             <?php foreach ($articles AS $key => $value) : ?>
                 <tr
@@ -1780,6 +1834,14 @@ EOD;
                         >
                         <a class="dashicons dashicons-plus add float-right" title="Add"></a>
                         <?php echo substr($value['citations_parenthetical_subsequent'], 0, 10); ?>...
+                    </td>
+                    <td
+                        class="narrow"
+                        data-style="endnote"
+                        title="<?php echo $value['endnote']; ?>"
+                        >
+                        <a class="dashicons dashicons-plus add float-right" title="Add"></a>
+                        <?php echo substr($value['endnote'], 0, 10); ?>...
                     </td>
                 </tr>
             <?php endforeach; ?>
