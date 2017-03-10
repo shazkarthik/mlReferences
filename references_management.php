@@ -297,6 +297,23 @@ function references_management_get_items($xml, $text)
         $text = '';
     }
     $text = explode("\n", $text);
+    $text_titles_1 = array();
+    $text_titles_2 = array();
+    $text_authors = array();
+
+    foreach ($text as $line) {
+        $line = trim($line);
+        $line = preg_split("#\((\d\d\d\d|n\.d\.)\)\s*\.#", $line);
+        $text_authors[] = trim($line[0]);
+        $line[1] = explode('.', $line[1], 2);
+        if (count($line[1]) === 2) {
+            $text_titles_1[] = trim($line[1][0]);
+            $text_titles_2[] = '';
+        } else if (count($line[1]) === 1) {
+            $text_titles_1[] = '';
+            $text_titles_2[] = trim($line[1][0]);
+        }
+    }
     foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
         try {
             $item = array();
@@ -349,8 +366,18 @@ function references_management_get_items($xml, $text)
             $item['isbn'] = str_replace("\r", ' ', $item['isbn']);
             $item['isbn'] = str_replace("\t", ' ', $item['isbn']);
             $item['isbn'] = preg_replace('/[^0-9A-Z]/', '', $item['isbn']);
+            $isbn = '';
             $item['isbn'] = explode(' ', $item['isbn']);
-            $item['isbn'] = $item['isbn'][0];
+            foreach($item['isbn'] as $isbn_) {
+                if (substr($isbn_, 0, 1) === '9') {
+                    $isbn = $isbn_;
+                }
+            }
+            if (!empty($isbn)) {
+                $item['isbn'] = $isbn;
+            } else {
+                $item['isbn'] = $item['isbn'][0];
+            }
             if (strlen($item['isbn']) === 8) {
                 $item['issn'] = sprintf('%s-%s', substr($item['isbn'], 0, 4), substr($item['isbn'], 4, 4));
                 $item['isbn'] = '';
@@ -410,35 +437,39 @@ function references_management_get_items($xml, $text)
             $item['references_editors'] = references_management_get_references_editors($item['authors']);
             $item['references_all'] = references_management_get_references_all($item);
             $item['endnote'] = '';
-            foreach ($text as $line) {
-                if (
-                    (
-                        !empty($item['title_1'])
-                        &&
-                        !empty($item['year'])
-                        &&
-                        strpos($line, $item['title_1']) !== false
-                        &&
-                        strpos($line, $item['year']) !== false
-                    )
-                    ||
-                    (
-                        !empty($item['url'])
-                        &&
-                        strpos($line, $item['url']) !== false
-                    )
-                ) {
-                        $item['endnote'] = $line;
+            $key = array_search($item['title_1'], $text_titles_1);
+            $author_keys = array();
+            if ($key !== false) {
+                $item['endnote'] = $text[$key];
+                unset($text[$key]);
+                unset($text_titles_1[$key]);
+                unset($text_titles_2[$key]);
+            } else {
+                $title_pattern = sprintf('@.*?%s.*?@', $item['title_1']);
+                $title_array = preg_grep($title_pattern, $text_titles_2);
+                if (!empty($title_array)) {
+                    $key = array_keys($title_array)[0];
+                    $item['endnote'] = $text[$key];
+                    unset($text[$key]);
+                    unset($text_titles_1[$key]);
+                    unset($text_titles_2[$key]);
                 } else {
                     foreach ($item['authors'] as $author) {
-                        if (strpos($line, $author['name']) !== false) {
-                            $item['endnote'] = $line;
-                            break;
+                        $author_pattern_1 = sprintf('@.*?%s.*?@', $author['name']);
+                        $author_pattern_2 = sprintf('@.*?%s.*?@', $author['first_name']);
+                        $author_name = preg_grep($author_pattern_1, $text_authors);
+                        if (!empty($author_name)) {
+                            $author_keys[] = array_keys($author_name)[0];
+                        } else {
+                            $author_name = preg_grep($author_pattern_2, $text_authors);
+                            $author_keys[] = array_keys($author_name)[0];
                         }
                     }
-                }
-                if (!empty($item['endnote'])) {
-                    break;
+                    if (count(array_unique($author_keys)) == 1) {
+                        $item['endnote'] = $text[$author_keys[0]];
+                        unset($text[$author_keys[0]]);
+                        unset($text_authors[$author_keys[0]]);
+                    }
                 }
             }
             $items[] = $item;
