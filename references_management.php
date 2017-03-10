@@ -445,31 +445,37 @@ function references_management_get_items($xml, $text)
                 unset($text_titles_1[$key]);
                 unset($text_titles_2[$key]);
             } else {
-                $title_pattern = sprintf('@.*?%s.*?@', $item['title_1']);
-                $title_array = preg_grep($title_pattern, $text_titles_2);
-                if (!empty($title_array)) {
-                    $key = array_keys($title_array)[0];
-                    $item['endnote'] = trim($text[$key]);
-                    unset($text[$key]);
-                    unset($text_titles_1[$key]);
-                    unset($text_titles_2[$key]);
-                } else {
-                    foreach ($item['authors'] as $author) {
-                        $author_pattern_1 = sprintf('@.*?%s.*?@', $author['name']);
-                        $author_pattern_2 = sprintf('@.*?%s.*?@', $author['first_name']);
-                        $author_name = preg_grep($author_pattern_1, $text_authors);
-                        if (!empty($author_name)) {
-                            $author_keys[] = array_keys($author_name)[0];
-                        } else {
-                            $author_name = preg_grep($author_pattern_2, $text_authors);
-                            $author_keys[] = array_keys($author_name)[0];
+                foreach ($text_titles_2 as $text_title) {
+                    if (empty($text_title)) {
+                        continue;
+                    }
+                    if (strpos($item['title_1'], $text_title) == 0) {
+                        $key = array_search($text_title, $text_titles_2);
+                        if ($key !== false) {
+                            $item['endnote'] = trim($text[$key]);
+                            unset($text[$key]);
+                            unset($text_titles_1[$key]);
+                            unset($text_titles_2[$key]);
                         }
                     }
-                    if (count(array_unique($author_keys)) == 1) {
-                        $item['endnote'] = trim($text[$author_keys[0]]);
-                        unset($text[$author_keys[0]]);
-                        unset($text_authors[$author_keys[0]]);
+                }
+            }
+            if (empty($item['endnote'])) {
+                foreach ($item['authors'] as $author) {
+                    $author_pattern_1 = sprintf('@.*?%s.*?@', $author['name']);
+                    $author_pattern_2 = sprintf('@.*?%s.*?@', $author['first_name']);
+                    $author_name = preg_grep($author_pattern_1, $text_authors);
+                    if (!empty($author_name)) {
+                        $author_keys[] = array_keys($author_name)[0];
+                    } else {
+                        $author_name = preg_grep($author_pattern_2, $text_authors);
+                        $author_keys[] = array_keys($author_name)[0];
                     }
+                }
+                if (count(array_unique($author_keys)) == 1) {
+                    $item['endnote'] = trim($text[$author_keys[0]]);
+                    unset($text[$author_keys[0]]);
+                    unset($text_authors[$author_keys[0]]);
                 }
             }
             $items[] = $item;
