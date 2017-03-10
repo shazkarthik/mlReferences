@@ -440,7 +440,7 @@ function references_management_get_items($xml, $text)
             $key = array_search($item['title_1'], $text_titles_1);
             $author_keys = array();
             if ($key !== false) {
-                $item['endnote'] = $text[$key];
+                $item['endnote'] = trim($text[$key]);
                 unset($text[$key]);
                 unset($text_titles_1[$key]);
                 unset($text_titles_2[$key]);
@@ -449,7 +449,7 @@ function references_management_get_items($xml, $text)
                 $title_array = preg_grep($title_pattern, $text_titles_2);
                 if (!empty($title_array)) {
                     $key = array_keys($title_array)[0];
-                    $item['endnote'] = $text[$key];
+                    $item['endnote'] = trim($text[$key]);
                     unset($text[$key]);
                     unset($text_titles_1[$key]);
                     unset($text_titles_2[$key]);
@@ -466,7 +466,7 @@ function references_management_get_items($xml, $text)
                         }
                     }
                     if (count(array_unique($author_keys)) == 1) {
-                        $item['endnote'] = $text[$author_keys[0]];
+                        $item['endnote'] = trim($text[$author_keys[0]]);
                         unset($text[$author_keys[0]]);
                         unset($text_authors[$author_keys[0]]);
                     }
