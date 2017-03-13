@@ -456,6 +456,7 @@ function references_management_get_items($xml, $text)
                             unset($text[$key]);
                             unset($text_titles_1[$key]);
                             unset($text_titles_2[$key]);
+                            break;
                         }
                     }
                 }
