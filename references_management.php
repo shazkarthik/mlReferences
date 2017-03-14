@@ -293,39 +293,54 @@ function references_management_get_url($first_name, $last_name)
 function references_management_get_items($xml, $text)
 {
     $items = array();
+
     if (empty($text)) {
         $text = '';
     }
     $text = explode("\n", $text);
+    $text = array_map('trim', $text);
     $text_titles_1 = array();
     $text_titles_2 = array();
     $text_authors = array();
-
     foreach ($text as $line) {
-        $line = trim($line);
         $line = preg_split("#\((\d\d\d\d|n\.d\.)\)\s*\.#", $line);
-        $text_authors[] = trim($line[0]);
         $line[1] = explode('.', $line[1], 2);
-        if (count($line[1]) === 2) {
-            $text_titles_1[] = trim($line[1][0]);
+        $line[1][0] = trim($line[1][0]);
+        $line[1][1] = trim($line[1][1]);
+        $count = count($line[1]);
+        if ($count === 2) {
+            $text_titles_1[] = $line[1][0];
             $text_titles_2[] = '';
-        } else if (count($line[1]) === 1) {
-            $text_titles_1[] = '';
-            $text_titles_2[] = trim($line[1][0]);
         }
+        if ($count === 1) {
+            $text_titles_1[] = '';
+            $text_titles_2[] = $line[1][0];
+        }
+        $text_authors[] = $line[0];
     }
+
     foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
         try {
             $item = array();
+
             $item['number'] = (string) array_pop($value->xpath('rec-number'));
+
             $item['type'] = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
+
             $item['title_1'] = (string) array_pop($value->xpath('titles/title/style'));
+
             $item['title_2'] = (string) array_pop($value->xpath('titles/secondary-title/style'));
+
             $item['year'] = (string) array_pop($value->xpath('dates/year/style'));
+
             $item['volume'] = (string) array_pop($value->xpath('volume/style'));
+
             $item['issue'] = (string) array_pop($value->xpath('number/style'));
+
             $item['page'] = (string) array_pop($value->xpath('pages/style'));
+
             $urls = $value->xpath('urls/related-urls/url/style');
+
             $item['url'] = '';
             foreach ($urls AS $url) {
                 $url = (string) $url;
@@ -334,6 +349,7 @@ function references_management_get_items($xml, $text)
                     break;
                 }
             }
+
             $item['doi'] = '';
             foreach ($urls AS $url) {
                 $url = (string) $url;
@@ -342,6 +358,7 @@ function references_management_get_items($xml, $text)
                     break;
                 }
             }
+
             $item['issn'] = (string) array_pop($value->xpath('orig-pub/style'));
             if ($item['issn'] === 'Contents') {
                 $item['issn'] = '';
@@ -350,7 +367,9 @@ function references_management_get_items($xml, $text)
                 $item['issn'] = '';
             }
             $item['issn'] = str_replace('ISSN: ', '', $item['issn']);
+
             $item['original_publication'] = (string) array_pop($value->xpath('orig-pub/style'));
+
             $item['isbn'] = (string) array_pop($value->xpath('isbn/style'));
             if ($item['isbn'] === 'ISBN') {
                 $item['isbn'] = '';
@@ -366,11 +385,13 @@ function references_management_get_items($xml, $text)
             $item['isbn'] = str_replace("\r", ' ', $item['isbn']);
             $item['isbn'] = str_replace("\t", ' ', $item['isbn']);
             $item['isbn'] = preg_replace('/[^0-9A-Z]/', '', $item['isbn']);
+
             $isbn = '';
             $item['isbn'] = explode(' ', $item['isbn']);
-            foreach($item['isbn'] as $isbn_) {
-                if (substr($isbn_, 0, 1) === '9') {
-                    $isbn = $isbn_;
+            foreach($item['isbn'] as $k => $v) {
+                if (substr($v, 0, 1) === '9') {
+                    $isbn = $v;
+                    break;
                 }
             }
             if (!empty($isbn)) {
@@ -378,6 +399,7 @@ function references_management_get_items($xml, $text)
             } else {
                 $item['isbn'] = $item['isbn'][0];
             }
+
             if (strlen($item['isbn']) === 8) {
                 $item['issn'] = sprintf('%s-%s', substr($item['isbn'], 0, 4), substr($item['isbn'], 4, 4));
                 $item['isbn'] = '';
@@ -388,12 +410,19 @@ function references_management_get_items($xml, $text)
                     $item['isbn'] = '';
                 }
             }
+
             $item['label'] = (string) array_pop($value->xpath('label/style'));
+
             $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
+
             $item['place_published'] = (string) array_pop($value->xpath('pub-location/style'));
+
             $item['access_date'] = (string) array_pop($value->xpath('access-date/style'));
+
             $item['attachment'] = (string) array_pop($value->xpath('urls/pdf-urls/url'));
+
             $item['attachment'] = str_replace('internal-pdf', '', $item['attachment']);
+
             $item['authors'] = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
                 $name = (string) $name->style;
@@ -423,67 +452,96 @@ function references_management_get_items($xml, $text)
                     'url' => references_management_get_url($explode[1], $explode[0]),
                 );
             }
+
             $item['citations_first'] = references_management_get_citations_first($item['authors'], $item['year']);
+
             $item['citations_subsequent'] = references_management_get_citations_subsequent(
                 $item['authors'], $item['year']
             );
+
             $item['citations_parenthetical_first'] = references_management_get_citations_parenthetical_first(
                 $item['authors'], $item['year']
             );
+
             $item['citations_parenthetical_subsequent'] = references_management_get_citations_parenthetical_subsequent(
                 $item['authors'], $item['year']
             );
+
             $item['references_authors'] = references_management_get_references_authors($item['authors']);
+
             $item['references_editors'] = references_management_get_references_editors($item['authors']);
+
             $item['references_all'] = references_management_get_references_all($item);
+
             $item['endnote'] = '';
-            $key = array_search($item['title_1'], $text_titles_1);
-            $author_keys = array();
-            if ($key !== false) {
-                $item['endnote'] = trim($text[$key]);
-                unset($text[$key]);
-                unset($text_titles_1[$key]);
-                unset($text_titles_2[$key]);
-            } else {
+
+            $endnote_title = false;
+            foreach ($text_titles_1 as $k => $v) {
+                if ($text_titles_1[$k] === $item['title_1']) {
+                    if (strpos($text[$k], sprintf('(%s)', $item['year'])) !== false) {
+                        $endnote_title = $k;
+                    }
+                    if (!empty($item['publisher']) && strpos($text[$k], $item['publisher']) !== false) {
+                        $endnote_title = $k;
+                    }
+                    if (!empty($item['place_published']) && strpos($text[$k], $item['place_published']) !== false) {
+                        $endnote_title = $k;
+                    }
+                }
+            }
+            if ($endnote_title === false) {
                 foreach ($text_titles_2 as $text_title) {
                     if (empty($text_title)) {
                         continue;
                     }
-                    if (strpos($item['title_1'], $text_title) == 0) {
-                        $key = array_search($text_title, $text_titles_2);
-                        if ($key !== false) {
-                            $item['endnote'] = trim($text[$key]);
-                            unset($text[$key]);
-                            unset($text_titles_1[$key]);
-                            unset($text_titles_2[$key]);
-                            break;
+                    if (strpos($item['title_1'], $text_title) === 0) {
+                        $endnote_title = array_search($text_title, $text_titles_2);
+                        break;
+                    }
+                }
+            }
+
+            $endnote_author = false;
+            $author_keys = array();
+            foreach ($item['authors'] as $author) {
+                $author_pattern = sprintf('@(%s,[\s])|([&][\s]%s[\s])@', $author['name'], $author['name']);
+                $author_name = preg_grep($author_pattern, $text_authors);
+                if (!empty($author_name)) {
+                    $author_keys[] = array_keys($author_name);
+                }
+            }
+
+            $count_1 = count($item['authors']);
+            $count_2 = count($author_keys);
+            if ($count_1 > 0) {
+                if ($count_1 === 1) {
+                    if ($count_2 === 1) {
+                        $endnote_author = $author_keys[0][0];
+                    }
+                } else {
+                    if ($count_1 === $count_2) {
+                        $author_keys = call_user_func_array('array_intersect', array_values($author_keys));
+                        if (count($author_keys) === 1) {
+                            $endnote_author = array_pop($author_keys);
                         }
                     }
                 }
             }
-            if (empty($item['endnote'])) {
-                foreach ($item['authors'] as $author) {
-                    $author_pattern_1 = sprintf('@.*?%s.*?@', $author['name']);
-                    $author_pattern_2 = sprintf('@.*?%s.*?@', $author['first_name']);
-                    $author_name = preg_grep($author_pattern_1, $text_authors);
-                    if (!empty($author_name)) {
-                        $author_keys[] = array_keys($author_name)[0];
-                    } else {
-                        $author_name = preg_grep($author_pattern_2, $text_authors);
-                        $author_keys[] = array_keys($author_name)[0];
-                    }
-                }
-                if (count(array_unique($author_keys)) == 1) {
-                    $item['endnote'] = trim($text[$author_keys[0]]);
-                    unset($text[$author_keys[0]]);
-                    unset($text_authors[$author_keys[0]]);
-                }
+
+            if ($endnote_title !== false and $endnote_author !== false and $endnote_title === $endnote_author) {
+                $item['endnote'] = $text[$endnote_title];
+                unset($text[$endnote_title]);
+                unset($text_titles_1[$endnote_title]);
+                unset($text_titles_2[$endnote_title]);
+                unset($text_authors[$endnote_title]);
             }
+
             $items[] = $item;
         } catch (Exception $exception) {
             return array(sprintf('references_management_get_items() - %s', $exception->getMessage()), array());
         }
     }
+
     return array(array(), $items);
 }
 
@@ -1513,11 +1571,13 @@ function references_management_faq()
                         <li>URL</li>
                         <li>DOI</li>
                         <li>ISSN</li>
+                        <li>Original Publication</li>
                         <li>ISBN</li>
                         <li>Label</li>
                         <li>Publisher</li>
                         <li>Place Published</li>
                         <li>Access Date</li>
+                        <li>Attachment</li>
                         <li>Authors Publish Text First</li>
                         <li>Authors Publish Text Subsequent</li>
                         <li>Authors Publish Text First Parenthetical</li>
@@ -1525,6 +1585,7 @@ function references_management_faq()
                         <li>Authors Publish Reference</li>
                         <li>Editors Publish Reference</li>
                         <li>Reference Entry</li>
+                        <li>EndNote</li>
                     </ul>
                 </li>
                 <li>
