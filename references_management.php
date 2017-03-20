@@ -39,6 +39,11 @@ function references_management_filters_editor($item)
     return $item['role'] === 'Editor';
 }
 
+function references_management_filters_authors($item)
+{
+    return strlen($item) > 1;
+}
+
 function references_management_uasort($one, $two)
 {
     preg_match("|[a-zA-Z]|", $one['string'], $match);
@@ -240,7 +245,7 @@ function references_management_get_shortcodes($contents)
     );
     if (!empty($matches)) {
         $number = 0;
-        foreach ($matches as $match) {
+        foreach ($matches AS $match) {
             $number++;
             $article = $GLOBALS['wpdb']->get_row(
                 $GLOBALS['wpdb']->prepare(
@@ -290,6 +295,66 @@ function references_management_get_url($first_name, $last_name)
     return '';
 }
 
+function references_management_get_endnote($item, &$text)
+{
+    foreach ($text AS $key => $value) {
+        $statuses = array(
+            'title' => false,
+            'authors' => false,
+        );
+
+        $value = preg_split('#\((\d\d\d\d|n\.d\.)\)\s*\.#', $value);
+        $value[0] = trim($value[0]);
+        $value[1] = trim($value[1]);
+
+        $strlen = strlen($item['title_1']);
+        $title_1 = substr($value[1], 0, $strlen);
+        if ($item['title_1'] === $title_1) {
+            if (
+                (!empty($item['year']) AND strpos($text[$key], sprintf('(%s)', $item['year'])) !== false)
+                OR
+                (!empty($item['publisher']) AND strpos($text[$key], $item['publisher']) !== false)
+                OR
+                (!empty($item['place_published']) AND strpos($text[$key], $item['place_published']) !== false)
+            ) {
+                $statuses['title'] = true;
+            }
+        }
+
+        $authors = $value[0];
+        $authors = preg_split('/[^\p{L}a-zA-Z-]/iu', $authors);
+        $authors = array_filter($authors, 'references_management_filters_authors');
+        $count_1 = count($authors);
+        $count_2 = 0;
+        foreach ($item['authors'] AS $author) {
+            if (in_array($author['name'], $authors)) {
+                $count_2 += 1;
+            }
+        }
+        if ($count_2 === $count_1) {
+            $statuses['authors'] = true;
+        }
+
+        if ($statuses['title'] === true AND $statuses['authors'] === true) {
+            return $key;
+        }
+    }
+
+    return -1;
+}
+
+function references_management_get_csv_dialect()
+{
+    return new Csv_Dialect(array(
+        'delimiter' => ';',
+        'escapechar' => "\"",
+        'lineterminator' => "\n",
+        'quotechar' => "\"",
+        'quoting' => Csv_Dialect::QUOTE_ALL,
+        'skipblanklines' => true,
+    ));
+}
+
 function references_management_get_items($xml, $text)
 {
     $items = array();
@@ -299,25 +364,6 @@ function references_management_get_items($xml, $text)
     }
     $text = explode("\n", $text);
     $text = array_map('trim', $text);
-    $text_titles_1 = array();
-    $text_titles_2 = array();
-    $text_authors = array();
-    foreach ($text as $line) {
-        $line = preg_split("#\((\d\d\d\d|n\.d\.)\)\s*\.#", $line);
-        $line[1] = explode('.', $line[1], 2);
-        $line[1][0] = trim($line[1][0]);
-        $line[1][1] = trim($line[1][1]);
-        $count = count($line[1]);
-        if ($count === 2) {
-            $text_titles_1[] = $line[1][0];
-            $text_titles_2[] = '';
-        }
-        if ($count === 1) {
-            $text_titles_1[] = '';
-            $text_titles_2[] = $line[1][0];
-        }
-        $text_authors[] = $line[0];
-    }
 
     foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
         try {
@@ -388,7 +434,7 @@ function references_management_get_items($xml, $text)
 
             $isbn = '';
             $item['isbn'] = explode(' ', $item['isbn']);
-            foreach($item['isbn'] as $k => $v) {
+            foreach($item['isbn'] AS $k => $v) {
                 if (substr($v, 0, 1) === '9') {
                     $isbn = $v;
                     break;
@@ -475,65 +521,10 @@ function references_management_get_items($xml, $text)
 
             $item['endnote'] = '';
 
-            $endnote_title = false;
-            foreach ($text_titles_1 as $k => $v) {
-                if ($text_titles_1[$k] === $item['title_1']) {
-                    if (strpos($text[$k], sprintf('(%s)', $item['year'])) !== false) {
-                        $endnote_title = $k;
-                    }
-                    if (!empty($item['publisher']) && strpos($text[$k], $item['publisher']) !== false) {
-                        $endnote_title = $k;
-                    }
-                    if (!empty($item['place_published']) && strpos($text[$k], $item['place_published']) !== false) {
-                        $endnote_title = $k;
-                    }
-                }
-            }
-            if ($endnote_title === false) {
-                foreach ($text_titles_2 as $text_title) {
-                    if (empty($text_title)) {
-                        continue;
-                    }
-                    if (strpos($item['title_1'], $text_title) === 0) {
-                        $endnote_title = array_search($text_title, $text_titles_2);
-                        break;
-                    }
-                }
-            }
-
-            $endnote_author = false;
-            $author_keys = array();
-            foreach ($item['authors'] as $author) {
-                $author_pattern = sprintf('@(%s,[\s])|([&][\s]%s[\s])@', $author['name'], $author['name']);
-                $author_name = preg_grep($author_pattern, $text_authors);
-                if (!empty($author_name)) {
-                    $author_keys[] = array_keys($author_name);
-                }
-            }
-
-            $count_1 = count($item['authors']);
-            $count_2 = count($author_keys);
-            if ($count_1 > 0) {
-                if ($count_1 === 1) {
-                    if ($count_2 === 1) {
-                        $endnote_author = $author_keys[0][0];
-                    }
-                } else {
-                    if ($count_1 === $count_2) {
-                        $author_keys = call_user_func_array('array_intersect', array_values($author_keys));
-                        if (count($author_keys) === 1) {
-                            $endnote_author = array_pop($author_keys);
-                        }
-                    }
-                }
-            }
-
-            if ($endnote_title !== false and $endnote_author !== false and $endnote_title === $endnote_author) {
-                $item['endnote'] = $text[$endnote_title];
-                unset($text[$endnote_title]);
-                unset($text_titles_1[$endnote_title]);
-                unset($text_titles_2[$endnote_title]);
-                unset($text_authors[$endnote_title]);
+            $endnote = references_management_get_endnote($item, $text);
+            if ($endnote !== -1) {
+                $item['endnote'] = $text[$endnote];
+                unset($text[$endnote]);
             }
 
             $items[] = $item;
@@ -1202,9 +1193,8 @@ EOD;
                 ARRAY_A
             );
             $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            $writer = new Csv_Writer(
-                $resource, new Csv_Dialect(array('delimiter' => ';', 'quoting' => Csv_Dialect::QUOTE_ALL))
-            );
+            $dialect = references_management_get_csv_dialect();
+            $writer = new Csv_Writer($resource, $dialect);
             $writer->writeRow(
                 array(
                     'id' => 'Identifier',
@@ -1251,9 +1241,8 @@ ORDER BY `id` ASC
 EOD;
             $authors = $GLOBALS['wpdb']->get_results(sprintf($query, references_management_get_prefix()), ARRAY_A);
             $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            $writer = new Csv_Writer(
-                $resource, new Csv_Dialect(array('delimiter' => ';', 'quoting' => Csv_Dialect::QUOTE_ALL))
-            );
+            $dialect = references_management_get_csv_dialect();
+            $writer = new Csv_Writer($resource, $dialect);
             $writer->writeRow(
                 array(
                     'id' => 'Identifier',
@@ -1289,9 +1278,8 @@ EOD;
                 ARRAY_A
             );
             $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            $writer = new Csv_Writer(
-                $resource, new Csv_Dialect(array('delimiter' => ';', 'quoting' => Csv_Dialect::QUOTE_ALL))
-            );
+            $dialect = references_management_get_csv_dialect();
+            $writer = new Csv_Writer($resource, $dialect);
             $writer->writeRow(
                 array(
                     'id' => 'Identifier',
@@ -2047,7 +2035,7 @@ function references_management_the_content($contents)
         $contents = array();
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $table_of_contents);
         $items = array();
-        foreach ($pages as $page) {
+        foreach ($pages AS $page) {
             $shortcodes = references_management_get_shortcodes($page->post_content);
             if (!empty($shortcodes)) {
                 $items[] = sprintf('<li><a href="%s">%s</a></li>', get_permalink($page->ID), get_the_title($page->ID));
@@ -2060,11 +2048,11 @@ function references_management_the_content($contents)
         }
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $references);
         $items = array();
-        foreach ($pages as $page) {
+        foreach ($pages AS $page) {
             $shortcodes = references_management_get_shortcodes($page->post_content);
             if (!empty($shortcodes)) {
                 uasort($shortcodes, 'references_management_uasort');
-                foreach ($shortcodes as $key => $value) {
+                foreach ($shortcodes AS $key => $value) {
                     if (empty($items[$value['string']])) {
                         $items[$value['string']] = array(
                             'id' => $value['id'],
@@ -2074,7 +2062,7 @@ function references_management_the_content($contents)
                         );
                     }
                     if (!empty($value['numbers'])) {
-                        foreach ($value['numbers'] as $number) {
+                        foreach ($value['numbers'] AS $number) {
                             $items[$value['string']]['numbers'][] = sprintf('%d.%d', $page->ID, $number);
                         }
                     }
@@ -2085,10 +2073,10 @@ function references_management_the_content($contents)
         uasort($items, 'references_management_uasort');
         if (!empty($items)) {
             $contents[] = '<ul role="doc-bibliography">';
-            foreach ($items as $item) {
+            foreach ($items AS $item) {
                 $numbers = array();
                 if (!empty($item['numbers'])) {
-                    foreach ($item['numbers'] as $number) {
+                    foreach ($item['numbers'] AS $number) {
                         $numbers[] = sprintf('[%s]', $number);
                     }
                 }
@@ -2108,7 +2096,7 @@ function references_management_the_content($contents)
         $shortcodes = references_management_get_shortcodes($contents);
         if (!empty($shortcodes)) {
             $index = 0;
-            foreach ($shortcodes as $key => $value) {
+            foreach ($shortcodes AS $key => $value) {
                 $index++;
                 $contents = str_replace(
                     $key,
@@ -2120,10 +2108,10 @@ function references_management_the_content($contents)
             $items = array();
             $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
             $items[] = '<ul role="doc-bibliography">';
-            foreach ($shortcodes as $key => $value) {
+            foreach ($shortcodes AS $key => $value) {
                 $numbers = array();
                 if (!empty($value['numbers'])) {
-                    foreach ($value['numbers'] as $number) {
+                    foreach ($value['numbers'] AS $number) {
                         $numbers[] = sprintf('[%d]', $number);
                     }
                 }
