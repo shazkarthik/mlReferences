@@ -270,34 +270,38 @@ function references_management_get_endnote($item, $text)
         } else {
             references_management_log('    Step 1: Title is not a match');
         }
-        $authors = $value[0];
-        $authors_ = preg_split('/[^\p{L}a-zA-Z-\'’]/iu', $authors);
-        $authors_ = array_filter($authors_, 'references_management_filters_authors');
-        $count_1 = count($authors_);
-        $count_2 = 0;
-        foreach ($item['authors'] AS $author) {
-            if (in_array($author['name'], $authors_)) {
-                $count_2 += 1;
-            }
-        }
-        if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
-            $statuses['authors'] = true;
-            references_management_log('    Step 2.1: Authors are a match');
-        } else {
-            references_management_log('    Step 2.1: Authors are not a match');
-        }
+
         if ($statuses['authors'] === false) {
-            $authors_ = preg_split('/, |& /iu', $authors);
-            $authors_ = array_filter($authors_, 'references_management_filters_authors');
-            $authors_ = array_map('trim', $authors_);
-            $count_1 = count($authors_);
+            $authors_1 = $value[0];
+            $authors_1 = preg_split('/[^\p{L}a-zA-Z-\'’]/iu', $authors_1);
+            $authors_1 = array_filter($authors_1, 'references_management_filters_authors');
+            $count_1 = count($authors_1);
             $count_2 = 0;
             foreach ($item['authors'] AS $author) {
-                if (in_array($author['name'], $authors_)) {
+                if (in_array($author['name'], $authors_1)) {
                     $count_2 += 1;
                 }
             }
-            if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
+            if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
+                $statuses['authors'] = true;
+                references_management_log('    Step 2.1: Authors are a match');
+            } else {
+                references_management_log('    Step 2.1: Authors are not a match');
+            }
+        }
+        if ($statuses['authors'] === false) {
+            $authors_2 = $value[0];
+            $authors_2 = preg_split('/, |& /iu', $authors);
+            $authors_2 = array_filter($authors_2, 'references_management_filters_authors');
+            $authors_2 = array_map('trim', $authors_2);
+            $count_1 = count($authors_2);
+            $count_2 = 0;
+            foreach ($item['authors'] AS $author) {
+                if (in_array($author['name'], $authors_2)) {
+                    $count_2 += 1;
+                }
+            }
+            if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
                 $statuses['authors'] = true;
                 references_management_log('    Step 2.2: Authors are a match');
             } else {
@@ -305,17 +309,18 @@ function references_management_get_endnote($item, $text)
             }
         }
         if ($statuses['authors'] === false) {
-            $authors_ = explode(',', $authors, 2);
-            $authors_ = array_filter($authors_, 'references_management_filters_authors');
-            $authors_ = array_map('trim', $authors_);
-            $count_1 = count($authors_);
+            $authors_3 = $value[0];
+            $authors_3 = explode(',', $authors_3, 2);
+            $authors_3 = array_filter($authors_3, 'references_management_filters_authors');
+            $authors_3 = array_map('trim', $authors_3);
+            $count_1 = count($authors_3);
             $count_2 = 0;
             foreach ($item['authors'] AS $author) {
-                if (in_array($author['name'], $authors_)) {
+                if (in_array($author['name'], $authors_3)) {
                     $count_2 += 1;
                 }
             }
-            if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
+            if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
                 $statuses['authors'] = true;
                 references_management_log('    Step 2.3: Authors are a match');
             } else {
@@ -499,8 +504,6 @@ function references_management_get_items($xml, $text)
                 );
             }
             $item['authors'] = array_unique($item['authors'], SORT_REGULAR);
-
-            print_r($item['authors']);
 
             $item['citations_first'] = references_management_get_citations_first($item['authors'], $item['year']);
 
