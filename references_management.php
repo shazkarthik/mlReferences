@@ -291,7 +291,7 @@ function references_management_get_endnote($item, $text)
         }
         if ($statuses['authors'] === false) {
             $authors_2 = $value[0];
-            $authors_2 = preg_split('/, |& /iu', $authors);
+            $authors_2 = preg_split('/, |& /iu', $authors_2);
             $authors_2 = array_filter($authors_2, 'references_management_filters_authors');
             $authors_2 = array_map('trim', $authors_2);
             $count_1 = count($authors_2);
