@@ -207,26 +207,24 @@ function references_management_get_directory($items)
 function references_management_get_endnote($item, $text)
 {
     $item['authors'] = references_management_get_authors($item);
-    if (defined('WP_DEBUG') && WP_DEBUG === true) {
-        fwrite($fopen, "Processing Article\n");
-        fwrite($fopen, sprintf("    Title          : %s\n", $item['title_1']));
-        fwrite($fopen, sprintf("    Year           : %s\n", $item['year']));
-        fwrite($fopen, sprintf("    Publisher      : %s\n", $item['publisher']));
-        fwrite($fopen, sprintf("    Place Published: %s\n", $item['place_published']));
-        fwrite($fopen, "    Authors\n");
-        foreach ($item['authors'] as $author) {
-            fwrite($fopen, sprintf("        %s, %s\n", $author['name'], $author['first_name']));
-        }
+
+    references_management_log('Processing Article');
+    references_management_log(sprintf('    Title          : %s', $item['title_1']));
+    references_management_log(sprintf('    Year           : %s', $item['year']));
+    references_management_log(sprintf('    Publisher      : %s', $item['publisher']));
+    references_management_log(sprintf('    Place Published: %s', $item['place_published']));
+    references_management_log('    Authors:');
+    foreach ($item['authors'] as $author) {
+        references_management_log(sprintf('        %s, %s', $author['name'], $author['first_name']));
     }
+
     foreach ($text AS $key => $value) {
         $statuses = array(
             'title' => false,
             'authors' => false,
         );
 
-        if (defined('WP_DEBUG') && WP_DEBUG === true) {
-            fwrite($fopen, sprintf("Checking if \"%s\" is a match\n", $value));
-        }
+        references_management_log(sprintf('Checking if "%s" is a match...', $value));
 
         $value_ = array();
 
@@ -288,21 +286,14 @@ function references_management_get_endnote($item, $text)
                 (!empty($item['place_published']) AND strpos($text[$key], $item['place_published']) !== false)
             ) {
                 $statuses['title'] = true;
-                if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                    fwrite($fopen, "Step 1: Title is a match\n");
-                }
+                references_management_log('Step 1: Title is a match');
             } else {
-                if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                    fwrite(
-                        $fopen,
-                        "Step 1.A: Title is match, but may be year or publisher or place published is not matching\n"
-                    );
-                }
+                references_management_log(
+                    'Step 1.A: Title is match, but year and publisher and place published is not a match'
+                );
             }
         } else {
-            if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                fwrite($fopen, "Step 1: Title is not a match\n");
-            }
+            references_management_log('Step 1: Title is not a match');
         }
         $authors = $value[0];
         $authors_ = preg_split('/[^\p{L}a-zA-Z-\'’]/iu', $authors);
@@ -316,20 +307,13 @@ function references_management_get_endnote($item, $text)
         }
         if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
             $statuses['authors'] = true;
-            if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                fwrite($fopen, "Step 2: Authors are a match\n");
-            }
+            references_management_log('Step 2: Authors are a match');
         } else {
-            if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                fwrite($fopen, "Step 2: Authors are not a match\n");
-            }
+            references_management_log('Step 2: Authors are not a match');
         }
         if ($statuses['authors'] === false) {
             $authors_ = preg_split('/, |& /iu', $authors);
-            $authors_ = array_filter(
-                $authors_,
-                'references_management_filters_authors'
-            );
+            $authors_ = array_filter($authors_, 'references_management_filters_authors');
             $authors_ = array_map('trim', $authors_);
             $count_1 = count($authors_);
             $count_2 = 0;
@@ -340,21 +324,14 @@ function references_management_get_endnote($item, $text)
             }
             if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
                 $statuses['authors'] = true;
-                if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                    fwrite($fopen, "Step 2: Authors are a match\n");
-                }
+                references_management_log('Step 2: Authors are a match');
             } else {
-                if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                    fwrite($fopen, "Step 2: Authors are not a match\n");
-                }
+                references_management_log('Step 2: Authors are not a match');
             }
         }
         if ($statuses['authors'] === false) {
             $authors_ = explode(',', $authors, 2);
-            $authors_ = array_filter(
-                $authors_,
-                'references_management_filters_authors'
-            );
+            $authors_ = array_filter($authors_, 'references_management_filters_authors');
             $authors_ = array_map('trim', $authors_);
             $count_1 = count($authors_);
             $count_2 = 0;
@@ -365,37 +342,20 @@ function references_management_get_endnote($item, $text)
             }
             if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
                 $statuses['authors'] = true;
-                if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                    fwrite($fopen, "Step 2: Authors are a match\n");
-                }
+                references_management_log('Step 2: Authors are a match');
             } else {
-                if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                    fwrite($fopen, "Step 2: Authors are not a match\n");
-                }
+                references_management_log('Step 2: Authors are not a match');
             }
         }
 
         if ($statuses['title'] === true AND $statuses['authors'] === true) {
-            if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                fwrite($fopen, "Success: We have a match.\n");
-            }
+            references_management_log('Success: We have a match.');
             return $key;
         } else {
-            if (defined('WP_DEBUG') && WP_DEBUG === true) {
-                fwrite(
-                    $fopen,
-                    "Failure: We do not have a match. Continuing onto the next line.\n"
-                );
-            }
+            references_management_log('Failure: We do not have a match. Continuing onto the next line.');
         }
     }
-    if (defined('WP_DEBUG') && WP_DEBUG === true) {
-        fwrite(
-            $fopen,
-            "Failure: None of the lines in the *TXT* file were a match.\n"
-        );
-    }
-
+    references_management_log('Failure: None of the lines in the *TXT* file were a match.');
     return -1;
 }
 
@@ -408,8 +368,6 @@ function references_management_get_file($items)
 
 function references_management_get_items($xml, $text)
 {
-    $fopen = fopen(sprintf('%d.log', time()), 'w');
-
     $items = array();
 
     if (empty($text)) {
@@ -612,8 +570,6 @@ function references_management_get_items($xml, $text)
             return array(sprintf('references_management_get_items() - %s', $exception->getMessage()), array());
         }
     }
-
-    fclose($fopen);
 
     return array(array(), $items);
 }
