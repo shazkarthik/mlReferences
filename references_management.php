@@ -391,21 +391,29 @@ function references_management_get_items($xml, $text)
         try {
             $item = array();
 
-            $item['number'] = (string) array_pop($value->xpath('rec-number'));
+            $item['number'] = $value->xpath('rec-number');
+            $item['number'] = (string) array_pop($item['number']);
 
-            $item['type'] = (string) array_pop($value->xpath('ref-type'))->attributes()['name'];
+            $item['type'] = $value->xpath('ref-type');
+            $item['type'] = (string) array_pop($item['type'])->attributes()['name'];
 
-            $item['title_1'] = (string) array_pop($value->xpath('titles/title/style'));
+            $item['title_1'] = $value->xpath('titles/title/style');
+            $item['title_1'] = (string) array_pop($item['title_1']);
 
-            $item['title_2'] = (string) array_pop($value->xpath('titles/secondary-title/style'));
+            $item['title_2'] = $value->xpath('titles/secondary-title/style');
+            $item['title_2'] = (string) array_pop($item['title_2']);
 
-            $item['year'] = (string) array_pop($value->xpath('dates/year/style'));
+            $item['year'] = $value->xpath('dates/year/style');
+            $item['year'] = (string) array_pop($item['year']);
 
-            $item['volume'] = (string) array_pop($value->xpath('volume/style'));
+            $item['volume'] = $value->xpath('volume/style');
+            $item['volume'] = (string) array_pop($item['volume']);
 
-            $item['issue'] = (string) array_pop($value->xpath('number/style'));
+            $item['issue'] = $value->xpath('number/style');
+            $item['issue'] = (string) array_pop($item['issue']);
 
-            $item['page'] = (string) array_pop($value->xpath('pages/style'));
+            $item['page'] = $value->xpath('pages/style');
+            $item['page'] = (string) array_pop($item['page']);
 
             $urls = $value->xpath('urls/related-urls/url/style');
 
@@ -427,7 +435,8 @@ function references_management_get_items($xml, $text)
                 }
             }
 
-            $item['issn'] = (string) array_pop($value->xpath('orig-pub/style'));
+            $item['issn'] = $value->xpath('orig-pub/style');
+            $item['issn'] = (string) array_pop($item['issn']);
             if ($item['issn'] === 'Contents') {
                 $item['issn'] = '';
             }
@@ -436,9 +445,11 @@ function references_management_get_items($xml, $text)
             }
             $item['issn'] = str_replace('ISSN: ', '', $item['issn']);
 
-            $item['original_publication'] = (string) array_pop($value->xpath('orig-pub/style'));
+            $item['original_publication'] = $value->xpath('orig-pub/style');
+            $item['original_publication'] = (string) array_pop($item['original_publication']);
 
-            $item['isbn'] = (string) array_pop($value->xpath('isbn/style'));
+            $item['isbn'] = $value->xpath('isbn/style');
+            $item['isbn'] = (string) array_pop($item['isbn']);
             if ($item['isbn'] === 'ISBN') {
                 $item['isbn'] = '';
             }
@@ -479,16 +490,20 @@ function references_management_get_items($xml, $text)
                 }
             }
 
-            $item['label'] = (string) array_pop($value->xpath('label/style'));
+            $item['label'] = $value->xpath('label/style');
+            $item['label'] = (string) array_pop($item['label']);
 
-            $item['publisher'] = (string) array_pop($value->xpath('publisher/style'));
+            $item['publisher'] = $value->xpath('publisher/style');
+            $item['publisher'] = (string) array_pop($item['publisher']);
 
-            $item['place_published'] = (string) array_pop($value->xpath('pub-location/style'));
+            $item['place_published'] = $value->xpath('pub-location/style');
+            $item['place_published'] = (string) array_pop($item['place_published']);
 
-            $item['access_date'] = (string) array_pop($value->xpath('access-date/style'));
+            $item['access_date'] = $value->xpath('access-date/style');
+            $item['access_date'] = (string) array_pop($item['access_date']);
 
-            $item['attachment'] = (string) array_pop($value->xpath('urls/pdf-urls/url'));
-
+            $item['attachment'] = $value->xpath('urls/pdf-urls/url');
+            $item['attachment'] = (string) array_pop($item['attachment']);
             $item['attachment'] = str_replace('internal-pdf', '', $item['attachment']);
 
             $item['authors'] = array();
