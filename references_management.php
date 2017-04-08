@@ -59,9 +59,9 @@ function references_management_filters_authors($item)
 
 function references_management_uasort($one, $two)
 {
-    preg_match("|[a-zA-Z]|", $one['string'], $match);
+    preg_match('#[a-zA-Z]#', $one['string'], $match);
     $one = $match[0];
-    preg_match("|[a-zA-Z]|", $two['string'], $match);
+    preg_match('#[a-zA-Z]#', $two['string'], $match);
     $two = $match[0];
     if ($one === $two) {
         return 0;
