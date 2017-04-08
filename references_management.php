@@ -250,8 +250,7 @@ function references_management_get_shortcodes($contents)
 {
     $items = array();
     preg_match_all(
-        "~\[references_management\s*id=(?:(?:&#.*?;)|\")(.*?)(?:(?:&#.*?;)|\")\s*style=(?:(?:&#.*?;)|\")(.*?)".
-        "(?:(?:&#.*?;)|\")\]~",
+        '/\[references_management id=&#\d+;(.*?)&#\d+; style=&#\d+;(.*?)&#\d+;\]/',
         $contents,
         $matches,
         PREG_SET_ORDER
