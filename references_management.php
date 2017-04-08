@@ -41,13 +41,13 @@ function references_management_filters_editor($item)
 
 function references_management_filters_authors($item)
 {
+    if ($item === 'Ed') {
+        return false;
+    }
+    if ($item === 'Eds') {
+        return false;
+    }
     if (substr($item, 0, 1) == '-') {
-        return false;
-    }
-    if ($item === "Eds") {
-        return false;
-    }
-    if ($item === "Ed") {
         return false;
     }
     if (preg_match('#[A-Za-z]\.$#', $item) !== 0) {
