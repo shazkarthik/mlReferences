@@ -78,6 +78,27 @@ function references_management_uasort($one, $two)
     return ($one < $two)? -1: 1;
 }
 
+function references_management_get_author($name)
+{
+    $explode = array();
+    $name = (string) $name->style;
+    $preg_match = preg_match('#".*?"$#', $name, $matches);
+    if ($preg_match !== 0) {
+        $explode[0] = $matches[0];
+    } else {
+        if (strpos($name, ',') !== false) {
+            $explode = explode(',', $name, 2);
+        } else {
+            $explode = explode(' ', $name, 2);
+        }
+    }
+    $explode = array_map('trim', $explode);
+    if (!$explode[0]) {
+        return false;
+    }
+    return $explode;
+}
+
 function references_management_get_authors($item)
 {
     $authors = array();
@@ -482,54 +503,29 @@ function references_management_get_items($xml, $text)
 
             $item['authors'] = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
-                $name = (string) $name->style;
-                $explode = array();
-                $result = preg_match('#".*?"$#', $name, $matches);
-                if ($result !== 0) {
-                    $explode[0] = $matches[0];
-                } else if (strpos($name, ',') !== false) {
-                    $explode = explode(',', $name, 2);
-                } else {
-                    $explode = explode(' ', $name, 2);
-                }
-                $explode = array_map('trim', $explode);
-                if (!$explode[0]) {
+                $author = references_management_get_author($name);
+                if ($author === false) {
                     continue;
                 }
                 $item['authors'][] = array(
-                    'name' => $explode[0],
-                    'first_name' => !empty($explode[1])? $explode[1]: '',
+                    'name' => $author[0],
+                    'first_name' => !empty($author[1])? $author[1]: '',
                     'role' => 'Author',
-                    'url' => references_management_get_url(!empty($explode[1])? $explode[1]: '', $explode[0]),
+                    'url' => references_management_get_url(!empty($author[1])? $author[1]: '', $author[0]),
                 );
-                unset($explode);
-                unset($name);
             }
             foreach ($value->xpath('contributors/secondary-authors/author') AS $name) {
-                $name = (string) $name->style;
-                $explode = array();
-                $result = preg_match('#".*?"$#', $name, $matches);
-                if ($result !== 0) {
-                    $explode[0] = $matches[0];
-                } else if (strpos($name, ',') !== false) {
-                    $explode = explode(',', $name, 2);
-                } else {
-                    $explode = explode(' ', $name, 2);
-                }
-                $explode = array_map('trim', $explode);
-                if (!$explode[0]) {
+                $author = references_management_get_author($name);
+                if ($author === false) {
                     continue;
                 }
                 $item['authors'][] = array(
-                    'name' => $explode[0],
-                    'first_name' => !empty($explode[1])? $explode[1]: '',
-                    'role' => 'Editor',
-                    'url' => references_management_get_url(!empty($explode[1])? $explode[1]: '', $explode[0]),
+                    'name' => $author[0],
+                    'first_name' => !empty($author[1])? $author[1]: '',
+                    'role' => 'Author',
+                    'url' => references_management_get_url(!empty($author[1])? $author[1]: '', $author[0]),
                 );
-                unset($explode);
-                unset($name);
             }
-
             $item['authors'] = array_unique($item['authors'], SORT_REGULAR);
 
             $item['citations_first'] = references_management_get_citations_first($item['authors'], $item['year']);
