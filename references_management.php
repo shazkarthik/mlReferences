@@ -41,6 +41,19 @@ function references_management_filters_editor($item)
 
 function references_management_filters_authors($item)
 {
+    if (substr($item, 0, 1) == '-') {
+        return false;
+    }
+    if ($item === "Eds") {
+        return false;
+    }
+    if ($item === "Ed") {
+        return false;
+    }
+    if (preg_match('#[A-Za-z]\.$#', $item) !== 0) {
+        return false;
+    }
+
     return strlen($item) > 1;
 }
 
@@ -295,49 +308,195 @@ function references_management_get_url($first_name, $last_name)
     return '';
 }
 
-function references_management_get_endnote($item, &$text)
+function references_management_get_endnote($item, &$text, $item_authors, $fopen)
 {
+    if (defined('WP_DEBUG') && WP_DEBUG === true) {
+        fwrite($fopen, "Processing Article\n");
+        fwrite($fopen, sprintf("    Title          : %s\n", $item['title_1']));
+        fwrite($fopen, sprintf("    Year           : %s\n", $item['year']));
+        fwrite($fopen, sprintf("    Publisher      : %s\n", $item['publisher']));
+        fwrite($fopen, sprintf("    Place Published: %s\n", $item['place_published']));
+        fwrite($fopen, "    Authors\n");
+        foreach ($item['authors'] as $author) {
+            fwrite($fopen, sprintf("        %s, %s\n", $author['name'], $author['first_name']));
+        }
+    }
     foreach ($text AS $key => $value) {
         $statuses = array(
             'title' => false,
             'authors' => false,
         );
 
-        $value = preg_split('#\((\d\d\d\d|n\.d\.)\)\s*\.#', $value);
-        $value[0] = trim($value[0]);
-        $value[1] = trim($value[1]);
+        if (defined('WP_DEBUG') && WP_DEBUG === true) {
+            fwrite($fopen, sprintf("Checking if \"%s\" is a match\n", $value));
+        }
+
+        $value_ = array();
+
+        $value_ = preg_split('#\((\d\d\d\d|n\.d\.)\)\s*\.#', $value);
+        if (count($value_) < 2) {
+            $value_ = preg_split(
+                '#\((\d\d\d\d, \d\d\d\d|n\.d\.)\)\s*\.#',
+                $value
+            );
+        }
+        if (count($value_) < 2) {
+            $value_ = preg_split(
+                '#\((\d\d\d\d, [A-Za-z]{3,}\.? \d{1,},? \d\d\d\d|n\.d\.)\)\s*\.#',
+                $value
+            );
+        }
+        if (count($value_) < 2) {
+            $value_ = preg_split(
+                '#\((\d\d\d\d, \d{1,2}-\d{1,2} [A-Za-z]{3,}\.? \d\d\d\d|n\.d\.)\)\s*\.#',
+                $value
+            );
+        }
+        if (count($value_) < 2) {
+            $value_ = preg_split(
+                '#\((\d\d\d\d, \d{1,}\.\d{1,}\.\d\d\d\d|n\.d\.|n\.d\., \d{1,}\.\d{1,}\.\d\d\d\d)\)\s*\.#',
+                $value
+            );
+        }
+        if (count($value_) < 2) {
+            $value_ = preg_split(
+                '#\((\d\d\d\d, [A-Za-z]{3,} \d{1,} \d\d\d\d\-[a-zA-Z]{3,} \d{1,} \d\d\d\d|n\.d\.)\)\s*\.#',
+                $value
+            );
+        }
+
+        $value_[0] = trim($value_[0]);
+        $value_[1] = trim($value_[1]);
+
+        $value = $value_;
 
         $strlen = strlen($item['title_1']);
         $title_1 = substr($value[1], 0, $strlen);
-        if ($item['title_1'] === $title_1) {
+        if (
+            $item['title_1'] === $title_1
+            // &&
+            // (
+            //     preg_match(sprintf('#%s\s*\.#', $item['title_1']), $value[1]) !== 0
+            //     ||
+            //     preg_match(sprintf('#%s\s*\?#', $item['title_1']), $value[1]) !== 0
+            //     ||
+            //     preg_match(sprintf('#%s\s*Retrieved#', $item['title_1']), $value[1]) !== 0
+            // )
+        ) {
             if (
-                (!empty($item['year']) AND strpos($text[$key], sprintf('(%s)', $item['year'])) !== false)
+                (!empty($item['year']) AND strpos($text[$key], $item['year']) !== false)
                 OR
                 (!empty($item['publisher']) AND strpos($text[$key], $item['publisher']) !== false)
                 OR
                 (!empty($item['place_published']) AND strpos($text[$key], $item['place_published']) !== false)
             ) {
                 $statuses['title'] = true;
+                if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                    fwrite($fopen, "Step 1: Title is a match\n");
+                }
+            } else {
+                if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                    fwrite(
+                        $fopen,
+                        "Step 1.A: Title is match, but may be year or publisher or place published is not matching\n"
+                    );
+                }
+            }
+        } else {
+            if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                fwrite($fopen, "Step 1: Title is not a match\n");
             }
         }
-
         $authors = $value[0];
-        $authors = preg_split('/[^\p{L}a-zA-Z-]/iu', $authors);
-        $authors = array_filter($authors, 'references_management_filters_authors');
-        $count_1 = count($authors);
+        $authors_ = preg_split('/[^\p{L}a-zA-Z-\'’]/iu', $authors);
+        $authors_ = array_filter($authors_, 'references_management_filters_authors');
+        $count_1 = count($authors_);
         $count_2 = 0;
-        foreach ($item['authors'] AS $author) {
-            if (in_array($author['name'], $authors)) {
+        foreach ($item_authors AS $author) {
+            if (in_array($author['name'], $authors_)) {
                 $count_2 += 1;
             }
         }
-        if ($count_2 === $count_1) {
+        if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
             $statuses['authors'] = true;
+            if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                fwrite($fopen, "Step 2: Authors are a match\n");
+            }
+        } else {
+            if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                fwrite($fopen, "Step 2: Authors are not a match\n");
+            }
+        }
+        if ($statuses['authors'] === false) {
+            $authors_ = preg_split('/, |& /iu', $authors);
+            $authors_ = array_filter(
+                $authors_,
+                'references_management_filters_authors'
+            );
+            $authors_ = array_map('trim', $authors_);
+            $count_1 = count($authors_);
+            $count_2 = 0;
+            foreach ($item_authors AS $author) {
+                if (in_array($author['name'], $authors_)) {
+                    $count_2 += 1;
+                }
+            }
+            if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
+                $statuses['authors'] = true;
+                if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                    fwrite($fopen, "Step 2: Authors are a match\n");
+                }
+            } else {
+                if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                    fwrite($fopen, "Step 2: Authors are not a match\n");
+                }
+            }
+        }
+        if ($statuses['authors'] === false) {
+            $authors_ = explode(',', $authors, 2);
+            $authors_ = array_filter(
+                $authors_,
+                'references_management_filters_authors'
+            );
+            $authors_ = array_map('trim', $authors_);
+            $count_1 = count($authors_);
+            $count_2 = 0;
+            foreach ($item_authors AS $author) {
+                if (in_array($author['name'], $authors_)) {
+                    $count_2 += 1;
+                }
+            }
+            if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
+                $statuses['authors'] = true;
+                if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                    fwrite($fopen, "Step 2: Authors are a match\n");
+                }
+            } else {
+                if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                    fwrite($fopen, "Step 2: Authors are not a match\n");
+                }
+            }
         }
 
         if ($statuses['title'] === true AND $statuses['authors'] === true) {
+            if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                fwrite($fopen, "Success: We have a match.\n");
+            }
             return $key;
+        } else {
+            if (defined('WP_DEBUG') && WP_DEBUG === true) {
+                fwrite(
+                    $fopen,
+                    "Failure: We do not have a match. Continuing onto the next line.\n"
+                );
+            }
         }
+    }
+    if (defined('WP_DEBUG') && WP_DEBUG === true) {
+        fwrite(
+            $fopen,
+            "Failure: None of the lines in the *TXT* file were a match.\n"
+        );
     }
 
     return -1;
@@ -357,6 +516,8 @@ function references_management_get_csv_dialect()
 
 function references_management_get_items($xml, $text)
 {
+    $fopen = fopen(sprintf('%d.log', time()), 'w');
+
     $items = array();
 
     if (empty($text)) {
@@ -470,34 +631,75 @@ function references_management_get_items($xml, $text)
             $item['attachment'] = str_replace('internal-pdf', '', $item['attachment']);
 
             $item['authors'] = array();
+            $authors = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
                 $name = (string) $name->style;
-                $explode = explode(',', $name, 2);
+                $explode = array();
+                $result = preg_match('#".*?"$#', $name, $matches);
+                if ($result !== 0) {
+                    $explode[0] = $matches[0];
+                } else if (strpos($name, ',') !== false) {
+                    $explode = explode(',', $name, 2);
+                } else {
+                    $explode = explode(' ', $name, 2);
+                }
                 $explode = array_map('trim', $explode);
-                if (!$explode[0] or !$explode[1]) {
+                if (!$explode[0]) {
                     continue;
                 }
                 $item['authors'][] = array(
                     'name' => $explode[0],
-                    'first_name' => $explode[1],
+                    'first_name' => !empty($explode[1])? $explode[1]: '',
                     'role' => 'Author',
-                    'url' => references_management_get_url($explode[1], $explode[0]),
+                    'url' => references_management_get_url(
+                        !empty($explode[1])? $explode[1]: '',
+                        $explode[0]
+                    ),
                 );
+                $authors[] = array(
+                    'name' => $explode[0],
+                    'first_name' => !empty($explode[1])? $explode[1]: '',
+                );
+
+                unset($explode);
+                unset($name);
             }
             foreach ($value->xpath('contributors/secondary-authors/author') AS $name) {
                 $name = (string) $name->style;
-                $explode = explode(',', $name, 2);
+                $explode = array();
+                $result = preg_match('#".*?"$#', $name, $matches);
+                if ($result !== 0) {
+                    $explode[0] = $matches[0];
+                } else if (strpos($name, ',') !== false) {
+                    $explode = explode(',', $name, 2);
+                } else {
+                    $explode = explode(' ', $name, 2);
+                }
                 $explode = array_map('trim', $explode);
-                if (!$explode[0] or !$explode[1]) {
+                if (!$explode[0]) {
                     continue;
                 }
                 $item['authors'][] = array(
                     'name' => $explode[0],
-                    'first_name' => $explode[1],
+                    'first_name' => !empty($explode[1])? $explode[1]: '',
                     'role' => 'Editor',
-                    'url' => references_management_get_url($explode[1], $explode[0]),
+                    'url' => references_management_get_url(
+                        !empty($explode[1])? $explode[1]: '',
+                        $explode[0]
+                    ),
                 );
+
+                $authors[] = array(
+                    'name' => $explode[0],
+                    'first_name' => !empty($explode[1])? $explode[1]: '',
+                );
+
+                unset($explode);
+                unset($name);
             }
+
+            $item['authors'] = array_unique($item['authors'], SORT_REGULAR);
+            $authors = array_unique($authors, SORT_REGULAR);
 
             $item['citations_first'] = references_management_get_citations_first($item['authors'], $item['year']);
 
@@ -521,7 +723,7 @@ function references_management_get_items($xml, $text)
 
             $item['endnote'] = '';
 
-            $endnote = references_management_get_endnote($item, $text);
+            $endnote = references_management_get_endnote($item, $text, $authors, $fopen);
             if ($endnote !== -1) {
                 $item['endnote'] = $text[$endnote];
                 unset($text[$endnote]);
@@ -532,6 +734,8 @@ function references_management_get_items($xml, $text)
             return array(sprintf('references_management_get_items() - %s', $exception->getMessage()), array());
         }
     }
+
+    fclose($fopen);
 
     return array(array(), $items);
 }
