@@ -57,11 +57,12 @@ function references_management_filters_editor($item)
     return $item['role'] === 'Editor';
 }
 
-function references_management_log(&$fopen, $contents)
+function references_management_log($contents)
 {
     if (defined('WP_DEBUG') && WP_DEBUG === true) {
-        fwrite($fopen, $contents);
-        fwrite($fopen, "\n");
+        $file = 'references_management.log';
+        file_put_contents($file, $contents, FILE_APPEND);
+        file_put_contents($file, "\n", FILE_APPEND);
     }
 }
 
@@ -75,6 +76,19 @@ function references_management_uasort($one, $two)
         return 0;
     }
     return ($one < $two)? -1: 1;
+}
+
+function references_management_get_authors($item)
+{
+    $authors = array();
+    foreach ($item['authors'] as $author) {
+        $authors[] = array(
+            'name' => $author['name'],
+            'first_name' => $author['first_name'],
+        );
+    }
+    $authors = array_unique($authors, SORT_REGULAR);
+    return $authors;
 }
 
 function references_management_get_citations_first($authors, $year)
@@ -190,8 +204,9 @@ function references_management_get_directory($items)
     return $directory;
 }
 
-function references_management_get_endnote($item, &$text, $item_authors, $fopen)
+function references_management_get_endnote($item, $text)
 {
+    $item['authors'] = references_management_get_authors($item);
     if (defined('WP_DEBUG') && WP_DEBUG === true) {
         fwrite($fopen, "Processing Article\n");
         fwrite($fopen, sprintf("    Title          : %s\n", $item['title_1']));
@@ -294,7 +309,7 @@ function references_management_get_endnote($item, &$text, $item_authors, $fopen)
         $authors_ = array_filter($authors_, 'references_management_filters_authors');
         $count_1 = count($authors_);
         $count_2 = 0;
-        foreach ($item_authors AS $author) {
+        foreach ($item['authors'] AS $author) {
             if (in_array($author['name'], $authors_)) {
                 $count_2 += 1;
             }
@@ -318,7 +333,7 @@ function references_management_get_endnote($item, &$text, $item_authors, $fopen)
             $authors_ = array_map('trim', $authors_);
             $count_1 = count($authors_);
             $count_2 = 0;
-            foreach ($item_authors AS $author) {
+            foreach ($item['authors'] AS $author) {
                 if (in_array($author['name'], $authors_)) {
                     $count_2 += 1;
                 }
@@ -343,7 +358,7 @@ function references_management_get_endnote($item, &$text, $item_authors, $fopen)
             $authors_ = array_map('trim', $authors_);
             $count_1 = count($authors_);
             $count_2 = 0;
-            foreach ($item_authors AS $author) {
+            foreach ($item['authors'] AS $author) {
                 if (in_array($author['name'], $authors_)) {
                     $count_2 += 1;
                 }
@@ -508,7 +523,6 @@ function references_management_get_items($xml, $text)
             $item['attachment'] = str_replace('internal-pdf', '', $item['attachment']);
 
             $item['authors'] = array();
-            $authors = array();
             foreach ($value->xpath('contributors/authors/author') AS $name) {
                 $name = (string) $name->style;
                 $explode = array();
@@ -533,11 +547,6 @@ function references_management_get_items($xml, $text)
                         $explode[0]
                     ),
                 );
-                $authors[] = array(
-                    'name' => $explode[0],
-                    'first_name' => !empty($explode[1])? $explode[1]: '',
-                );
-
                 unset($explode);
                 unset($name);
             }
@@ -565,18 +574,11 @@ function references_management_get_items($xml, $text)
                         $explode[0]
                     ),
                 );
-
-                $authors[] = array(
-                    'name' => $explode[0],
-                    'first_name' => !empty($explode[1])? $explode[1]: '',
-                );
-
                 unset($explode);
                 unset($name);
             }
 
             $item['authors'] = array_unique($item['authors'], SORT_REGULAR);
-            $authors = array_unique($authors, SORT_REGULAR);
 
             $item['citations_first'] = references_management_get_citations_first($item['authors'], $item['year']);
 
@@ -599,8 +601,7 @@ function references_management_get_items($xml, $text)
             $item['references_all'] = references_management_get_references_all($item);
 
             $item['endnote'] = '';
-
-            $endnote = references_management_get_endnote($item, $text, $authors, $fopen);
+            $endnote = references_management_get_endnote($item, $text);
             if ($endnote !== -1) {
                 $item['endnote'] = $text[$endnote];
                 unset($text[$endnote]);
