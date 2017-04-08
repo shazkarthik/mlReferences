@@ -264,7 +264,7 @@ function references_management_get_endnote($item, $text)
                 references_management_log('    Step 1: Title is a match');
             } else {
                 references_management_log(
-                    '    Step 1.A: Title is a match, but year/publisher/place published is not a match'
+                    '    Step 1: Title is a match, but year/publisher/place published is not a match'
                 );
             }
         } else {
@@ -282,9 +282,9 @@ function references_management_get_endnote($item, $text)
         }
         if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
             $statuses['authors'] = true;
-            references_management_log('    Step 2: Authors are a match');
+            references_management_log('    Step 2.1: Authors are a match');
         } else {
-            references_management_log('    Step 2: Authors are not a match');
+            references_management_log('    Step 2.1: Authors are not a match');
         }
         if ($statuses['authors'] === false) {
             $authors_ = preg_split('/, |& /iu', $authors);
@@ -299,9 +299,9 @@ function references_management_get_endnote($item, $text)
             }
             if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
                 $statuses['authors'] = true;
-                references_management_log('    Step 2: Authors are a match');
+                references_management_log('    Step 2.2: Authors are a match');
             } else {
-                references_management_log('    Step 2: Authors are not a match');
+                references_management_log('    Step 2.2: Authors are not a match');
             }
         }
         if ($statuses['authors'] === false) {
@@ -317,9 +317,9 @@ function references_management_get_endnote($item, $text)
             }
             if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
                 $statuses['authors'] = true;
-                references_management_log('    Step 2: Authors are a match');
+                references_management_log('    Step 2.3: Authors are a match');
             } else {
-                references_management_log('    Step 2: Authors are not a match');
+                references_management_log('    Step 2.3: Authors are not a match');
             }
         }
 
@@ -499,6 +499,8 @@ function references_management_get_items($xml, $text)
                 );
             }
             $item['authors'] = array_unique($item['authors'], SORT_REGULAR);
+
+            print_r($item['authors']);
 
             $item['citations_first'] = references_management_get_citations_first($item['authors'], $item['year']);
 
@@ -690,8 +692,8 @@ function references_management_get_value($value_1)
             $value_1
         );
     }
-    $value_2[0] = trim($value_2[0]);
-    $value_2[1] = trim($value_2[1]);
+    $value_2[0] = trim(@$value_2[0]);
+    $value_2[1] = trim(@$value_2[1]);
     return $value_2;
 }
 
