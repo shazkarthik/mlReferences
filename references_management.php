@@ -229,7 +229,8 @@ function references_management_get_endnote($item, $text)
 {
     $item['authors'] = references_management_get_authors($item);
 
-    references_management_log('Processing Article');
+    references_management_log(str_repeat('-', 80));
+    references_management_log('Article');
     references_management_log(sprintf('    Title          : %s', $item['title_1']));
     references_management_log(sprintf('    Year           : %s', $item['year']));
     references_management_log(sprintf('    Publisher      : %s', $item['publisher']));
@@ -247,44 +248,7 @@ function references_management_get_endnote($item, $text)
 
         references_management_log(sprintf('Checking if "%s" is a match...', $value));
 
-        $value_ = array();
-
-        $value_ = preg_split('#\((\d\d\d\d|n\.d\.)\)\s*\.#', $value);
-        if (count($value_) < 2) {
-            $value_ = preg_split(
-                '#\((\d\d\d\d, \d\d\d\d|n\.d\.)\)\s*\.#',
-                $value
-            );
-        }
-        if (count($value_) < 2) {
-            $value_ = preg_split(
-                '#\((\d\d\d\d, [A-Za-z]{3,}\.? \d{1,},? \d\d\d\d|n\.d\.)\)\s*\.#',
-                $value
-            );
-        }
-        if (count($value_) < 2) {
-            $value_ = preg_split(
-                '#\((\d\d\d\d, \d{1,2}-\d{1,2} [A-Za-z]{3,}\.? \d\d\d\d|n\.d\.)\)\s*\.#',
-                $value
-            );
-        }
-        if (count($value_) < 2) {
-            $value_ = preg_split(
-                '#\((\d\d\d\d, \d{1,}\.\d{1,}\.\d\d\d\d|n\.d\.|n\.d\., \d{1,}\.\d{1,}\.\d\d\d\d)\)\s*\.#',
-                $value
-            );
-        }
-        if (count($value_) < 2) {
-            $value_ = preg_split(
-                '#\((\d\d\d\d, [A-Za-z]{3,} \d{1,} \d\d\d\d\-[a-zA-Z]{3,} \d{1,} \d\d\d\d|n\.d\.)\)\s*\.#',
-                $value
-            );
-        }
-
-        $value_[0] = trim($value_[0]);
-        $value_[1] = trim($value_[1]);
-
-        $value = $value_;
+        $value = references_management_get_value($value);
 
         $strlen = strlen($item['title_1']);
         $title_1 = substr($value[1], 0, $strlen);
@@ -297,14 +261,14 @@ function references_management_get_endnote($item, $text)
                 (!empty($item['place_published']) AND strpos($text[$key], $item['place_published']) !== false)
             ) {
                 $statuses['title'] = true;
-                references_management_log('Step 1: Title is a match');
+                references_management_log('    Step 1: Title is a match');
             } else {
                 references_management_log(
-                    'Step 1.A: Title is match, but year and publisher and place published is not a match'
+                    '    Step 1.A: Title is a match, but year/publisher/place published is not a match'
                 );
             }
         } else {
-            references_management_log('Step 1: Title is not a match');
+            references_management_log('    Step 1: Title is not a match');
         }
         $authors = $value[0];
         $authors_ = preg_split('/[^\p{L}a-zA-Z-\'’]/iu', $authors);
@@ -316,11 +280,11 @@ function references_management_get_endnote($item, $text)
                 $count_2 += 1;
             }
         }
-        if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
+        if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
             $statuses['authors'] = true;
-            references_management_log('Step 2: Authors are a match');
+            references_management_log('    Step 2: Authors are a match');
         } else {
-            references_management_log('Step 2: Authors are not a match');
+            references_management_log('    Step 2: Authors are not a match');
         }
         if ($statuses['authors'] === false) {
             $authors_ = preg_split('/, |& /iu', $authors);
@@ -335,9 +299,9 @@ function references_management_get_endnote($item, $text)
             }
             if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
                 $statuses['authors'] = true;
-                references_management_log('Step 2: Authors are a match');
+                references_management_log('    Step 2: Authors are a match');
             } else {
-                references_management_log('Step 2: Authors are not a match');
+                references_management_log('    Step 2: Authors are not a match');
             }
         }
         if ($statuses['authors'] === false) {
@@ -353,20 +317,23 @@ function references_management_get_endnote($item, $text)
             }
             if (($count_2 === $count_1) && ($count_1 > 0) && ($count_2 > 0)) {
                 $statuses['authors'] = true;
-                references_management_log('Step 2: Authors are a match');
+                references_management_log('    Step 2: Authors are a match');
             } else {
-                references_management_log('Step 2: Authors are not a match');
+                references_management_log('    Step 2: Authors are not a match');
             }
         }
 
         if ($statuses['title'] === true AND $statuses['authors'] === true) {
-            references_management_log('Success: We have a match.');
+            references_management_log('    Success: We have a match!');
+            references_management_log(str_repeat('-', 80));
             return $key;
         } else {
-            references_management_log('Failure: We do not have a match. Continuing onto the next line.');
+            references_management_log('    Failure: We do not have a match!');
+            references_management_log('    Continuing onto the next line...');
         }
     }
-    references_management_log('Failure: None of the lines in the *TXT* file were a match.');
+    references_management_log('Failure: None of the lines in the TXT file were a match!');
+    references_management_log(str_repeat('-', 80));
     return -1;
 }
 
@@ -699,6 +666,35 @@ function references_management_get_url($first_name, $last_name)
     return '';
 }
 
+function references_management_get_value($value_1)
+{
+    $value_2 = preg_split('#\((\d\d\d\d|n\.d\.)\)\s*\.#', $value_1);
+    if (count($value_2) < 2) {
+        $value_2 = preg_split('#\((\d\d\d\d, \d\d\d\d|n\.d\.)\)\s*\.#', $value_1);
+    }
+    if (count($value_2) < 2) {
+        $value_2 = preg_split('#\((\d\d\d\d, [A-Za-z]{3,}\.? \d{1,},? \d\d\d\d|n\.d\.)\)\s*\.#', $value_1);
+    }
+    if (count($value_2) < 2) {
+        $value_2 = preg_split('#\((\d\d\d\d, \d{1,2}-\d{1,2} [A-Za-z]{3,}\.? \d\d\d\d|n\.d\.)\)\s*\.#', $value_1);
+    }
+    if (count($value_2) < 2) {
+        $value_2 = preg_split(
+            '#\((\d\d\d\d, \d{1,}\.\d{1,}\.\d\d\d\d|n\.d\.|n\.d\., \d{1,}\.\d{1,}\.\d\d\d\d)\)\s*\.#',
+            $value_1
+        );
+    }
+    if (count($value_2) < 2) {
+        $value_2 = preg_split(
+            '#\((\d\d\d\d, [A-Za-z]{3,} \d{1,} \d\d\d\d\-[a-zA-Z]{3,} \d{1,} \d\d\d\d|n\.d\.)\)\s*\.#',
+            $value_1
+        );
+    }
+    $value_2[0] = trim($value_2[0]);
+    $value_2[1] = trim($value_2[1]);
+    return $value_2;
+}
+
 function references_management_register_activation_hook()
 {
     references_management_register_deactivation_hook();
@@ -939,7 +935,7 @@ function references_management_dashboard()
     if (!current_user_can('manage_options')) {
         wp_die('You do not have permissions to access this page.');
     }
-    $action = $_REQUEST['action']? $_REQUEST['action']: '';
+    $action = @$_REQUEST['action']? $_REQUEST['action']: '';
     ?>
     <div class="references_management wrap">
         <?php
