@@ -1504,7 +1504,12 @@ ORDER BY `id` ASC
 EOD;
             $articles_authors = $GLOBALS['wpdb']->get_results(
                 $GLOBALS['wpdb']->prepare(
-                    sprintf($query, references_management_get_prefix(), references_management_get_prefix(), references_management_get_prefix()),
+                    sprintf(
+                        $query,
+                        references_management_get_prefix(),
+                        references_management_get_prefix(),
+                        references_management_get_prefix()
+                    ),
                     $document['id']
                 ),
                 ARRAY_A
