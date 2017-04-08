@@ -1895,7 +1895,10 @@ function references_management_add_meta_boxes_1($page)
                     <label for="references_management_1_multipage_report">Multipage Report</label>
                 </td>
                 <td>
-                    <select id="references_management_1_multipage_report" name="references_management_1_multipage_report">
+                    <select
+                        id="references_management_1_multipage_report"
+                        name="references_management_1_multipage_report"
+                        >
                         <option <?php echo $multipage_report === "No"? 'selected="selected"': ''; ?> value="No">
                             No
                         </option>
