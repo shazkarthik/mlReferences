@@ -880,7 +880,14 @@ ALTER TABLE `%sarticles_authors`
     ON DELETE CASCADE
     ON UPDATE CASCADE;
 EOD;
-    $GLOBALS['wpdb']->query(sprintf($query, references_management_get_prefix(), references_management_get_prefix(), references_management_get_prefix()));
+    $GLOBALS['wpdb']->query(
+        sprintf(
+            $query,
+            references_management_get_prefix(),
+            references_management_get_prefix(),
+            references_management_get_prefix()
+        )
+    );
 
     references_management_get_directory(array());
 }
