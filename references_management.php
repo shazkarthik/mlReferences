@@ -500,10 +500,7 @@ function references_management_get_items($xml, $text)
                     'name' => $explode[0],
                     'first_name' => !empty($explode[1])? $explode[1]: '',
                     'role' => 'Author',
-                    'url' => references_management_get_url(
-                        !empty($explode[1])? $explode[1]: '',
-                        $explode[0]
-                    ),
+                    'url' => references_management_get_url(!empty($explode[1])? $explode[1]: '', $explode[0]),
                 );
                 unset($explode);
                 unset($name);
@@ -527,10 +524,7 @@ function references_management_get_items($xml, $text)
                     'name' => $explode[0],
                     'first_name' => !empty($explode[1])? $explode[1]: '',
                     'role' => 'Editor',
-                    'url' => references_management_get_url(
-                        !empty($explode[1])? $explode[1]: '',
-                        $explode[0]
-                    ),
+                    'url' => references_management_get_url(!empty($explode[1])? $explode[1]: '', $explode[0]),
                 );
                 unset($explode);
                 unset($name);
