@@ -34,11 +34,6 @@ function references_management_filters_author($item)
     return $item['role'] === 'Author';
 }
 
-function references_management_filters_editor($item)
-{
-    return $item['role'] === 'Editor';
-}
-
 function references_management_filters_authors($item)
 {
     if ($item === 'Ed') {
@@ -55,6 +50,11 @@ function references_management_filters_authors($item)
     }
 
     return strlen($item) > 1;
+}
+
+function references_management_filters_editor($item)
+{
+    return $item['role'] === 'Editor';
 }
 
 function references_management_uasort($one, $two)
