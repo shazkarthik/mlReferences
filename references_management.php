@@ -57,6 +57,14 @@ function references_management_filters_editor($item)
     return $item['role'] === 'Editor';
 }
 
+function references_management_log(&$fopen, $contents)
+{
+    if (defined('WP_DEBUG') && WP_DEBUG === true) {
+        fwrite($fopen, $contents);
+        fwrite($fopen, "\n");
+    }
+}
+
 function references_management_uasort($one, $two)
 {
     preg_match('#[a-zA-Z]#', $one['string'], $match);
@@ -67,34 +75,6 @@ function references_management_uasort($one, $two)
         return 0;
     }
     return ($one < $two)? -1: 1;
-}
-
-function references_management_get_file($items)
-{
-    array_unshift($items, 'files');
-    array_unshift($items, rtrim(plugin_dir_path(__FILE__), '/'));
-    return implode(DIRECTORY_SEPARATOR, $items);
-}
-
-function references_management_get_directory($items)
-{
-    $directory = references_management_get_file($items);
-    if (!@is_dir($directory)) {
-        @mkdir($directory, 0777, true);
-    }
-    return $directory;
-}
-
-function references_management_get_initials($name)
-{
-    $initials = array();
-    $name = explode(' ', $name);
-    if (!empty($name)) {
-        foreach ($name AS $key => $value) {
-            $initials[] = sprintf('%s.', substr($value, 0, 1));
-        }
-    }
-    return implode(' ', $initials);
 }
 
 function references_management_get_citations_first($authors, $year)
@@ -124,21 +104,6 @@ function references_management_get_citations_first($authors, $year)
             }
         }
         return sprintf('%s (%s)', implode(' ', $names), $year);
-    }
-    return sprintf('%s et al. (%s)', $authors[0]['name'], $year);
-}
-
-function references_management_get_citations_subsequent($authors, $year)
-{
-    $count = count($authors);
-    if ($count === 0) {
-        return '';
-    }
-    if ($count === 1) {
-        return sprintf('%s (%s)', $authors[0]['name'], $year);
-    }
-    if ($count === 2) {
-        return sprintf('%s & %s (%s)', $authors[0]['name'], $authors[1]['name'], $year);
     }
     return sprintf('%s et al. (%s)', $authors[0]['name'], $year);
 }
@@ -189,122 +154,40 @@ function references_management_get_citations_parenthetical_subsequent($authors, 
     return sprintf('(%s et al., %s)', $authors[0]['name'], $year);
 }
 
-function references_management_get_prefix()
+function references_management_get_citations_subsequent($authors, $year)
 {
-    return sprintf('%sreferences_management_', $GLOBALS['wpdb']->prefix);
-}
-
-function references_management_get_references_authors($authors)
-{
-    $authors = array_filter($authors, 'references_management_filters_author');
     $count = count($authors);
-    $names = array();
-    if (!empty($authors)) {
-        foreach ($authors AS $key => $value) {
-            $separator = ',';
-            if ($key + 1 === $count - 1) {
-                $separator = ', &';
-            }
-            if ($key + 1 === $count) {
-                $separator = '';
-            }
-            $names[] = sprintf('%s%s', $value['name'], $separator);
-        }
-    }
-    return implode(' ', $names);
-}
-
-function references_management_get_references_editors($authors)
-{
-    $authors = array_filter($authors, 'references_management_filters_editor');
-    $count = count($authors);
-    $names = array();
-    if (!empty($authors)) {
-        foreach ($authors AS $key => $value) {
-            $separator = ',';
-            if ($key + 1 === $count - 1) {
-                $separator = ', &';
-            }
-            if ($key + 1 === $count) {
-                $separator = '';
-            }
-            $names[] = sprintf('%s%s', $value['name'], $separator);
-        }
-    }
-    return implode(' ', $names);
-}
-
-function references_management_get_references_all($item)
-{
-    return sprintf(
-        '%s. %s: %s. %s: %s',
-        references_management_get_citations_first($item['authors'], $item['year']),
-        $item['title_1'],
-        $item['title_2'],
-        $item['place_published'],
-        $item['publisher']
-    );
-}
-
-function references_management_get_shortcodes($contents)
-{
-    $items = array();
-    preg_match_all(
-        '/\[references_management id=&#\d+;(.*?)&#\d+; style=&#\d+;(.*?)&#\d+;\]/',
-        $contents,
-        $matches,
-        PREG_SET_ORDER
-    );
-    if (!empty($matches)) {
-        $number = 0;
-        foreach ($matches AS $match) {
-            $number++;
-            $article = $GLOBALS['wpdb']->get_row(
-                $GLOBALS['wpdb']->prepare(
-                    sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
-                    intval($match[1])
-                ),
-                ARRAY_A
-            );
-            if (empty($items[$match[0]])) {
-                $items[$match[0]] = array(
-                    'id' => $match[1],
-                    'style' => $match[2],
-                    'numbers' => array(),
-                    'string' => $article[$match[2]],
-                );
-            }
-            $items[$match[0]]['numbers'][] = $number;
-        }
-    }
-    return $items;
-}
-
-function references_management_get_url($first_name, $last_name)
-{
-    if (@$_SERVER['SERVER_NAME'] === '0.0.0.0') {
+    if ($count === 0) {
         return '';
     }
-    $name = sprintf('%s %s', $first_name, $last_name);
-    $xml = @file_get_contents(
-        sprintf(
-            'http://lookup.dbpedia.org/api/search/KeywordSearch?QueryClass=person&QueryString=%s', urlencode($name)
-        )
-    );
-    if (!$xml) {
-        return '';
+    if ($count === 1) {
+        return sprintf('%s (%s)', $authors[0]['name'], $year);
     }
-    $xml = @simplexml_load_string($xml);
-    if (!$xml) {
-        return '';
+    if ($count === 2) {
+        return sprintf('%s & %s (%s)', $authors[0]['name'], $authors[1]['name'], $year);
     }
-    $xml->registerXPathNamespace('xpns', 'http://lookup.dbpedia.org/');
-    foreach ($xml->xpath('//xpns:Result') AS $key => $value) {
-        if ((string) $value->Label === $name) {
-            return (string) $value->URI;
-        }
+    return sprintf('%s et al. (%s)', $authors[0]['name'], $year);
+}
+
+function references_management_get_csv_dialect()
+{
+    return new Csv_Dialect(array(
+        'delimiter' => ';',
+        'escapechar' => "\"",
+        'lineterminator' => "\n",
+        'quotechar' => "\"",
+        'quoting' => Csv_Dialect::QUOTE_ALL,
+        'skipblanklines' => true,
+    ));
+}
+
+function references_management_get_directory($items)
+{
+    $directory = references_management_get_file($items);
+    if (!@is_dir($directory)) {
+        @mkdir($directory, 0777, true);
     }
-    return '';
+    return $directory;
 }
 
 function references_management_get_endnote($item, &$text, $item_authors, $fopen)
@@ -501,16 +384,11 @@ function references_management_get_endnote($item, &$text, $item_authors, $fopen)
     return -1;
 }
 
-function references_management_get_csv_dialect()
+function references_management_get_file($items)
 {
-    return new Csv_Dialect(array(
-        'delimiter' => ';',
-        'escapechar' => "\"",
-        'lineterminator' => "\n",
-        'quotechar' => "\"",
-        'quoting' => Csv_Dialect::QUOTE_ALL,
-        'skipblanklines' => true,
-    ));
+    array_unshift($items, 'files');
+    array_unshift($items, rtrim(plugin_dir_path(__FILE__), '/'));
+    return implode(DIRECTORY_SEPARATOR, $items);
 }
 
 function references_management_get_items($xml, $text)
@@ -737,6 +615,136 @@ function references_management_get_items($xml, $text)
     fclose($fopen);
 
     return array(array(), $items);
+}
+
+function references_management_get_initials($name)
+{
+    $initials = array();
+    $name = explode(' ', $name);
+    if (!empty($name)) {
+        foreach ($name AS $key => $value) {
+            $initials[] = sprintf('%s.', substr($value, 0, 1));
+        }
+    }
+    return implode(' ', $initials);
+}
+
+function references_management_get_prefix()
+{
+    return sprintf('%sreferences_management_', $GLOBALS['wpdb']->prefix);
+}
+
+function references_management_get_references_all($item)
+{
+    return sprintf(
+        '%s. %s: %s. %s: %s',
+        references_management_get_citations_first($item['authors'], $item['year']),
+        $item['title_1'],
+        $item['title_2'],
+        $item['place_published'],
+        $item['publisher']
+    );
+}
+
+function references_management_get_references_authors($authors)
+{
+    $authors = array_filter($authors, 'references_management_filters_author');
+    $count = count($authors);
+    $names = array();
+    if (!empty($authors)) {
+        foreach ($authors AS $key => $value) {
+            $separator = ',';
+            if ($key + 1 === $count - 1) {
+                $separator = ', &';
+            }
+            if ($key + 1 === $count) {
+                $separator = '';
+            }
+            $names[] = sprintf('%s%s', $value['name'], $separator);
+        }
+    }
+    return implode(' ', $names);
+}
+
+function references_management_get_references_editors($authors)
+{
+    $authors = array_filter($authors, 'references_management_filters_editor');
+    $count = count($authors);
+    $names = array();
+    if (!empty($authors)) {
+        foreach ($authors AS $key => $value) {
+            $separator = ',';
+            if ($key + 1 === $count - 1) {
+                $separator = ', &';
+            }
+            if ($key + 1 === $count) {
+                $separator = '';
+            }
+            $names[] = sprintf('%s%s', $value['name'], $separator);
+        }
+    }
+    return implode(' ', $names);
+}
+
+function references_management_get_shortcodes($contents)
+{
+    $items = array();
+    preg_match_all(
+        '/\[references_management id=&#\d+;(.*?)&#\d+; style=&#\d+;(.*?)&#\d+;\]/',
+        $contents,
+        $matches,
+        PREG_SET_ORDER
+    );
+    if (!empty($matches)) {
+        $number = 0;
+        foreach ($matches AS $match) {
+            $number++;
+            $article = $GLOBALS['wpdb']->get_row(
+                $GLOBALS['wpdb']->prepare(
+                    sprintf("SELECT * FROM `%sarticles` WHERE `id` = %%d", references_management_get_prefix()),
+                    intval($match[1])
+                ),
+                ARRAY_A
+            );
+            if (empty($items[$match[0]])) {
+                $items[$match[0]] = array(
+                    'id' => $match[1],
+                    'style' => $match[2],
+                    'numbers' => array(),
+                    'string' => $article[$match[2]],
+                );
+            }
+            $items[$match[0]]['numbers'][] = $number;
+        }
+    }
+    return $items;
+}
+
+function references_management_get_url($first_name, $last_name)
+{
+    if (@$_SERVER['SERVER_NAME'] === '0.0.0.0') {
+        return '';
+    }
+    $name = sprintf('%s %s', $first_name, $last_name);
+    $xml = @file_get_contents(
+        sprintf(
+            'http://lookup.dbpedia.org/api/search/KeywordSearch?QueryClass=person&QueryString=%s', urlencode($name)
+        )
+    );
+    if (!$xml) {
+        return '';
+    }
+    $xml = @simplexml_load_string($xml);
+    if (!$xml) {
+        return '';
+    }
+    $xml->registerXPathNamespace('xpns', 'http://lookup.dbpedia.org/');
+    foreach ($xml->xpath('//xpns:Result') AS $key => $value) {
+        if ((string) $value->Label === $name) {
+            return (string) $value->URI;
+        }
+    }
+    return '';
 }
 
 function references_management_register_activation_hook()
