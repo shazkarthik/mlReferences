@@ -288,17 +288,7 @@ function references_management_get_endnote($item, $text)
 
         $strlen = strlen($item['title_1']);
         $title_1 = substr($value[1], 0, $strlen);
-        if (
-            $item['title_1'] === $title_1
-            // &&
-            // (
-            //     preg_match(sprintf('#%s\s*\.#', $item['title_1']), $value[1]) !== 0
-            //     ||
-            //     preg_match(sprintf('#%s\s*\?#', $item['title_1']), $value[1]) !== 0
-            //     ||
-            //     preg_match(sprintf('#%s\s*Retrieved#', $item['title_1']), $value[1]) !== 0
-            // )
-        ) {
+        if ($item['title_1'] === $title_1) {
             if (
                 (!empty($item['year']) AND strpos($text[$key], $item['year']) !== false)
                 OR
