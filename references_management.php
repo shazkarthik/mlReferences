@@ -225,7 +225,7 @@ function references_management_get_directory($items)
     return $directory;
 }
 
-function references_management_get_endnote($item, $text)
+function references_management_get_endnote($item, $txt)
 {
     $item['authors'] = references_management_get_authors($item);
 
@@ -240,7 +240,7 @@ function references_management_get_endnote($item, $text)
         references_management_log(sprintf('        %s, %s', $author['name'], $author['first_name']));
     }
 
-    foreach ($text AS $key => $value) {
+    foreach ($txt AS $key => $value) {
         $statuses = array(
             'title' => false,
             'authors' => false,
@@ -254,11 +254,11 @@ function references_management_get_endnote($item, $text)
         $title_1 = substr($value[1], 0, $strlen);
         if ($item['title_1'] === $title_1) {
             if (
-                (!empty($item['year']) AND strpos($text[$key], $item['year']) !== false)
+                (!empty($item['year']) AND strpos($txt[$key], $item['year']) !== false)
                 OR
-                (!empty($item['publisher']) AND strpos($text[$key], $item['publisher']) !== false)
+                (!empty($item['publisher']) AND strpos($txt[$key], $item['publisher']) !== false)
                 OR
-                (!empty($item['place_published']) AND strpos($text[$key], $item['place_published']) !== false)
+                (!empty($item['place_published']) AND strpos($txt[$key], $item['place_published']) !== false)
             ) {
                 $statuses['title'] = true;
                 references_management_log('    Step 1: Title is a match');
@@ -349,15 +349,15 @@ function references_management_get_file($items)
     return implode(DIRECTORY_SEPARATOR, $items);
 }
 
-function references_management_get_items($xml, $text)
+function references_management_get_items($xml, $txt)
 {
     $items = array();
 
-    if (empty($text)) {
-        $text = '';
+    if (empty($txt)) {
+        $txt = '';
     }
-    $text = explode("\n", $text);
-    $text = array_map('trim', $text);
+    $txt = explode("\n", $txt);
+    $txt = array_map('trim', $txt);
 
     foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
         try {
@@ -526,10 +526,10 @@ function references_management_get_items($xml, $text)
             $item['references_all'] = references_management_get_references_all($item);
 
             $item['endnote'] = '';
-            $endnote = references_management_get_endnote($item, $text);
+            $endnote = references_management_get_endnote($item, $txt);
             if ($endnote !== -1) {
-                $item['endnote'] = $text[$endnote];
-                unset($text[$endnote]);
+                $item['endnote'] = $txt[$endnote];
+                unset($txt[$endnote]);
             }
 
             $items[] = $item;
