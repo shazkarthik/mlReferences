@@ -225,7 +225,7 @@ function references_management_get_directory($items)
     return $directory;
 }
 
-function references_management_get_endnote($item, $txt)
+function references_management_get_endnote($item, &$txt)
 {
     $item['authors'] = references_management_get_authors($item);
 
@@ -2344,8 +2344,13 @@ if (defined('WP_CLI') && WP_CLI)
     {
         public function __invoke($args)
         {
-            WP_CLI::success($args[0]);
-            WP_CLI::success($args[1]);
+            $xml = $args[0];
+            $xml = file_get_contents($xml);
+            $txt = $args[1];
+            $txt = file_get_contents($txt);
+            list($errors, $items) = references_management_get_items($xml, $txt);
+            print_r($items);
+            print_r($errors);
             WP_CLI::success('OK');
         }
     }
