@@ -82,9 +82,9 @@ function references_management_get_author($name)
 {
     $explode = array();
     $name = (string) $name->style;
-    $preg_match = preg_match('#".*?"$#', $name, $matches);
+    $preg_match = preg_match('#"(.*?)"$#', $name, $matches);
     if ($preg_match !== 0) {
-        $explode[0] = $matches[0];
+        $explode[0] = $matches[1];
     } else {
         if (strpos($name, ',') !== false) {
             $explode = explode(',', $name, 2);
@@ -269,6 +269,9 @@ function references_management_get_endnote($item, &$txt)
             }
         } else {
             references_management_log('    Step 1: Title is not a match');
+            references_management_log(print_r($item['title_1'], true));
+            references_management_log(print_r($txt[$key], true));
+            references_management_log(print_r($value[1], true));
         }
 
         if ($statuses['authors'] === false) {
@@ -287,6 +290,9 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.1: Authors are a match');
             } else {
                 references_management_log('    Step 2.1: Authors are not a match');
+                references_management_log(print_r($item['authors'], true));
+                references_management_log(print_r($txt[$key], true));
+                references_management_log(print_r($authors_1, true));
             }
         }
         if ($statuses['authors'] === false) {
@@ -306,7 +312,10 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.2: Authors are a match');
             } else {
                 references_management_log('    Step 2.2: Authors are not a match');
-            }
+                references_management_log(print_r($item['authors'], true));
+                references_management_log(print_r($txt[$key], true));
+                references_management_log(print_r($authors_2, true));
+              }
         }
         if ($statuses['authors'] === false) {
             $authors_3 = $value[0];
@@ -325,7 +334,10 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.3: Authors are a match');
             } else {
                 references_management_log('    Step 2.3: Authors are not a match');
-            }
+                references_management_log(print_r($item['authors'], true));
+                references_management_log(print_r($txt[$key], true));
+                references_management_log(print_r($authors_3, true));
+              }
         }
 
         if ($statuses['title'] === true AND $statuses['authors'] === true) {
@@ -356,6 +368,7 @@ function references_management_get_items($xml, $txt)
     if (empty($txt)) {
         $txt = '';
     }
+    $txt = references_management_get_txt($txt);
     $txt = explode("\n", $txt);
     $txt = array_map('trim', $txt);
 
@@ -526,10 +539,12 @@ function references_management_get_items($xml, $txt)
             $item['references_all'] = references_management_get_references_all($item);
 
             $item['endnote'] = '';
-            $endnote = references_management_get_endnote($item, $txt);
-            if ($endnote !== -1) {
-                $item['endnote'] = $txt[$endnote];
-                unset($txt[$endnote]);
+            if ($item['number'] === '2754') {
+                $endnote = references_management_get_endnote($item, $txt);
+                if ($endnote !== -1) {
+                    $item['endnote'] = $txt[$endnote];
+                    unset($txt[$endnote]);
+                }
             }
 
             $items[] = $item;
@@ -537,6 +552,8 @@ function references_management_get_items($xml, $txt)
             return array(sprintf('references_management_get_items() - %s', $exception->getMessage()), array());
         }
     }
+
+    print_r($txt);
 
     return array(array(), $items);
 }
@@ -642,6 +659,13 @@ function references_management_get_shortcodes($contents)
         }
     }
     return $items;
+}
+
+function references_management_get_txt($txt)
+{
+    $bom = pack('H*','EFBBBF');
+    $txt = preg_replace("/^{$bom}/", '', $txt);
+    return $txt;
 }
 
 function references_management_get_url($first_name, $last_name)
@@ -2354,7 +2378,11 @@ if (defined('WP_CLI') && WP_CLI)
             list($errors, $items) = references_management_get_items($xml, $txt);
             foreach ($items as $item) {
                 if ($item['endnote'] === '') {
-                    print_r($item);
+                    foreach ($item['authors'] as $key => $value) {
+                        $item['authors'][$key] = sprintf('%s, %s', $value['name'], $value['first_name']);
+                    }
+                    $item['authors'] = implode(', ', $item['authors']);
+                    echo sprintf("%s | %s | %s\n", $item['number'], $item['authors'], $item['title_1']);
                 }
             }
             WP_CLI::success('OK');
