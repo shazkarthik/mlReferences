@@ -649,6 +649,9 @@ function references_management_get_url($first_name, $last_name)
     if (@$_SERVER['SERVER_NAME'] === '0.0.0.0') {
         return '';
     }
+    if (defined('WP_CLI') && WP_CLI) {
+        return '';
+    }
     $name = sprintf('%s %s', $first_name, $last_name);
     $xml = @file_get_contents(
         sprintf(
