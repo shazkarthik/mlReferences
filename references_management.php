@@ -2337,3 +2337,18 @@ add_action('save_post', 'references_management_save_post');
 add_action('wp_head', 'references_management_wp_head', 90);
 
 add_filter('the_content', 'references_management_the_content', 90);
+
+if (defined('WP_CLI') && WP_CLI)
+{
+    class CLI
+    {
+        public function __invoke($args)
+        {
+            WP_CLI::success($args[0]);
+            WP_CLI::success($args[1]);
+            WP_CLI::success('OK');
+        }
+    }
+
+    WP_CLI::add_command('references_management', 'CLI');
+}
