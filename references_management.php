@@ -2352,8 +2352,11 @@ if (defined('WP_CLI') && WP_CLI)
             $txt = $args[1];
             $txt = file_get_contents($txt);
             list($errors, $items) = references_management_get_items($xml, $txt);
-            print_r($items);
-            print_r($errors);
+            foreach ($items as $item) {
+                if ($item['endnote'] === '') {
+                    print_r($item);
+                }
+            }
             WP_CLI::success('OK');
         }
     }
