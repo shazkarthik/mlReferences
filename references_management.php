@@ -119,10 +119,10 @@ function references_management_get_citations_first($authors, $year)
         return '';
     }
     if ($count === 1) {
-        return sprintf('%s (%s)', $authors[0]['name'], $year);
+        return sprintf('%s (%s)', @$authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf('%s & %s (%s)', $authors[0]['name'], $authors[1]['name'], $year);
+        return sprintf('%s & %s (%s)', @$authors[0]['name'], @$authors[1]['name'], $year);
     }
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
@@ -140,7 +140,7 @@ function references_management_get_citations_first($authors, $year)
         }
         return sprintf('%s (%s)', implode(' ', $names), $year);
     }
-    return sprintf('%s et al. (%s)', $authors[0]['name'], $year);
+    return sprintf('%s et al. (%s)', @$authors[0]['name'], $year);
 }
 
 function references_management_get_citations_parenthetical_first($authors, $year)
@@ -150,10 +150,10 @@ function references_management_get_citations_parenthetical_first($authors, $year
         return '';
     }
     if ($count === 1) {
-        return sprintf('(%s, %s)', $authors[0]['name'], $year);
+        return sprintf('(%s, %s)', @$authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf('(%s & %s, %s)', $authors[0]['name'], $authors[1]['name'], $year);
+        return sprintf('(%s & %s, %s)', @$authors[0]['name'], @$authors[1]['name'], $year);
     }
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
@@ -171,7 +171,7 @@ function references_management_get_citations_parenthetical_first($authors, $year
         }
         return sprintf('(%s, %s)', implode(' ', $names), $year);
     }
-    return sprintf('(%s et al., %s)', $authors[0]['name'], $year);
+    return sprintf('(%s et al., %s)', @$authors[0]['name'], $year);
 }
 
 function references_management_get_citations_parenthetical_subsequent($authors, $year)
@@ -181,12 +181,12 @@ function references_management_get_citations_parenthetical_subsequent($authors, 
         return '';
     }
     if ($count === 1) {
-        return sprintf('(%s, %s)', $authors[0]['name'], $year);
+        return sprintf('(%s, %s)', @$authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf('(%s & %s, %s)', $authors[0]['name'], $authors[1]['name'], $year);
+        return sprintf('(%s & %s, %s)', @$authors[0]['name'], @$authors[1]['name'], $year);
     }
-    return sprintf('(%s et al., %s)', $authors[0]['name'], $year);
+    return sprintf('(%s et al., %s)', @$authors[0]['name'], $year);
 }
 
 function references_management_get_citations_subsequent($authors, $year)
@@ -196,12 +196,12 @@ function references_management_get_citations_subsequent($authors, $year)
         return '';
     }
     if ($count === 1) {
-        return sprintf('%s (%s)', $authors[0]['name'], $year);
+        return sprintf('%s (%s)', @$authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf('%s & %s (%s)', $authors[0]['name'], $authors[1]['name'], $year);
+        return sprintf('%s & %s (%s)', @$authors[0]['name'], @$authors[1]['name'], $year);
     }
-    return sprintf('%s et al. (%s)', $authors[0]['name'], $year);
+    return sprintf('%s et al. (%s)', @$authors[0]['name'], $year);
 }
 
 function references_management_get_csv_dialect()
@@ -269,8 +269,6 @@ function references_management_get_endnote($item, &$txt)
             }
         } else {
             references_management_log('    Step 1: Title is not a match');
-            references_management_log(print_r($item['title_1'], true));
-            references_management_log(print_r($txt[$key], true));
             references_management_log(print_r($value[1], true));
         }
 
@@ -290,8 +288,6 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.1: Authors are a match');
             } else {
                 references_management_log('    Step 2.1: Authors are not a match');
-                references_management_log(print_r($item['authors'], true));
-                references_management_log(print_r($txt[$key], true));
                 references_management_log(print_r($authors_1, true));
             }
         }
@@ -312,8 +308,6 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.2: Authors are a match');
             } else {
                 references_management_log('    Step 2.2: Authors are not a match');
-                references_management_log(print_r($item['authors'], true));
-                references_management_log(print_r($txt[$key], true));
                 references_management_log(print_r($authors_2, true));
               }
         }
@@ -334,11 +328,27 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.3: Authors are a match');
             } else {
                 references_management_log('    Step 2.3: Authors are not a match');
-                references_management_log(print_r($item['authors'], true));
-                references_management_log(print_r($txt[$key], true));
                 references_management_log(print_r($authors_3, true));
               }
         }
+        if ($statuses['authors'] === false) {
+            $authors_4 = $value[0];
+            $count_1 = count($authors_4);
+            $count_2 = 0;
+            foreach ($item['authors'] AS $author) {
+                if ($author['name'] === $authors_4) {
+                    $count_2 += 1;
+                }
+            }
+            if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
+                $statuses['authors'] = true;
+                references_management_log('    Step 2.4: Authors are a match');
+            } else {
+                references_management_log('    Step 2.4: Authors are not a match');
+                references_management_log(print_r($authors_4, true));
+              }
+        }
+
 
         if ($statuses['title'] === true AND $statuses['authors'] === true) {
             references_management_log('    Success: We have a match!');
@@ -539,12 +549,10 @@ function references_management_get_items($xml, $txt)
             $item['references_all'] = references_management_get_references_all($item);
 
             $item['endnote'] = '';
-            if ($item['number'] === '2754') {
-                $endnote = references_management_get_endnote($item, $txt);
-                if ($endnote !== -1) {
-                    $item['endnote'] = $txt[$endnote];
-                    unset($txt[$endnote]);
-                }
+            $endnote = references_management_get_endnote($item, $txt);
+            if ($endnote !== -1) {
+                $item['endnote'] = $txt[$endnote];
+                unset($txt[$endnote]);
             }
 
             $items[] = $item;
@@ -722,6 +730,9 @@ function references_management_get_value($value_1)
             $value_1
         );
     }
+    $value_2[0] = str_replace('"', '', @$value_2[0]);
+    $value_2[0] = str_replace('.', '', @$value_2[0]);
+    $value_2[0] = str_replace('_', ' ', @$value_2[0]);
     $value_2[0] = trim(@$value_2[0]);
     $value_2[1] = trim(@$value_2[1]);
     return $value_2;
