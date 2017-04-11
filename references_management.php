@@ -48,6 +48,9 @@ function references_management_filters_authors($item)
     if (preg_match('#[A-Za-z]\.$#', $item) !== 0) {
         return false;
     }
+    if (strpos($item, '.') !== false) {
+        return false;
+    }
 
     return strlen($item) > 1;
 }
@@ -82,6 +85,7 @@ function references_management_get_author($name)
 {
     $explode = array();
     $name = (string) $name->style;
+    $name = trim($name);
     $preg_match = preg_match('#"(.*?)"$#', $name, $matches);
     if ($preg_match !== 0) {
         $explode[0] = $matches[1];
@@ -89,7 +93,10 @@ function references_management_get_author($name)
         if (strpos($name, ',') !== false) {
             $explode = explode(',', $name, 2);
         } else {
-            $explode = explode(' ', $name, 2);
+            $explode = array_map('strrev', explode(' .', strrev($name), 2));
+            if (@$explode[1]) {
+                $explode[1] = sprintf('%s.', $explode[1]);
+            }
         }
     }
     $explode = array_map('trim', $explode);
@@ -269,7 +276,6 @@ function references_management_get_endnote($item, &$txt)
             }
         } else {
             references_management_log('    Step 1: Title is not a match');
-            references_management_log(print_r($value[1], true));
         }
 
         if ($statuses['authors'] === false) {
@@ -281,6 +287,13 @@ function references_management_get_endnote($item, &$txt)
             foreach ($item['authors'] AS $author) {
                 if (in_array($author['name'], $authors_1)) {
                     $count_2 += 1;
+                    continue;
+                }
+                foreach ($authors_1 AS $k => $v) {
+                    if (strpos($author['name'], $v) !== false) {
+                        $count_2 += 1;
+                        break;
+                    }
                 }
             }
             if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
@@ -288,7 +301,6 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.1: Authors are a match');
             } else {
                 references_management_log('    Step 2.1: Authors are not a match');
-                references_management_log(print_r($authors_1, true));
             }
         }
         if ($statuses['authors'] === false) {
@@ -301,6 +313,13 @@ function references_management_get_endnote($item, &$txt)
             foreach ($item['authors'] AS $author) {
                 if (in_array($author['name'], $authors_2)) {
                     $count_2 += 1;
+                    continue;
+                }
+                foreach ($authors_2 AS $k => $v) {
+                    if (strpos($author['name'], $v) !== false) {
+                        $count_2 += 1;
+                        break;
+                    }
                 }
             }
             if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
@@ -308,7 +327,6 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.2: Authors are a match');
             } else {
                 references_management_log('    Step 2.2: Authors are not a match');
-                references_management_log(print_r($authors_2, true));
               }
         }
         if ($statuses['authors'] === false) {
@@ -321,6 +339,13 @@ function references_management_get_endnote($item, &$txt)
             foreach ($item['authors'] AS $author) {
                 if (in_array($author['name'], $authors_3)) {
                     $count_2 += 1;
+                    continue;
+                }
+                foreach ($authors_3 AS $k => $v) {
+                    if (strpos($author['name'], $v) !== false) {
+                        $count_2 += 1;
+                        break;
+                    }
                 }
             }
             if ($count_2 === $count_1 && $count_1 > 0 && $count_2 > 0) {
@@ -328,7 +353,6 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.3: Authors are a match');
             } else {
                 references_management_log('    Step 2.3: Authors are not a match');
-                references_management_log(print_r($authors_3, true));
               }
         }
         if ($statuses['authors'] === false) {
@@ -345,7 +369,6 @@ function references_management_get_endnote($item, &$txt)
                 references_management_log('    Step 2.4: Authors are a match');
             } else {
                 references_management_log('    Step 2.4: Authors are not a match');
-                references_management_log(print_r($authors_4, true));
               }
         }
 
@@ -388,33 +411,42 @@ function references_management_get_items($xml, $txt)
 
             $item['number'] = $value->xpath('rec-number');
             $item['number'] = (string) array_pop($item['number']);
+            $item['number'] = trim($item['number']);
 
             $item['type'] = $value->xpath('ref-type');
             $item['type'] = (string) array_pop($item['type'])->attributes()['name'];
+            $item['type'] = trim($item['type']);
 
             $item['title_1'] = $value->xpath('titles/title/style');
             $item['title_1'] = (string) array_pop($item['title_1']);
+            $item['title_1'] = trim($item['title_1']);
 
             $item['title_2'] = $value->xpath('titles/secondary-title/style');
             $item['title_2'] = (string) array_pop($item['title_2']);
+            $item['title_2'] = trim($item['title_2']);
 
             $item['year'] = $value->xpath('dates/year/style');
             $item['year'] = (string) array_pop($item['year']);
+            $item['year'] = trim($item['year']);
 
             $item['volume'] = $value->xpath('volume/style');
             $item['volume'] = (string) array_pop($item['volume']);
+            $item['volume'] = trim($item['volume']);
 
             $item['issue'] = $value->xpath('number/style');
             $item['issue'] = (string) array_pop($item['issue']);
+            $item['issue'] = trim($item['issue']);
 
             $item['page'] = $value->xpath('pages/style');
             $item['page'] = (string) array_pop($item['page']);
+            $item['page'] = trim($item['page']);
 
             $urls = $value->xpath('urls/related-urls/url/style');
 
             $item['url'] = '';
             foreach ($urls AS $url) {
                 $url = (string) $url;
+                $url = trim($url);
                 if (stristr($url, 'doi') === false) {
                     $item['url'] = $url;
                     break;
@@ -424,6 +456,7 @@ function references_management_get_items($xml, $txt)
             $item['doi'] = '';
             foreach ($urls AS $url) {
                 $url = (string) $url;
+                $url = trim($url);
                 if (stristr($url, 'doi') !== false) {
                     $item['doi'] = $url;
                     break;
@@ -432,6 +465,7 @@ function references_management_get_items($xml, $txt)
 
             $item['issn'] = $value->xpath('orig-pub/style');
             $item['issn'] = (string) array_pop($item['issn']);
+            $item['issn'] = trim($item['issn']);
             if ($item['issn'] === 'Contents') {
                 $item['issn'] = '';
             }
@@ -442,9 +476,11 @@ function references_management_get_items($xml, $txt)
 
             $item['original_publication'] = $value->xpath('orig-pub/style');
             $item['original_publication'] = (string) array_pop($item['original_publication']);
+            $item['original_publication'] = trim($item['original_publication']);
 
             $item['isbn'] = $value->xpath('isbn/style');
             $item['isbn'] = (string) array_pop($item['isbn']);
+            $item['isbn'] = trim($item['isbn']);
             if ($item['isbn'] === 'ISBN') {
                 $item['isbn'] = '';
             }
@@ -487,18 +523,23 @@ function references_management_get_items($xml, $txt)
 
             $item['label'] = $value->xpath('label/style');
             $item['label'] = (string) array_pop($item['label']);
+            $item['label'] = trim($item['label']);
 
             $item['publisher'] = $value->xpath('publisher/style');
             $item['publisher'] = (string) array_pop($item['publisher']);
+            $item['publisher'] = trim($item['publisher']);
 
             $item['place_published'] = $value->xpath('pub-location/style');
             $item['place_published'] = (string) array_pop($item['place_published']);
+            $item['place_published'] = trim($item['place_published']);
 
             $item['access_date'] = $value->xpath('access-date/style');
             $item['access_date'] = (string) array_pop($item['access_date']);
+            $item['access_date'] = trim($item['access_date']);
 
             $item['attachment'] = $value->xpath('urls/pdf-urls/url');
             $item['attachment'] = (string) array_pop($item['attachment']);
+            $item['attachment'] = trim($item['attachment']);
             $item['attachment'] = str_replace('internal-pdf', '', $item['attachment']);
 
             $item['authors'] = array();
@@ -731,9 +772,9 @@ function references_management_get_value($value_1)
         );
     }
     $value_2[0] = str_replace('"', '', @$value_2[0]);
-    $value_2[0] = str_replace('.', '', @$value_2[0]);
     $value_2[0] = str_replace('_', ' ', @$value_2[0]);
     $value_2[0] = trim(@$value_2[0]);
+    $value_2[0] = trim(@$value_2[0], '.');
     $value_2[1] = trim(@$value_2[1]);
     return $value_2;
 }
@@ -2396,7 +2437,6 @@ if (defined('WP_CLI') && WP_CLI)
                     echo sprintf("%s | %s | %s\n", $item['number'], $item['authors'], $item['title_1']);
                 }
             }
-            WP_CLI::success('OK');
         }
     }
 
