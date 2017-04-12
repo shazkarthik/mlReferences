@@ -598,13 +598,11 @@ function references_management_get_items($xml, $txt)
 
             $items[] = $item;
         } catch (Exception $exception) {
-            return array(sprintf('references_management_get_items() - %s', $exception->getMessage()), array());
+            return array(sprintf('references_management_get_items() - %s', $exception->getMessage()), array(), array());
         }
     }
 
-    print_r($txt);
-
-    return array(array(), $items);
+    return array(array(), $items, $txt);
 }
 
 function references_management_get_initials($name)
@@ -772,7 +770,6 @@ function references_management_get_value($value_1)
         );
     }
     $value_2[0] = str_replace('"', '', @$value_2[0]);
-    $value_2[0] = str_replace('_', ' ', @$value_2[0]);
     $value_2[0] = trim(@$value_2[0]);
     $value_2[0] = trim(@$value_2[0], '.');
     $value_2[1] = trim(@$value_2[1]);
@@ -1026,7 +1023,7 @@ function references_management_dashboard()
         switch ($action) {
         case 'upload':
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                list($errors, $items) = references_management_get_items(
+                list($errors, $items, $txt) = references_management_get_items(
                     file_get_contents($_FILES['file_1']['tmp_name']),
                     !empty($_FILES['file_2']['name']) ? file_get_contents($_FILES['file_2']['tmp_name']): null
                 );
@@ -2427,7 +2424,7 @@ if (defined('WP_CLI') && WP_CLI)
             $xml = file_get_contents($xml);
             $txt = $args[1];
             $txt = file_get_contents($txt);
-            list($errors, $items) = references_management_get_items($xml, $txt);
+            list($errors, $items, $txt) = references_management_get_items($xml, $txt);
             foreach ($items as $item) {
                 if ($item['endnote'] === '') {
                     foreach ($item['authors'] as $key => $value) {
@@ -2437,6 +2434,7 @@ if (defined('WP_CLI') && WP_CLI)
                     echo sprintf("%s | %s | %s\n", $item['number'], $item['authors'], $item['title_1']);
                 }
             }
+            print_r($txt);
         }
     }
 
