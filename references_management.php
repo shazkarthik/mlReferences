@@ -2416,7 +2416,7 @@ add_filter('the_content', 'references_management_the_content', 90);
 
 if (defined('WP_CLI') && WP_CLI)
 {
-    class CLI
+    class references_management_cli
     {
         public function __invoke($args)
         {
@@ -2438,5 +2438,5 @@ if (defined('WP_CLI') && WP_CLI)
         }
     }
 
-    WP_CLI::add_command('references_management', 'CLI');
+    WP_CLI::add_command('references_management', 'references_management_cli');
 }
