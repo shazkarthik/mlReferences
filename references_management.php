@@ -81,6 +81,11 @@ function references_management_uasort($one, $two)
     return ($one < $two)? -1: 1;
 }
 
+function references_management_usort($one, $two)
+{
+    return strlen($two) - strlen($one);
+}
+
 function references_management_get_author($name)
 {
     $explode = array();
@@ -494,31 +499,34 @@ function references_management_get_items($xml, $txt)
             $item['isbn'] = str_replace("\n", ' ', $item['isbn']);
             $item['isbn'] = str_replace("\r", ' ', $item['isbn']);
             $item['isbn'] = str_replace("\t", ' ', $item['isbn']);
-            $item['isbn'] = preg_replace('/[^0-9A-Z]/', '', $item['isbn']);
-
-            $isbn = '';
+            $item['isbn'] = preg_replace('/[^0-9A-Z ]/', '', $item['isbn']);
+            $item['isbn'] = trim($item['isbn']);
             $item['isbn'] = explode(' ', $item['isbn']);
-            foreach($item['isbn'] AS $k => $v) {
-                if (substr($v, 0, 1) === '9') {
-                    $isbn = $v;
-                    break;
-                }
-            }
-            if (!empty($isbn)) {
-                $item['isbn'] = $isbn;
-            } else {
-                $item['isbn'] = $item['isbn'][0];
-            }
-
-            if (strlen($item['isbn']) === 8) {
-                $item['issn'] = sprintf('%s-%s', substr($item['isbn'], 0, 4), substr($item['isbn'], 4, 4));
+            usort($item['isbn'], 'references_management_usort');
+            $item['isbn'] = $item['isbn'][0];
+            $strlen = strlen($item['isbn']);
+            if ($strlen === 8) {
                 $item['isbn'] = '';
-            } else {
-                if (strlen($item['isbn']) >= 10) {
-                    $item['isbn'] = substr($item['isbn'], 0, 10);
-                } else {
-                    $item['isbn'] = '';
-                }
+                $item['issn'] = sprintf('%s-%s', substr($item['isbn'], 0, 4), substr($item['isbn'], 4, 4));
+            }
+            if ($strlen === 10) {
+                $item['isbn'] = sprintf(
+                    '%s-%s-%s-%s',
+                    substr($item['isbn'], 0, 1),
+                    substr($item['isbn'], 1, 3),
+                    substr($item['isbn'], 4, 5),
+                    substr($item['isbn'], 9, 1)
+                );
+            }
+            if ($strlen === 13) {
+                $item['isbn'] = sprintf(
+                    '%s-%s-%s-%s-%s',
+                    substr($item['isbn'], 0, 3),
+                    substr($item['isbn'], 3, 1),
+                    substr($item['isbn'], 4, 3),
+                    substr($item['isbn'], 7, 5),
+                    substr($item['isbn'], 12, 1)
+                );
             }
 
             $item['label'] = $value->xpath('label/style');
