@@ -131,10 +131,10 @@ function references_management_get_citations_first($authors, $year)
         return '';
     }
     if ($count === 1) {
-        return sprintf('%s (%s)', @$authors[0]['name'], $year);
+        return sprintf('%s et al., %s', @$authors[0]['name'], $year);
     }
     if ($count === 2) {
-        return sprintf('%s & %s (%s)', @$authors[0]['name'], @$authors[1]['name'], $year);
+        return sprintf('%s & %s et al., %s', @$authors[0]['name'], @$authors[1]['name'], $year);
     }
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
@@ -142,7 +142,7 @@ function references_management_get_citations_first($authors, $year)
             foreach ($authors AS $key => $value) {
                 $separator = ',';
                 if ($key + 1 === $count - 1) {
-                    $separator = ', &';
+                    $separator = ' &';
                 }
                 if ($key + 1 === $count) {
                     $separator = '';
@@ -150,9 +150,9 @@ function references_management_get_citations_first($authors, $year)
                 $names[] = sprintf('%s%s', $value['name'], $separator);
             }
         }
-        return sprintf('%s (%s)', implode(' ', $names), $year);
+        return sprintf('%s et al., %s', implode(' ', $names), $year);
     }
-    return sprintf('%s et al. (%s)', @$authors[0]['name'], $year);
+    return sprintf('%s et al., %s', @$authors[0]['name'], $year);
 }
 
 function references_management_get_citations_parenthetical_first($authors, $year)
@@ -173,7 +173,7 @@ function references_management_get_citations_parenthetical_first($authors, $year
             foreach ($authors AS $key => $value) {
                 $separator = ',';
                 if ($key + 1 === $count - 1) {
-                    $separator = ', &';
+                    $separator = ' &';
                 }
                 if ($key + 1 === $count) {
                     $separator = '';
@@ -213,7 +213,7 @@ function references_management_get_citations_subsequent($authors, $year)
     if ($count === 2) {
         return sprintf('%s & %s (%s)', @$authors[0]['name'], @$authors[1]['name'], $year);
     }
-    return sprintf('%s et al. (%s)', @$authors[0]['name'], $year);
+    return sprintf('%s et al., (%s)', @$authors[0]['name'], $year);
 }
 
 function references_management_get_csv_dialect()
@@ -591,9 +591,9 @@ function references_management_get_items($xml, $txt)
                 $item['authors'], $item['year']
             );
 
-            $item['references_authors'] = references_management_get_references_authors($item['authors']);
+            $item['references_authors'] = references_management_get_references_authors($item);
 
-            $item['references_editors'] = references_management_get_references_editors($item['authors']);
+            $item['references_editors'] = references_management_get_references_editors($item);
 
             $item['references_all'] = references_management_get_references_all($item);
 
@@ -642,16 +642,16 @@ function references_management_get_references_all($item)
     );
 }
 
-function references_management_get_references_authors($authors)
+function references_management_get_references_authors($item)
 {
-    $authors = array_filter($authors, 'references_management_filters_author');
-    $count = count($authors);
+    $item['authors'] = array_filter($item['authors'], 'references_management_filters_author');
+    $count = count($item['authors']);
     $names = array();
-    if (!empty($authors)) {
-        foreach ($authors AS $key => $value) {
+    if (!empty($item['authors'])) {
+        foreach ($item['authors'] AS $key => $value) {
             $separator = ',';
             if ($key + 1 === $count - 1) {
-                $separator = ', &';
+                $separator = ' &';
             }
             if ($key + 1 === $count) {
                 $separator = '';
@@ -659,19 +659,19 @@ function references_management_get_references_authors($authors)
             $names[] = sprintf('%s%s', $value['name'], $separator);
         }
     }
-    return implode(' ', $names);
+    return sprintf('%s, %s', implode(' ', $names), $item['year']);
 }
 
-function references_management_get_references_editors($authors)
+function references_management_get_references_editors($item)
 {
-    $authors = array_filter($authors, 'references_management_filters_editor');
-    $count = count($authors);
+    $item['authors'] = array_filter($item['authors'], 'references_management_filters_editor');
+    $count = count($item['authors']);
     $names = array();
-    if (!empty($authors)) {
-        foreach ($authors AS $key => $value) {
+    if (!empty($item['authors'])) {
+        foreach ($item['authors'] AS $key => $value) {
             $separator = ',';
             if ($key + 1 === $count - 1) {
-                $separator = ', &';
+                $separator = ' &';
             }
             if ($key + 1 === $count) {
                 $separator = '';
@@ -679,7 +679,7 @@ function references_management_get_references_editors($authors)
             $names[] = sprintf('%s%s', $value['name'], $separator);
         }
     }
-    return implode(' ', $names);
+    return sprintf('%s, %s', implode(' ', $names), $item['year']);
 }
 
 function references_management_get_shortcodes($contents)
