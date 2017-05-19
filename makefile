@@ -7,7 +7,7 @@ SHELL:=/bin/bash
 build:
 	cd .. \
 	&& \
-	/usr/bin/rm --force references_management.zip \
+	/usr/bin/rm --force references_management/references_management.zip \
 	&& \
 	/usr/bin/zip --recurse-paths references_management.zip references_management -x '*.git*' -x '*.gitignore*' -x '*files*' -x '*makefile*' \
 	&& \
