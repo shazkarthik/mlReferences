@@ -86,6 +86,24 @@ function references_management_usort($one, $two)
     return strlen($two) - strlen($one);
 }
 
+function references_management_get_access_date($access_date)
+{
+    if (strpos($access_date, '/') !== false) {
+        $access_date = str_replace('/', '.', $access_date);
+        $access_date = references_management_get_access_date($access_date);
+        return $access_date;
+    }
+    if (preg_match('#(\d{1,2})\.(\d{1,2})\.(\d{4})#', $access_date, $matches)) {
+        $access_date = sprintf('%02d.%02d.%04d', $matches[1], $matches[2], $matches[3]);
+        return $access_date;
+    }
+    if (preg_match('#(\d{4})\.(\d{1,2})\.(\d{1,2})#', $access_date, $matches)) {
+        $access_date = sprintf('%02d.%02d.%04d', $matches[3], $matches[2], $matches[1]);
+        return $access_date;
+    }
+    return '';
+}
+
 function references_management_get_author($name)
 {
     $explode = array();
@@ -544,6 +562,7 @@ function references_management_get_items($xml, $txt)
             $item['access_date'] = $value->xpath('access-date/style');
             $item['access_date'] = (string) array_pop($item['access_date']);
             $item['access_date'] = trim($item['access_date']);
+            $item['access_date'] = references_management_get_access_date($item['access_date']);
 
             $item['attachment'] = $value->xpath('urls/pdf-urls/url');
             $item['attachment'] = (string) array_pop($item['attachment']);
@@ -1489,10 +1508,9 @@ EOD;
                     'citations_subsequent' => 'Authors Publish Text Subsequent',
                     'citations_parenthetical_first' => 'Authors Publish Text First Parenthetical',
                     'citations_parenthetical_subsequent' => 'Authors Publish Text Subsequent Parenthetical',
+                    'references_all' => 'Full Reference',
                     'references_authors' => 'Authors Publish Reference',
                     'references_editors' => 'Editors Publish Reference',
-                    'references_all' => 'Reference Entry',
-                    'endnote' => 'EndNote',
                 )
             );
 
@@ -1616,10 +1634,9 @@ EOD;
                             'citations_subsequent' => $article[20],
                             'citations_parenthetical_first' => $article[21],
                             'citations_parenthetical_subsequent' => $article[22],
-                            'references_authors' => $article[23],
-                            'references_editors' => $article[24],
-                            'references_all' => $article[25],
-                            'endnote' => $article[26],
+                            'references_all' => $article[23],
+                            'references_authors' => $article[24],
+                            'references_editors' => $article[25],
                         ),
                         array(
                             'id' => $article[0]
@@ -1844,10 +1861,9 @@ function references_management_faq()
                         <li>Authors Publish Text Subsequent</li>
                         <li>Authors Publish Text First Parenthetical</li>
                         <li>Authors Publish Text Subsequent Parenthetical</li>
+                        <li>Full Reference</li>
                         <li>Authors Publish Reference</li>
                         <li>Editors Publish Reference</li>
-                        <li>Reference Entry</li>
-                        <li>EndNote</li>
                     </ul>
                 </li>
                 <li>
