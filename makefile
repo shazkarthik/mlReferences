@@ -9,7 +9,15 @@ build:
 	&& \
 	/usr/bin/rm --force references_management/references_management.zip \
 	&& \
-	/usr/bin/zip --recurse-paths references_management.zip references_management -x '*.git*' -x '*.gitignore*' -x '*files*' -x '*makefile*' \
+	/usr/bin/zip \
+		--recurse-paths \
+		references_management.zip \
+		references_management \
+		-x '*.git*' \
+		-x '*.gitignore*' \
+		-x '*files*' \
+		-x '*makefile*' \
+		-x '*phpcs.xml*' \
 	&& \
 	/usr/bin/mv references_management.zip references_management \
 	&& \
