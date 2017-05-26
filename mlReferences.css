@@ -1,0 +1,207 @@
+.mlReferences {
+    margin: 0 20px 0 0 !important;
+}
+
+.mlReferences h1 {
+    margin: 20px 0 0 0 !important;
+    padding: 0 !important;
+}
+
+.mlReferences hr {
+    border: 0 !important;
+    border-bottom: 1px solid #e5e5e5 !important;
+    margin-top: 20px !important;
+}
+
+.mlReferences ol {
+    margin: 20px 0 0 20px !important;
+}
+
+.mlReferences ol li {
+    font-size: 12px !important;
+    margin: 0 !important;
+}
+
+.mlReferences ol li ul {
+    margin: 10px 0 10px 15px !important;
+}
+
+.mlReferences ol li ul li {
+    list-style-type: disc !important;
+}
+
+.mlReferences p {
+    margin: 20px 0 0 0 !important;
+}
+
+.mlReferences .bordered {
+    border-collapse: collapse !important;
+    margin-top: 20px !important;
+}
+
+.mlReferences .bordered td {
+    border: 1px solid #e5e5e5 !important;
+    vertical-align: middle !important;
+}
+
+.mlReferences .bordered th {
+    border: 1px solid #e5e5e5 !important;
+    font-size: 13px !important;
+    font-weight: bold !important;
+    vertical-align: middle !important;
+}
+
+.mlReferences .button-primary + a {
+    line-height: 28px !important;
+}
+
+.mlReferences .center {
+    text-align: center !important;
+}
+
+.mlReferences .error,
+.mlReferences .updated {
+    margin: 20px 0 0 0 !important;
+}
+
+.mlReferences .error p,
+.mlReferences .updated p {
+    margin: 10px 0 !important;
+    padding: 0 !important;
+}
+
+.mlReferences .float-left {
+    float: left !important;
+}
+
+.mlReferences .float-right {
+    float: right !important;
+}
+
+.mlReferences .label {
+    white-space: nowrap !important;
+    width: 200px !important;
+}
+
+.mlReferences .narrow {
+    white-space: nowrap !important;
+    width: 1px !important;
+}
+
+.mlReferences .right {
+    text-align: right !important;
+}
+
+.mlReferences .submit {
+    margin: 20px 0 !important;
+    padding: 0 !important;
+}
+
+.mlReferences .updated {
+    margin: 20px 0 0 0 !important;
+}
+
+.mlReferences .welcome-panel {
+    margin-top: 20px !important;
+    padding: 0 20px 20px 20px !important;
+}
+
+.mlReferences_3 td {
+    position: relative !important;
+}
+
+.mlReferences_3 td .delete {
+    position: absolute !important;
+    top: 11px !important;
+    right: 10px !important;
+}
+
+.mlReferences_4 {
+    max-height: 250px !important;
+    overflow: auto !important;
+}
+
+.mlReferences_4 .mlReferences_widget {
+    margin-top: 0 !important;
+    width: 100% !important;
+}
+
+.mlReferences_4 .mlReferences_widget th {
+    text-align: left !important;
+}
+
+.mlReferences_highlight {
+    color: #007acc !important;
+    font-weight: bold !important;
+    text-decoration: underline !important;
+}
+
+.mlReferences_widget {
+    border-collapse: collapse !important;
+    margin-top: 12px !important;
+    width: 100% !important;
+}
+
+.mlReferences_widget a {
+    cursor: pointer !important;
+}
+
+.mlReferences_widget th {
+    background-color: #eee !important;
+    border-left: 1px solid #fff !important;
+    border-right: 1px solid #fff !important;
+    padding: 12px 6px !important;
+}
+
+.mlReferences_widget td {
+    border: 1px solid #fff !important;
+    padding: 6px !important;
+}
+
+.mlReferences_widget td label {
+    display: block !important;
+    margin-right: 12px !important;
+    text-align: right !important;
+}
+
+.mlReferences_widget td input {
+    width: 100% !important;
+}
+
+.mlReferences_widget .center {
+    text-align: center !important;
+}
+
+.mlReferences_widget .even {
+    background-color: #f9f9f9 !important;
+}
+
+.mlReferences_widget .float-right {
+    float: right !important;
+}
+
+.mlReferences_widget .hide {
+    display: none !important;
+}
+
+.mlReferences_widget .label {
+    white-space: nowrap !important;
+    width: 200px !important;
+}
+
+.mlReferences_widget .narrow {
+    white-space: nowrap !important;
+    width: 1px !important;
+}
+
+.mlReferences_widget .odd {
+    border-bottom: 1px solid #f9f9f9 !important;
+}
+
+.mlReferences_widget .right {
+    text-align: right !important;
+}
+
+.mlReferences_widget .wide {
+    width: 100% !important;
+}
