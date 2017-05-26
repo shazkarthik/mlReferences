@@ -94,6 +94,11 @@ function references_management_zip_get_articles($file)
     $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'articles.csv'));
     if ($contents !== false) {
         $articles = str_getcsv($contents, "\n");
+        if (!empty($articles)) {
+            foreach ($articles as $key => $value) {
+                $articles[$key] = str_getcsv($value, ';');
+            }
+        }
         return $articles;
     }
 
@@ -119,6 +124,11 @@ function references_management_zip_get_authors($file)
     $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'authors.csv'));
     if ($contents !== false) {
         $authors = str_getcsv($contents, "\n");
+        if (!empty($authors)) {
+            foreach ($authors as $key => $value) {
+                $authors[$key] = str_getcsv($value, ';');
+            }
+        }
         return $authors;
     }
 
@@ -144,6 +154,11 @@ function references_management_zip_get_articles_authors($file)
     $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'articles_authors.csv'));
     if ($contents !== false) {
         $articles_authors = str_getcsv($contents, "\n");
+        if (!empty($articles_authors)) {
+            foreach ($articles_authors as $key => $value) {
+                $articles_authors[$key] = str_getcsv($value, ';');
+            }
+        }
         return $articles_authors;
     }
 
@@ -178,7 +193,7 @@ function references_management_zip_get_items($contents)
             $item = array();
             if (!empty($value)) {
                 foreach ($value as $k => $v) {
-                    $k = PHPExcel_Cell::columnIndexFromString($k);
+                    $k = PHPExcel_Cell::columnIndexFromString($k) - 1;
                     $item[$k] = $v;
                 }
             }
@@ -1714,7 +1729,6 @@ EOD;
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $articles = references_management_zip_get_articles($_FILES['file']['tmp_name']);
                 foreach ($articles AS $article) {
-                    $article = str_getcsv($article, ';');
                     $GLOBALS['wpdb']->update(
                         sprintf('%sarticles', references_management_get_prefix()),
                         array(
@@ -1750,7 +1764,6 @@ EOD;
                 }
                 $authors = references_management_zip_get_authors($_FILES['file']['tmp_name']);
                 foreach ($authors AS $author) {
-                    $author = str_getcsv($author, ';');
                     $GLOBALS['wpdb']->update(
                         sprintf('%sauthors', references_management_get_prefix()),
                         array(
@@ -1765,7 +1778,6 @@ EOD;
                 }
                 $articles_authors = references_management_zip_get_articles_authors($_FILES['file']['tmp_name']);
                 foreach ($articles_authors AS $article_author) {
-                    $article_author = str_getcsv($article_author, ';');
                     $GLOBALS['wpdb']->update(
                         sprintf('%sarticles_authors', references_management_get_prefix()),
                         array(
