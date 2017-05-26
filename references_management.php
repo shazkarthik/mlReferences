@@ -768,6 +768,9 @@ function references_management_get_references_authors($item)
 {
     $item['authors'] = array_filter($item['authors'], 'references_management_filters_author');
     $count = count($item['authors']);
+    if ($count === 0) {
+        return '';
+    }
     $names = array();
     if (!empty($item['authors'])) {
         foreach ($item['authors'] AS $key => $value) {
@@ -788,6 +791,9 @@ function references_management_get_references_editors($item)
 {
     $item['authors'] = array_filter($item['authors'], 'references_management_filters_editor');
     $count = count($item['authors']);
+    if ($count === 0) {
+        return '';
+    }
     $names = array();
     if (!empty($item['authors'])) {
         foreach ($item['authors'] AS $key => $value) {
