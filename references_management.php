@@ -11,6 +11,7 @@
 
 require_once 'vendors/php-csv-utils-0.3/Csv/Dialect.php';
 require_once 'vendors/php-csv-utils-0.3/Csv/Writer.php';
+require_once 'vendors/PHPExcel-1.8/Classes/PHPExcel/IOFactory.php';
 
 libxml_use_internal_errors(true);
 
@@ -84,6 +85,108 @@ function references_management_uasort($one, $two)
 function references_management_usort($one, $two)
 {
     return strlen($two) - strlen($one);
+}
+
+function references_management_zip_get_articles($file)
+{
+    $articles = array();
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'articles.csv'));
+    if ($contents !== false) {
+        $articles = str_getcsv($contents, "\n");
+        return $articles;
+    }
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'articles.xls'));
+    if ($contents !== false) {
+        $articles = references_management_zip_get_items($contents);
+        return $articles;
+    }
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'articles.xlsx'));
+    if ($contents !== false) {
+        $articles = references_management_zip_get_items($contents);
+        return $articles;
+    }
+
+    return $articles;
+}
+
+function references_management_zip_get_authors($file)
+{
+    $authors = array();
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'authors.csv'));
+    if ($contents !== false) {
+        $authors = str_getcsv($contents, "\n");
+        return $authors;
+    }
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'authors.xls'));
+    if ($contents !== false) {
+        $authors = references_management_zip_get_items($contents);
+        return $authors;
+    }
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'authors.xlsx'));
+    if ($contents !== false) {
+        $authors = references_management_zip_get_items($contents);
+        return $authors;
+    }
+
+    return $authors;
+}
+
+function references_management_zip_get_articles_authors($file)
+{
+    $articles_authors = array();
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'articles_authors.csv'));
+    if ($contents !== false) {
+        $articles_authors = str_getcsv($contents, "\n");
+        return $articles_authors;
+    }
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'articles_authors.xls'));
+    if ($contents !== false) {
+        $articles_authors = references_management_zip_get_items($contents);
+        return $articles_authors;
+    }
+
+    $contents = @file_get_contents(sprintf('zip://%s#%s', $file, 'articles_authors.xlsx'));
+    if ($contents !== false) {
+        $articles_authors = references_management_zip_get_items($contents);
+        return $articles_authors;
+    }
+
+    return $articles_authors;
+}
+
+function references_management_zip_get_items($contents)
+{
+    $items = array();
+    $tempnam = tempnam(sys_get_temp_dir(), 'references_management_');
+    $fopen = fopen($tempnam, 'w');
+    fwrite($fopen, $contents);
+    fclose($fopen);
+    $type = PHPExcel_IOFactory::identify($tempnam);
+    $reader = PHPExcel_IOFactory::createReader($type);
+    $load = $reader->load($tempnam);
+    $items = $load->getActiveSheet()->toArray(null,true,true,true);
+    if (!empty($items)) {
+        foreach ($items as $key => $value) {
+            $item = array();
+            if (!empty($value)) {
+                foreach ($value as $k => $v) {
+                    $k = PHPExcel_Cell::columnIndexFromString($k);
+                    $item[$k] = $v;
+                }
+            }
+            $items[$key] = $item;
+        }
+    }
+    unlink($tempnam);
+    return $items;
 }
 
 function references_management_get_access_date($access_date)
@@ -1468,10 +1571,9 @@ citations_first,
 citations_subsequent,
 citations_parenthetical_first,
 citations_parenthetical_subsequent,
-references_authors,
-references_editors,
 references_all,
-endnote
+references_authors,
+references_editors
 FROM `%sarticles`
 WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
@@ -1604,10 +1706,7 @@ EOD;
             break;
         case 'upload_zip':
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $articles = str_getcsv(
-                    @file_get_contents(sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'articles.csv')),
-                    "\n"
-                );
+                $articles = references_management_zip_get_articles($_FILES['file']['tmp_name']);
                 foreach ($articles AS $article) {
                     $article = str_getcsv($article, ';');
                     $GLOBALS['wpdb']->update(
@@ -1643,10 +1742,7 @@ EOD;
                         )
                     );
                 }
-                $authors = str_getcsv(
-                    @file_get_contents(sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'authors.csv')),
-                    "\n"
-                );
+                $authors = references_management_zip_get_authors($_FILES['file']['tmp_name']);
                 foreach ($authors AS $author) {
                     $author = str_getcsv($author, ';');
                     $GLOBALS['wpdb']->update(
@@ -1661,12 +1757,7 @@ EOD;
                         )
                     );
                 }
-                $articles_authors = str_getcsv(
-                    @file_get_contents(
-                        sprintf('zip://%s#%s', $_FILES['file']['tmp_name'], 'articles_authors.csv')
-                    ),
-                    "\n"
-                );
+                $articles_authors = references_management_zip_get_articles_authors($_FILES['file']['tmp_name']);
                 foreach ($articles_authors AS $article_author) {
                     $article_author = str_getcsv($article_author, ';');
                     $GLOBALS['wpdb']->update(
@@ -2442,7 +2533,10 @@ if (defined('WP_CLI') && WP_CLI)
 {
     class references_management_cli
     {
-        public function __invoke($args)
+        /**
+         * @subcommand upload
+         */
+        public function upload($args)
         {
             $xml = $args[0];
             $xml = file_get_contents($xml);
@@ -2459,6 +2553,23 @@ if (defined('WP_CLI') && WP_CLI)
                 }
             }
             print_r($txt);
+        }
+
+        /**
+         * @subcommand upload_zip
+         */
+        public function upload_zip($args)
+        {
+            $file = $args[0];
+            $articles = references_management_zip_get_articles($file);
+            $articles = array_slice($articles, 0, 5);
+            print_r($articles);
+            $authors = references_management_zip_get_authors($file);
+            $authors = array_slice($authors, 0, 5);
+            print_r($authors);
+            $articles_authors = references_management_zip_get_articles_authors($file);
+            $articles_authors = array_slice($articles_authors, 0, 5);
+            print_r($articles_authors);
         }
     }
 
