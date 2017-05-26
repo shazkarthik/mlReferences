@@ -21,7 +21,7 @@ function mlReferences_delete($directory)
         new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS),
         RecursiveIteratorIterator::CHILD_FIRST
     );
-    foreach ($files AS $file) {
+    foreach ($files as $file) {
         if ($file->isDir()) {
             rmdir($file->getRealPath());
         } else {
@@ -187,7 +187,7 @@ function mlReferences_zip_get_items($contents)
     $type = PHPExcel_IOFactory::identify($tempnam);
     $reader = PHPExcel_IOFactory::createReader($type);
     $load = $reader->load($tempnam);
-    $items = $load->getActiveSheet()->toArray(null,true,true,true);
+    $items = $load->getActiveSheet()->toArray(null, true, true, true);
     if (!empty($items)) {
         foreach ($items as $key => $value) {
             $item = array();
@@ -275,7 +275,7 @@ function mlReferences_get_citations_first($authors, $year)
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
         if (!empty($authors)) {
-            foreach ($authors AS $key => $value) {
+            foreach ($authors as $key => $value) {
                 $separator = ',';
                 if ($key + 1 === $count - 1) {
                     $separator = ' &';
@@ -306,7 +306,7 @@ function mlReferences_get_citations_parenthetical_first($authors, $year)
     if ($count === 3 or $count === 4 or $count === 5) {
         $names = array();
         if (!empty($authors)) {
-            foreach ($authors AS $key => $value) {
+            foreach ($authors as $key => $value) {
                 $separator = ',';
                 if ($key + 1 === $count - 1) {
                     $separator = ' &';
@@ -388,7 +388,7 @@ function mlReferences_get_endnote($item, &$txt)
         mlReferences_log(sprintf('        %s, %s', $author['name'], $author['first_name']));
     }
 
-    foreach ($txt AS $key => $value) {
+    foreach ($txt as $key => $value) {
         $statuses = array(
             'title' => false,
             'authors' => false,
@@ -401,12 +401,9 @@ function mlReferences_get_endnote($item, &$txt)
         $strlen = strlen($item['title_1']);
         $title_1 = substr($value[1], 0, $strlen);
         if ($item['title_1'] === $title_1) {
-            if (
-                (!empty($item['year']) AND strpos($txt[$key], $item['year']) !== false)
-                OR
-                (!empty($item['publisher']) AND strpos($txt[$key], $item['publisher']) !== false)
-                OR
-                (!empty($item['place_published']) AND strpos($txt[$key], $item['place_published']) !== false)
+            if ((!empty($item['year']) and strpos($txt[$key], $item['year']) !== false) or
+                (!empty($item['publisher']) and strpos($txt[$key], $item['publisher']) !== false) or
+                (!empty($item['place_published']) and strpos($txt[$key], $item['place_published']) !== false)
             ) {
                 $statuses['title'] = true;
                 mlReferences_log('    Step 1: Title is a match');
@@ -425,12 +422,12 @@ function mlReferences_get_endnote($item, &$txt)
             $authors_1 = array_filter($authors_1, 'mlReferences_filters_authors');
             $count_1 = count($authors_1);
             $count_2 = 0;
-            foreach ($item['authors'] AS $author) {
+            foreach ($item['authors'] as $author) {
                 if (in_array($author['name'], $authors_1)) {
                     $count_2 += 1;
                     continue;
                 }
-                foreach ($authors_1 AS $k => $v) {
+                foreach ($authors_1 as $k => $v) {
                     if (strpos($author['name'], $v) !== false) {
                         $count_2 += 1;
                         break;
@@ -451,12 +448,12 @@ function mlReferences_get_endnote($item, &$txt)
             $authors_2 = array_map('trim', $authors_2);
             $count_1 = count($authors_2);
             $count_2 = 0;
-            foreach ($item['authors'] AS $author) {
+            foreach ($item['authors'] as $author) {
                 if (in_array($author['name'], $authors_2)) {
                     $count_2 += 1;
                     continue;
                 }
-                foreach ($authors_2 AS $k => $v) {
+                foreach ($authors_2 as $k => $v) {
                     if (strpos($author['name'], $v) !== false) {
                         $count_2 += 1;
                         break;
@@ -468,7 +465,7 @@ function mlReferences_get_endnote($item, &$txt)
                 mlReferences_log('    Step 2.2: Authors are a match');
             } else {
                 mlReferences_log('    Step 2.2: Authors are not a match');
-              }
+            }
         }
         if ($statuses['authors'] === false) {
             $authors_3 = $value[0];
@@ -477,12 +474,12 @@ function mlReferences_get_endnote($item, &$txt)
             $authors_3 = array_map('trim', $authors_3);
             $count_1 = count($authors_3);
             $count_2 = 0;
-            foreach ($item['authors'] AS $author) {
+            foreach ($item['authors'] as $author) {
                 if (in_array($author['name'], $authors_3)) {
                     $count_2 += 1;
                     continue;
                 }
-                foreach ($authors_3 AS $k => $v) {
+                foreach ($authors_3 as $k => $v) {
                     if (strpos($author['name'], $v) !== false) {
                         $count_2 += 1;
                         break;
@@ -494,13 +491,13 @@ function mlReferences_get_endnote($item, &$txt)
                 mlReferences_log('    Step 2.3: Authors are a match');
             } else {
                 mlReferences_log('    Step 2.3: Authors are not a match');
-              }
+            }
         }
         if ($statuses['authors'] === false) {
             $authors_4 = $value[0];
             $count_1 = count($authors_4);
             $count_2 = 0;
-            foreach ($item['authors'] AS $author) {
+            foreach ($item['authors'] as $author) {
                 if ($author['name'] === $authors_4) {
                     $count_2 += 1;
                 }
@@ -510,11 +507,10 @@ function mlReferences_get_endnote($item, &$txt)
                 mlReferences_log('    Step 2.4: Authors are a match');
             } else {
                 mlReferences_log('    Step 2.4: Authors are not a match');
-              }
+            }
         }
 
-
-        if ($statuses['title'] === true AND $statuses['authors'] === true) {
+        if ($statuses['title'] === true and $statuses['authors'] === true) {
             mlReferences_log('    Success: We have a match!');
             mlReferences_log(str_repeat('-', 80));
             return $key;
@@ -546,7 +542,7 @@ function mlReferences_get_items($xml, $txt)
     $txt = explode("\n", $txt);
     $txt = array_map('trim', $txt);
 
-    foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') AS $key => $value) {
+    foreach (@simplexml_load_string($xml)->xpath('//xml/records/record') as $key => $value) {
         try {
             $item = array();
 
@@ -585,7 +581,7 @@ function mlReferences_get_items($xml, $txt)
             $urls = $value->xpath('urls/related-urls/url/style');
 
             $item['url'] = '';
-            foreach ($urls AS $url) {
+            foreach ($urls as $url) {
                 $url = (string) $url;
                 $url = trim($url);
                 if (stristr($url, 'doi') === false) {
@@ -595,7 +591,7 @@ function mlReferences_get_items($xml, $txt)
             }
 
             $item['doi'] = '';
-            foreach ($urls AS $url) {
+            foreach ($urls as $url) {
                 $url = (string) $url;
                 $url = trim($url);
                 if (stristr($url, 'doi') !== false) {
@@ -688,7 +684,7 @@ function mlReferences_get_items($xml, $txt)
             $item['attachment'] = str_replace('internal-pdf', '', $item['attachment']);
 
             $item['authors'] = array();
-            foreach ($value->xpath('contributors/authors/author') AS $name) {
+            foreach ($value->xpath('contributors/authors/author') as $name) {
                 $author = mlReferences_get_author($name);
                 if ($author === false) {
                     continue;
@@ -700,7 +696,7 @@ function mlReferences_get_items($xml, $txt)
                     'url' => mlReferences_get_url(!empty($author[1])? $author[1]: '', $author[0]),
                 );
             }
-            foreach ($value->xpath('contributors/secondary-authors/author') AS $name) {
+            foreach ($value->xpath('contributors/secondary-authors/author') as $name) {
                 $author = mlReferences_get_author($name);
                 if ($author === false) {
                     continue;
@@ -717,15 +713,18 @@ function mlReferences_get_items($xml, $txt)
             $item['citations_first'] = mlReferences_get_citations_first($item['authors'], $item['year']);
 
             $item['citations_subsequent'] = mlReferences_get_citations_subsequent(
-                $item['authors'], $item['year']
+                $item['authors'],
+                $item['year']
             );
 
             $item['citations_parenthetical_first'] = mlReferences_get_citations_parenthetical_first(
-                $item['authors'], $item['year']
+                $item['authors'],
+                $item['year']
             );
 
             $item['citations_parenthetical_subsequent'] = mlReferences_get_citations_parenthetical_subsequent(
-                $item['authors'], $item['year']
+                $item['authors'],
+                $item['year']
             );
 
             $item['references_authors'] = mlReferences_get_references_authors($item);
@@ -755,7 +754,7 @@ function mlReferences_get_initials($name)
     $initials = array();
     $name = explode(' ', $name);
     if (!empty($name)) {
-        foreach ($name AS $key => $value) {
+        foreach ($name as $key => $value) {
             $initials[] = sprintf('%s.', substr($value, 0, 1));
         }
     }
@@ -788,7 +787,7 @@ function mlReferences_get_references_authors($item)
     }
     $names = array();
     if (!empty($item['authors'])) {
-        foreach ($item['authors'] AS $key => $value) {
+        foreach ($item['authors'] as $key => $value) {
             $separator = ',';
             if ($key + 1 === $count - 1) {
                 $separator = ' &';
@@ -811,7 +810,7 @@ function mlReferences_get_references_editors($item)
     }
     $names = array();
     if (!empty($item['authors'])) {
-        foreach ($item['authors'] AS $key => $value) {
+        foreach ($item['authors'] as $key => $value) {
             $separator = ',';
             if ($key + 1 === $count - 1) {
                 $separator = ' &';
@@ -836,7 +835,7 @@ function mlReferences_get_shortcodes($contents)
     );
     if (!empty($matches)) {
         $number = 0;
-        foreach ($matches AS $match) {
+        foreach ($matches as $match) {
             $number++;
             $article = $GLOBALS['wpdb']->get_row(
                 $GLOBALS['wpdb']->prepare(
@@ -861,7 +860,7 @@ function mlReferences_get_shortcodes($contents)
 
 function mlReferences_get_txt($txt)
 {
-    $bom = pack('H*','EFBBBF');
+    $bom = pack('H*', 'EFBBBF');
     $txt = preg_replace("/^{$bom}/", '', $txt);
     return $txt;
 }
@@ -877,7 +876,8 @@ function mlReferences_get_url($first_name, $last_name)
     $name = sprintf('%s %s', $first_name, $last_name);
     $xml = @file_get_contents(
         sprintf(
-            'http://lookup.dbpedia.org/api/search/KeywordSearch?QueryClass=person&QueryString=%s', urlencode($name)
+            'http://lookup.dbpedia.org/api/search/KeywordSearch?QueryClass=person&QueryString=%s',
+            urlencode($name)
         )
     );
     if (!$xml) {
@@ -888,7 +888,7 @@ function mlReferences_get_url($first_name, $last_name)
         return '';
     }
     $xml->registerXPathNamespace('xpns', 'http://lookup.dbpedia.org/');
-    foreach ($xml->xpath('//xpns:Result') AS $key => $value) {
+    foreach ($xml->xpath('//xpns:Result') as $key => $value) {
         if ((string) $value->Label === $name) {
             return (string) $value->URI;
         }
@@ -1092,7 +1092,7 @@ function mlReferences_init()
     if (get_magic_quotes_gpc()) {
         $temporary = array(&$_GET, &$_POST, &$_COOKIE, &$_REQUEST);
         while (list($key, $value) = each($temporary)) {
-            foreach ($value AS $k => $v) {
+            foreach ($value as $k => $v) {
                 unset($temporary[$key][$k]);
                 if (is_array($v)) {
                     $temporary[$key][stripslashes($k)] = $v;
@@ -1116,16 +1116,12 @@ function mlReferences_admin_init()
 
 function mlReferences_scripts()
 {
-    wp_enqueue_script(
-        'all_js', sprintf('%s/mlReferences.js', plugins_url('/mlReferences')), array('jquery')
-    );
+    wp_enqueue_script('mlReferences_js', sprintf('%s/mlReferences.js', plugins_url('/mlReferences')), array('jquery'));
 }
 
 function mlReferences_styles()
 {
-    wp_enqueue_style(
-        'all_css', sprintf('%s/mlReferences.css', plugins_url('/mlReferences'))
-    );
+    wp_enqueue_style('mlReferences_css', sprintf('%s/mlReferences.css', plugins_url('/mlReferences')));
 }
 
 function mlReferences_admin_menu()
@@ -1152,7 +1148,7 @@ function mlReferences_flashes()
 {
     ?>
     <?php if (!empty($_SESSION['mlReferences']['flashes'])) : ?>
-        <?php foreach ($_SESSION['mlReferences']['flashes'] AS $key => $value) : ?>
+        <?php foreach ($_SESSION['mlReferences']['flashes'] as $key => $value) : ?>
             <div class="<?php echo $key; ?>">
                 <p><strong><?php echo $value; ?></strong></p>
             </div>
@@ -1172,169 +1168,165 @@ function mlReferences_dashboard()
     <div class="mlReferences wrap">
         <?php
         switch ($action) {
-        case 'upload':
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                list($errors, $items, $txt) = mlReferences_get_items(
-                    file_get_contents($_FILES['file_1']['tmp_name']),
-                    !empty($_FILES['file_2']['name']) ? file_get_contents($_FILES['file_2']['tmp_name']): null
-                );
-                if ($errors) {
-                    $_SESSION['mlReferences']['flashes'] = array(
-                        'error' => 'The document was not uploaded successfully. Please try again.',
+            case 'upload':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    list($errors, $items, $txt) = mlReferences_get_items(
+                        file_get_contents($_FILES['file_1']['tmp_name']),
+                        !empty($_FILES['file_2']['name']) ? file_get_contents($_FILES['file_2']['tmp_name']): null
                     );
-                    ?>
-                    <meta
-                        content="0;url=<?php echo admin_url(
-                            'admin.php?action=upload&page=mlReferences'
-                        ); ?>"
-                        http-equiv="refresh"
-                        >
-                    <?php
-                    die();
-                }
-                if (!$items) {
-                    $_SESSION['mlReferences']['flashes'] = array(
-                        'error' => 'The document was not uploaded successfully. Please try again.',
-                    );
-                    ?>
-                    <meta
-                        content="0;url=<?php echo admin_url(
-                            'admin.php?action=upload&page=mlReferences'
-                        ); ?>"
-                        http-equiv="refresh"
-                        >
-                    <?php
-                    die();
-                }
-                $GLOBALS['wpdb']->insert(
-                    sprintf('%sdocuments', mlReferences_get_prefix()),
-                    array(
-                        'name' => $_FILES['file_1']['name'],
-                    )
-                );
-                $document_id = $GLOBALS['wpdb']->insert_id;
-                mlReferences_get_directory(array($document_id));
-                copy(
-                    $_FILES['file_1']['tmp_name'],
-                    mlReferences_get_file(array($document_id, $_FILES['file_1']['name']))
-                );
-                foreach ($items AS $item) {
+                    if ($errors) {
+                        $_SESSION['mlReferences']['flashes'] = array(
+                            'error' => 'The document was not uploaded successfully. Please try again.',
+                        );
+                        ?>
+                        <meta
+                            content="0;url=<?php echo admin_url('admin.php?action=upload&page=mlReferences'); ?>"
+                            http-equiv="refresh"
+                            >
+                        <?php
+                        die();
+                    }
+                    if (!$items) {
+                        $_SESSION['mlReferences']['flashes'] = array(
+                            'error' => 'The document was not uploaded successfully. Please try again.',
+                        );
+                        ?>
+                        <meta
+                            content="0;url=<?php echo admin_url('admin.php?action=upload&page=mlReferences'); ?>"
+                            http-equiv="refresh"
+                            >
+                        <?php
+                        die();
+                    }
                     $GLOBALS['wpdb']->insert(
-                        sprintf('%sarticles', mlReferences_get_prefix()),
+                        sprintf('%sdocuments', mlReferences_get_prefix()),
                         array(
-                            'document_id' => $document_id,
-                            'number' => $item['number'],
-                            'type' => $item['type'],
-                            'title_1' => $item['title_1'],
-                            'title_2' => $item['title_2'],
-                            'year' => $item['year'],
-                            'volume' => $item['volume'],
-                            'issue' => $item['issue'],
-                            'page' => $item['page'],
-                            'url' => $item['url'],
-                            'doi' => $item['doi'],
-                            'issn' => $item['issn'],
-                            'original_publication' => $item['original_publication'],
-                            'isbn' => $item['isbn'],
-                            'label' => $item['label'],
-                            'publisher' => $item['publisher'],
-                            'place_published' => $item['place_published'],
-                            'access_date' => $item['access_date'],
-                            'attachment' => $item['attachment'],
-                            'citations_first' => $item['citations_first'],
-                            'citations_subsequent' => $item['citations_subsequent'],
-                            'citations_parenthetical_first' => $item['citations_parenthetical_first'],
-                            'citations_parenthetical_subsequent' => $item['citations_parenthetical_subsequent'],
-                            'references_authors' => $item['references_authors'],
-                            'references_editors' => $item['references_editors'],
-                            'references_all' => $item['references_all'],
-                            'endnote' => $item['endnote'],
+                            'name' => $_FILES['file_1']['name'],
                         )
                     );
-                    $article_id = $GLOBALS['wpdb']->insert_id;
-                    foreach ($item['authors'] AS $author) {
-                        $query = <<<EOD
+                    $document_id = $GLOBALS['wpdb']->insert_id;
+                    mlReferences_get_directory(array($document_id));
+                    copy(
+                        $_FILES['file_1']['tmp_name'],
+                        mlReferences_get_file(array($document_id, $_FILES['file_1']['name']))
+                    );
+                    foreach ($items as $item) {
+                        $GLOBALS['wpdb']->insert(
+                            sprintf('%sarticles', mlReferences_get_prefix()),
+                            array(
+                                'document_id' => $document_id,
+                                'number' => $item['number'],
+                                'type' => $item['type'],
+                                'title_1' => $item['title_1'],
+                                'title_2' => $item['title_2'],
+                                'year' => $item['year'],
+                                'volume' => $item['volume'],
+                                'issue' => $item['issue'],
+                                'page' => $item['page'],
+                                'url' => $item['url'],
+                                'doi' => $item['doi'],
+                                'issn' => $item['issn'],
+                                'original_publication' => $item['original_publication'],
+                                'isbn' => $item['isbn'],
+                                'label' => $item['label'],
+                                'publisher' => $item['publisher'],
+                                'place_published' => $item['place_published'],
+                                'access_date' => $item['access_date'],
+                                'attachment' => $item['attachment'],
+                                'citations_first' => $item['citations_first'],
+                                'citations_subsequent' => $item['citations_subsequent'],
+                                'citations_parenthetical_first' => $item['citations_parenthetical_first'],
+                                'citations_parenthetical_subsequent' => $item['citations_parenthetical_subsequent'],
+                                'references_authors' => $item['references_authors'],
+                                'references_editors' => $item['references_editors'],
+                                'references_all' => $item['references_all'],
+                                'endnote' => $item['endnote'],
+                            )
+                        );
+                        $article_id = $GLOBALS['wpdb']->insert_id;
+                        foreach ($item['authors'] as $author) {
+                            $query = <<<EOD
 SELECT *
 FROM `%sauthors`
 WHERE `name` = %%s AND `first_name` = %%s
 EOD;
-                        $row = $GLOBALS['wpdb']->get_row(
-                            $GLOBALS['wpdb']->prepare(
-                                sprintf($query, mlReferences_get_prefix()),
-                                $author['name'],
-                                $author['first_name']
-                            ),
-                            ARRAY_A
-                        );
-                        if ($row) {
-                            $author_id = $row['id'];
-                        } else {
+                            $row = $GLOBALS['wpdb']->get_row(
+                                $GLOBALS['wpdb']->prepare(
+                                    sprintf($query, mlReferences_get_prefix()),
+                                    $author['name'],
+                                    $author['first_name']
+                                ),
+                                ARRAY_A
+                            );
+                            if ($row) {
+                                $author_id = $row['id'];
+                            } else {
+                                $GLOBALS['wpdb']->insert(
+                                    sprintf('%sauthors', mlReferences_get_prefix()),
+                                    array(
+                                        'name' => $author['name'],
+                                        'first_name' => $author['first_name'],
+                                        'url' => $author['url'],
+                                    )
+                                );
+                                $author_id = $GLOBALS['wpdb']->insert_id;
+                            }
                             $GLOBALS['wpdb']->insert(
-                                sprintf('%sauthors', mlReferences_get_prefix()),
+                                sprintf('%sarticles_authors', mlReferences_get_prefix()),
                                 array(
-                                    'name' => $author['name'],
-                                    'first_name' => $author['first_name'],
-                                    'url' => $author['url'],
+                                    'article_id' => $article_id,
+                                    'author_id' => $author_id,
+                                    'role' => $author['role'],
                                 )
                             );
-                            $author_id = $GLOBALS['wpdb']->insert_id;
                         }
-                        $GLOBALS['wpdb']->insert(
-                            sprintf('%sarticles_authors', mlReferences_get_prefix()),
-                            array(
-                                'article_id' => $article_id,
-                                'author_id' => $author_id,
-                                'role' => $author['role'],
-                            )
-                        );
                     }
+                    $_SESSION['mlReferences']['flashes'] = array(
+                        'updated' => 'The document was uploaded successfully.',
+                    );
+                    ?>
+                    <meta
+                        content="0;url=<?php echo admin_url('admin.php?action=&page=mlReferences'); ?>"
+                        http-equiv="refresh"
+                        >
+                    <?php
+                    die();
+                } else {
+                    ?>
+                    <h1>Documents - Upload</h1>
+                    <form
+                        action="<?php echo admin_url('admin.php?action=upload&page=mlReferences'); ?>"
+                        enctype="multipart/form-data"
+                        method="post"
+                        >
+                        <table class="bordered widefat wp-list-table">
+                            <tr>
+                                <td class="label">
+                                    <label for="file_1">XML File</label>
+                                </td>
+                                <td><input id="file" name="file_1" type="file"></td>
+                            </tr>
+                            <tr>
+                                <td class="label">
+                                    <label for="file_2">TXT File</label>
+                                </td>
+                                <td><input id="file" name="file_2" type="file"></td>
+                            </tr>
+                        </table>
+                        <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
+                    </form>
+                    <?php
                 }
-                $_SESSION['mlReferences']['flashes'] = array(
-                    'updated' => 'The document was uploaded successfully.',
+                break;
+            case 'download':
+                $document = $GLOBALS['wpdb']->get_row(
+                    $GLOBALS['wpdb']->prepare(
+                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', mlReferences_get_prefix()),
+                        intval($_REQUEST['id'])
+                    ),
+                    ARRAY_A
                 );
-                ?>
-                <meta
-                    content="0;url=<?php echo admin_url('admin.php?action=&page=mlReferences'); ?>"
-                    http-equiv="refresh"
-                    >
-                <?php
-                die();
-            } else {
-                ?>
-                <h1>Documents - Upload</h1>
-                <form
-                    action="<?php echo admin_url('admin.php?action=upload&page=mlReferences'); ?>"
-                    enctype="multipart/form-data"
-                    method="post"
-                    >
-                    <table class="bordered widefat wp-list-table">
-                        <tr>
-                            <td class="label">
-                                <label for="file_1">XML File</label>
-                            </td>
-                            <td><input id="file" name="file_1" type="file"></td>
-                        </tr>
-                        <tr>
-                            <td class="label">
-                                <label for="file_2">TXT File</label>
-                            </td>
-                            <td><input id="file" name="file_2" type="file"></td>
-                        </tr>
-                    </table>
-                    <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
-                </form>
-                <?php
-            }
-            break;
-        case 'download':
-            $document = $GLOBALS['wpdb']->get_row(
-                $GLOBALS['wpdb']->prepare(
-                    sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', mlReferences_get_prefix()),
-                    intval($_REQUEST['id'])
-                ),
-                ARRAY_A
-            );
-            $query = <<<EOD
+                $query = <<<EOD
 SELECT `%sauthors`.`name`, `%sauthors`.`first_name`
 FROM `%sauthors`
 INNER JOIN `%sarticles_authors` ON
@@ -1343,231 +1335,227 @@ WHERE `%sarticles_authors`.`role` = %%s
 LIMIT 1
 OFFSET %d
 EOD;
-            $xml = simplexml_load_file(mlReferences_get_file(array($_REQUEST['id'], $document['name'])));
-            foreach ($xml->xpath('//xml/records/record') AS $key => $value) {
-                $number = (string) array_pop($value->xpath('rec-number'));
-                $article = $GLOBALS['wpdb']->get_row(
-                    $GLOBALS['wpdb']->prepare(
-                        sprintf(
-                            'SELECT * FROM `%sarticles` WHERE `document_id` = %%d AND `number` = %%s',
-                            mlReferences_get_prefix()
+                $xml = simplexml_load_file(mlReferences_get_file(array($_REQUEST['id'], $document['name'])));
+                foreach ($xml->xpath('//xml/records/record') as $key => $value) {
+                    $number = (string) array_pop($value->xpath('rec-number'));
+                    $article = $GLOBALS['wpdb']->get_row(
+                        $GLOBALS['wpdb']->prepare(
+                            sprintf(
+                                'SELECT * FROM `%sarticles` WHERE `document_id` = %%d AND `number` = %%s',
+                                mlReferences_get_prefix()
+                            ),
+                            $document['id'],
+                            $number
                         ),
-                        $document['id'],
-                        $number
+                        ARRAY_A
+                    );
+                    if (!$article) {
+                        continue;
+                    }
+                    $types = $value->xpath('ref-type');
+                    foreach ($types as $type) {
+                        $dom = dom_import_simplexml($type);
+                        $dom->setAttribute('name', $article['type']);
+                    }
+                    $title_1s = $value->xpath('titles/title/style');
+                    foreach ($title_1s as $title_1) {
+                        $dom = dom_import_simplexml($title_1);
+                        $dom->nodeValue = $article['title_1'];
+                    }
+                    $title_2s = $value->xpath('titles/secondary-title/style');
+                    foreach ($title_2s as $title_2) {
+                        $dom = dom_import_simplexml($title_2);
+                        $dom->nodeValue = $article['title_2'];
+                    }
+                    $years = $value->xpath('dates/year/style');
+                    foreach ($years as $year) {
+                        $dom = dom_import_simplexml($year);
+                        $dom->nodeValue = $article['year'];
+                    }
+                    $volumes = $value->xpath('volume/style');
+                    foreach ($volumes as $volume) {
+                        $dom = dom_import_simplexml($volume);
+                        $dom->nodeValue = $article['volume'];
+                    }
+                    $issues = $value->xpath('number/style');
+                    foreach ($issues as $issue) {
+                        $dom = dom_import_simplexml($issue);
+                        $dom->nodeValue = $article['issue'];
+                    }
+                    $pages = $value->xpath('pages/style');
+                    foreach ($pages as $page) {
+                        $dom = dom_import_simplexml($page);
+                        $dom->nodeValue = $article['page'];
+                    }
+                    $urls = $value->xpath('urls/related-urls/url/style');
+                    foreach ($urls as $url) {
+                        $dom = dom_import_simplexml($url);
+                        if (stristr($url, 'doi') === false) {
+                            $dom->nodeValue = $article['url'];
+                            break;
+                        }
+                    }
+                    foreach ($urls as $url) {
+                        $dom = dom_import_simplexml($url);
+                        if (stristr($url, 'doi') !== false) {
+                            $dom->nodeValue = $article['doi'];
+                            break;
+                        }
+                    }
+                    $issns = $value->xpath('orig-pub/style');
+                    foreach ($issns as $issn) {
+                        $dom = dom_import_simplexml($issn);
+                        $dom->nodeValue = $article['issn'];
+                    }
+                    $original_publications = $value->xpath('orig-pub/style');
+                    foreach ($original_publications as $original_publication) {
+                        $dom = dom_import_simplexml($original_publication);
+                        $dom->nodeValue = $article['original_publication'];
+                    }
+                    $isbns = $value->xpath('isbn/style');
+                    foreach ($isbns as $isbn) {
+                        $dom = dom_import_simplexml($isbn);
+                        $dom->nodeValue = $article['isbn'];
+                    }
+                    $labels = $value->xpath('label/style');
+                    foreach ($labels as $label) {
+                        $dom = dom_import_simplexml($label);
+                        $dom->nodeValue = $article['label'];
+                    }
+                    $publishers = $value->xpath('publisher/style');
+                    foreach ($publishers as $publisher) {
+                        $dom = dom_import_simplexml($publisher);
+                        $dom->nodeValue = $article['publisher'];
+                    }
+                    $places_published = $value->xpath('pub-location/style');
+                    foreach ($places_published as $place_published) {
+                        $dom = dom_import_simplexml($place_published);
+                        $dom->nodeValue = $article['place_published'];
+                    }
+                    $access_dates = $value->xpath('access-date/style');
+                    foreach ($access_dates as $access_date) {
+                        $dom = dom_import_simplexml($access_date);
+                        $dom->nodeValue = $article['access_date'];
+                    }
+                    $attachments = $value->xpath('urls/pdf-urls/url');
+                    foreach ($attachments as $attachment) {
+                        $dom = dom_import_simplexml($attachment);
+                        $dom->nodeValue = sprintf('internal-pdf%s', $article['attachment']);
+                    }
+                    $authors = $value->xpath('contributors/authors/author/style');
+                    foreach ($authors as $k => $v) {
+                        $author = $GLOBALS['wpdb']->get_row(
+                            $GLOBALS['wpdb']->prepare(
+                                sprintf(
+                                    $query,
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    $k
+                                ),
+                                $article['id'],
+                                'Author'
+                            ),
+                            ARRAY_A
+                        );
+                        if ($author) {
+                            $dom = dom_import_simplexml($v);
+                            $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
+                        }
+                    }
+                    $editors = $value->xpath('contributors/secondary-authors/author/style');
+                    foreach ($editors as $k => $v) {
+                        $editor = $GLOBALS['wpdb']->get_row(
+                            $GLOBALS['wpdb']->prepare(
+                                sprintf(
+                                    $query,
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    mlReferences_get_prefix(),
+                                    $k
+                                ),
+                                $article['id'],
+                                'Editor'
+                            ),
+                            ARRAY_A
+                        );
+                        if ($editor) {
+                            $dom = dom_import_simplexml($v);
+                            $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
+                        }
+                    }
+                }
+                $contents = $xml->asXML();
+                ob_clean();
+                header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
+                header(sprintf('Content-Length: %d', strlen($contents)));
+                echo $contents;
+                break;
+            case 'delete':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $directory = mlReferences_get_directory(array($_REQUEST['id']));
+                    mlReferences_delete($directory);
+                    rmdir($directory);
+                    $GLOBALS['wpdb']->delete(
+                        sprintf('%sdocuments', mlReferences_get_prefix()),
+                        array(
+                            'id' => $_REQUEST['id'],
+                        ),
+                        null,
+                        null
+                    );
+                    $_SESSION['mlReferences']['flashes'] = array(
+                        'updated' => 'The document was deleted successfully.',
+                    );
+                    ?>
+                    <meta
+                        content="0;url=<?php echo admin_url('admin.php?action=&deleted=deleted&page=mlReferences'); ?>"
+                        http-equiv="refresh"
+                        >
+                    <?php
+                    die();
+                } else {
+                    ?>
+                    <h1>Documents - Delete</h1>
+                    <div class="error">
+                        <p><strong>Are you sure you want to delete this document?</strong></p>
+                    </div>
+                    <form
+                        action="<?php echo admin_url(sprintf('admin.php?action=delete&id=%d&page=mlReferences', $_REQUEST['id'])); ?>"
+                        method="post"
+                        >
+                        <p class="submit">
+                            <input class="button-primary" type="submit" value="Yes">
+                            <a
+                                class="float-right"
+                                href="<?php echo admin_url('admin.php?action=&page=mlReferences'); ?>"
+                                >
+                                No
+                            </a>
+                        </p>
+                    </form>
+                    <?php
+                }
+                break;
+            case 'download_zip':
+                $document = $GLOBALS['wpdb']->get_row(
+                    $GLOBALS['wpdb']->prepare(
+                        sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', mlReferences_get_prefix()),
+                        intval($_REQUEST['id'])
                     ),
                     ARRAY_A
                 );
-                if (!$article) {
-                    continue;
-                }
-                $types = $value->xpath('ref-type');
-                foreach ($types AS $type) {
-                    $dom = dom_import_simplexml($type);
-                    $dom->setAttribute('name', $article['type']);
-                }
-                $title_1s = $value->xpath('titles/title/style');
-                foreach ($title_1s AS $title_1) {
-                    $dom = dom_import_simplexml($title_1);
-                    $dom->nodeValue = $article['title_1'];
-                }
-                $title_2s = $value->xpath('titles/secondary-title/style');
-                foreach ($title_2s AS $title_2) {
-                    $dom = dom_import_simplexml($title_2);
-                    $dom->nodeValue = $article['title_2'];
-                }
-                $years = $value->xpath('dates/year/style');
-                foreach ($years AS $year) {
-                    $dom = dom_import_simplexml($year);
-                    $dom->nodeValue = $article['year'];
-                }
-                $volumes = $value->xpath('volume/style');
-                foreach ($volumes AS $volume) {
-                    $dom = dom_import_simplexml($volume);
-                    $dom->nodeValue = $article['volume'];
-                }
-                $issues = $value->xpath('number/style');
-                foreach ($issues AS $issue) {
-                    $dom = dom_import_simplexml($issue);
-                    $dom->nodeValue = $article['issue'];
-                }
-                $pages = $value->xpath('pages/style');
-                foreach ($pages AS $page) {
-                    $dom = dom_import_simplexml($page);
-                    $dom->nodeValue = $article['page'];
-                }
-                $urls = $value->xpath('urls/related-urls/url/style');
-                foreach ($urls AS $url) {
-                    $dom = dom_import_simplexml($url);
-                    if (stristr($url, 'doi') === false) {
-                        $dom->nodeValue = $article['url'];
-                        break;
-                    }
-                }
-                foreach ($urls AS $url) {
-                    $dom = dom_import_simplexml($url);
-                    if (stristr($url, 'doi') !== false) {
-                        $dom->nodeValue = $article['doi'];
-                        break;
-                    }
-                }
-                $issns = $value->xpath('orig-pub/style');
-                foreach ($issns AS $issn) {
-                    $dom = dom_import_simplexml($issn);
-                    $dom->nodeValue = $article['issn'];
-                }
-                $original_publications = $value->xpath('orig-pub/style');
-                foreach ($original_publications AS $original_publication) {
-                    $dom = dom_import_simplexml($original_publication);
-                    $dom->nodeValue = $article['original_publication'];
-                }
-                $isbns = $value->xpath('isbn/style');
-                foreach ($isbns AS $isbn) {
-                    $dom = dom_import_simplexml($isbn);
-                    $dom->nodeValue = $article['isbn'];
-                }
-                $labels = $value->xpath('label/style');
-                foreach ($labels AS $label) {
-                    $dom = dom_import_simplexml($label);
-                    $dom->nodeValue = $article['label'];
-                }
-                $publishers = $value->xpath('publisher/style');
-                foreach ($publishers AS $publisher) {
-                    $dom = dom_import_simplexml($publisher);
-                    $dom->nodeValue = $article['publisher'];
-                }
-                $places_published = $value->xpath('pub-location/style');
-                foreach ($places_published AS $place_published) {
-                    $dom = dom_import_simplexml($place_published);
-                    $dom->nodeValue = $article['place_published'];
-                }
-                $access_dates = $value->xpath('access-date/style');
-                foreach ($access_dates AS $access_date) {
-                    $dom = dom_import_simplexml($access_date);
-                    $dom->nodeValue = $article['access_date'];
-                }
-                $attachments = $value->xpath('urls/pdf-urls/url');
-                foreach ($attachments AS $attachment) {
-                    $dom = dom_import_simplexml($attachment);
-                    $dom->nodeValue = sprintf('internal-pdf%s', $article['attachment']);
-                }
-                $authors = $value->xpath('contributors/authors/author/style');
-                foreach ($authors AS $k => $v) {
-                    $author = $GLOBALS['wpdb']->get_row(
-                        $GLOBALS['wpdb']->prepare(
-                            sprintf(
-                                $query,
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                $k
-                            ),
-                            $article['id'],
-                            'Author'
-                        ),
-                        ARRAY_A
-                    );
-                    if ($author) {
-                        $dom = dom_import_simplexml($v);
-                        $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
-                    }
-                }
-                $editors = $value->xpath('contributors/secondary-authors/author/style');
-                foreach ($editors AS $k => $v) {
-                    $editor = $GLOBALS['wpdb']->get_row(
-                        $GLOBALS['wpdb']->prepare(
-                            sprintf(
-                                $query,
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                mlReferences_get_prefix(),
-                                $k
-                            ),
-                            $article['id'],
-                            'Editor'
-                        ),
-                        ARRAY_A
-                    );
-                    if ($editor) {
-                        $dom = dom_import_simplexml($v);
-                        $dom->nodeValue = sprintf('%s, %s', $author['name'], $author['first_name']);
-                    }
-                }
-            }
-            $contents = $xml->asXML();
-            ob_clean();
-            header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
-            header(sprintf('Content-Length: %d', strlen($contents)));
-            echo $contents;
-            break;
-        case 'delete':
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $directory = mlReferences_get_directory(array($_REQUEST['id']));
-                mlReferences_delete($directory);
-                rmdir($directory);
-                $GLOBALS['wpdb']->delete(
-                    sprintf('%sdocuments', mlReferences_get_prefix()),
-                    array(
-                        'id' => $_REQUEST['id'],
-                    ),
-                    null,
-                    null
-                );
-                $_SESSION['mlReferences']['flashes'] = array(
-                    'updated' => 'The document was deleted successfully.',
-                );
-                ?>
-                <meta
-                    content="0;url=<?php echo admin_url(
-                        'admin.php?action=&deleted=deleted&page=mlReferences'
-                    ); ?>"
-                    http-equiv="refresh"
-                    >
-                <?php
-                die();
-            } else {
-                ?>
-                <h1>Documents - Delete</h1>
-                <div class="error">
-                    <p><strong>Are you sure you want to delete this document?</strong></p>
-                </div>
-                <form
-                    action="<?php echo admin_url(
-                        sprintf('admin.php?action=delete&id=%d&page=mlReferences', $_REQUEST['id'])
-                    ); ?>"
-                    method="post"
-                    >
-                    <p class="submit">
-                        <input class="button-primary" type="submit" value="Yes">
-                        <a
-                            class="float-right"
-                            href="<?php echo admin_url('admin.php?action=&page=mlReferences'); ?>"
-                            >
-                            No
-                        </a>
-                    </p>
-                </form>
-                <?php
-            }
-            break;
-        case 'download_zip':
-            $document = $GLOBALS['wpdb']->get_row(
-                $GLOBALS['wpdb']->prepare(
-                    sprintf('SELECT * FROM `%sdocuments` WHERE `id` = %%d', mlReferences_get_prefix()),
-                    intval($_REQUEST['id'])
-                ),
-                ARRAY_A
-            );
-            $query = <<<EOD
+                $query = <<<EOD
 SELECT
 id,
 number,
@@ -1599,75 +1587,75 @@ FROM `%sarticles`
 WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
 EOD;
-            $articles = $GLOBALS['wpdb']->get_results(
-                $GLOBALS['wpdb']->prepare(sprintf($query, mlReferences_get_prefix()), $document['id']),
-                ARRAY_A
-            );
-            $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            $dialect = mlReferences_get_csv_dialect();
-            $writer = new Csv_Writer($resource, $dialect);
-            $writer->writeRow(
-                array(
-                    'id' => 'Identifier',
-                    'number' => 'Number',
-                    'type' => 'Type',
-                    'title_1' => 'Title',
-                    'title_2' => 'Title2',
-                    'year' => 'Year',
-                    'volume' => 'Volume',
-                    'issue' => 'Issue',
-                    'page' => 'Page',
-                    'url' => 'URL',
-                    'doi' => 'DOI',
-                    'issn' => 'ISSN',
-                    'original_publication' => 'Original Publication',
-                    'isbn' => 'ISBN',
-                    'label' => 'Label',
-                    'publisher' => 'Publisher',
-                    'place_published' => 'Place Published',
-                    'access_date' => 'Access Date',
-                    'attachment' => 'Attachment',
-                    'citations_first' => 'Authors Publish Text First',
-                    'citations_subsequent' => 'Authors Publish Text Subsequent',
-                    'citations_parenthetical_first' => 'Authors Publish Text First Parenthetical',
-                    'citations_parenthetical_subsequent' => 'Authors Publish Text Subsequent Parenthetical',
-                    'references_all' => 'Full Reference',
-                    'references_authors' => 'Authors Publish Reference',
-                    'references_editors' => 'Editors Publish Reference',
-                )
-            );
+                $articles = $GLOBALS['wpdb']->get_results(
+                    $GLOBALS['wpdb']->prepare(sprintf($query, mlReferences_get_prefix()), $document['id']),
+                    ARRAY_A
+                );
+                $resource = @fopen('php://temp/maxmemory:999999999', 'w');
+                $dialect = mlReferences_get_csv_dialect();
+                $writer = new Csv_Writer($resource, $dialect);
+                $writer->writeRow(
+                    array(
+                        'id' => 'Identifier',
+                        'number' => 'Number',
+                        'type' => 'Type',
+                        'title_1' => 'Title',
+                        'title_2' => 'Title2',
+                        'year' => 'Year',
+                        'volume' => 'Volume',
+                        'issue' => 'Issue',
+                        'page' => 'Page',
+                        'url' => 'URL',
+                        'doi' => 'DOI',
+                        'issn' => 'ISSN',
+                        'original_publication' => 'Original Publication',
+                        'isbn' => 'ISBN',
+                        'label' => 'Label',
+                        'publisher' => 'Publisher',
+                        'place_published' => 'Place Published',
+                        'access_date' => 'Access Date',
+                        'attachment' => 'Attachment',
+                        'citations_first' => 'Authors Publish Text First',
+                        'citations_subsequent' => 'Authors Publish Text Subsequent',
+                        'citations_parenthetical_first' => 'Authors Publish Text First Parenthetical',
+                        'citations_parenthetical_subsequent' => 'Authors Publish Text Subsequent Parenthetical',
+                        'references_all' => 'Full Reference',
+                        'references_authors' => 'Authors Publish Reference',
+                        'references_editors' => 'Editors Publish Reference',
+                    )
+                );
 
-            foreach ($articles AS $article) {
-                $writer->writeRow($article);
-            }
+                foreach ($articles as $article) {
+                    $writer->writeRow($article);
+                }
 
-            @rewind($resource);
-            $articles = stream_get_contents($resource);
-            @fclose($resource);
-            $query = <<<EOD
+                @rewind($resource);
+                $articles = stream_get_contents($resource);
+                @fclose($resource);
+                $query = <<<EOD
 SELECT id, name, first_name, url
 FROM `%sauthors`
 ORDER BY `id` ASC
 EOD;
-            $authors = $GLOBALS['wpdb']->get_results(sprintf($query, mlReferences_get_prefix()), ARRAY_A);
-            $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            $dialect = mlReferences_get_csv_dialect();
-            $writer = new Csv_Writer($resource, $dialect);
-            $writer->writeRow(
-                array(
-                    'id' => 'Identifier',
-                    'name' => 'Name',
-                    'first_name' => 'First Name',
-                    'url' => 'URL',
-                )
-            );
-            foreach ($authors AS $author) {
-                $writer->writeRow($author);
-            }
-            @rewind($resource);
-            $authors = stream_get_contents($resource);
-            @fclose($resource);
-            $query = <<<EOD
+                $authors = $GLOBALS['wpdb']->get_results(sprintf($query, mlReferences_get_prefix()), ARRAY_A);
+                $resource = @fopen('php://temp/maxmemory:999999999', 'w');
+                $dialect = mlReferences_get_csv_dialect();
+                $writer = new Csv_Writer($resource, $dialect);
+                $writer->writeRow(
+                    array(
+                        'id' => 'Identifier',
+                        'name' => 'Name',
+                        'first_name' => 'First Name',
+                        'url' => 'URL',
+                    )
+                );
+                foreach ($authors as $author) {
+                    $writer->writeRow($author);
+                }
+                @rewind($resource);
+                $authors = stream_get_contents($resource);
+                @fclose($resource);
+                $query = <<<EOD
 SELECT id, article_id, author_id, role
 FROM `%sarticles_authors`
 WHERE
@@ -1680,222 +1668,200 @@ AND
 )
 ORDER BY `id` ASC
 EOD;
-            $articles_authors = $GLOBALS['wpdb']->get_results(
-                $GLOBALS['wpdb']->prepare(
-                    sprintf(
-                        $query,
-                        mlReferences_get_prefix(),
-                        mlReferences_get_prefix(),
-                        mlReferences_get_prefix()
+                $articles_authors = $GLOBALS['wpdb']->get_results(
+                    $GLOBALS['wpdb']->prepare(
+                        sprintf(
+                            $query,
+                            mlReferences_get_prefix(),
+                            mlReferences_get_prefix(),
+                            mlReferences_get_prefix()
+                        ),
+                        $document['id']
                     ),
-                    $document['id']
-                ),
-                ARRAY_A
-            );
-            $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-            $dialect = mlReferences_get_csv_dialect();
-            $writer = new Csv_Writer($resource, $dialect);
-            $writer->writeRow(
-                array(
-                    'id' => 'Identifier',
-                    'article_id' => 'Article Identifier',
-                    'author_id' => 'Author Identifier',
-                    'role' => 'Role',
-                ),
-                ';'
-            );
-            foreach ($articles_authors AS $article_author) {
-                $writer->writeRow($article_author);
-            }
-            @rewind($resource);
-            $articles_authors = stream_get_contents($resource);
-            @fclose($resource);
+                    ARRAY_A
+                );
+                $resource = @fopen('php://temp/maxmemory:999999999', 'w');
+                $dialect = mlReferences_get_csv_dialect();
+                $writer = new Csv_Writer($resource, $dialect);
+                $writer->writeRow(
+                    array(
+                        'id' => 'Identifier',
+                        'article_id' => 'Article Identifier',
+                        'author_id' => 'Author Identifier',
+                        'role' => 'Role',
+                    ),
+                    ';'
+                );
+                foreach ($articles_authors as $article_author) {
+                    $writer->writeRow($article_author);
+                }
+                @rewind($resource);
+                $articles_authors = stream_get_contents($resource);
+                @fclose($resource);
 
-            $tempnam = tempnam(sys_get_temp_dir(), 'mlReferences');
-            $zip = new ZipArchive();
-            $zip->open($tempnam, ZipArchive::CREATE);
-            $zip->addFromString('articles.csv', $articles);
-            $zip->addFromString('authors.csv', $authors);
-            $zip->addFromString('articles_authors.csv', $articles_authors);
-            $zip->close();
-            ob_clean();
-            header('Content-Type: application/zip');
-            header(sprintf('Content-Disposition: attachment; filename="%s.zip"', $document['name']));
-            header(sprintf('Content-Length: %d', filesize($tempnam)));
-            readfile($tempnam);
-            unlink($tempnam);
-            break;
-        case 'upload_zip':
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $articles = mlReferences_zip_get_articles($_FILES['file']['tmp_name']);
-                foreach ($articles AS $article) {
-                    $GLOBALS['wpdb']->update(
-                        sprintf('%sarticles', mlReferences_get_prefix()),
-                        array(
-                            'type' => $article[2],
-                            'title_1' => $article[3],
-                            'title_2' => $article[4],
-                            'year' => $article[5],
-                            'volume' => $article[6],
-                            'issue' => $article[7],
-                            'page' => $article[8],
-                            'url' => $article[9],
-                            'doi' => $article[10],
-                            'issn' => $article[11],
-                            'original_publication' => $article[12],
-                            'isbn' => $article[13],
-                            'label' => $article[14],
-                            'publisher' => $article[15],
-                            'place_published' => $article[16],
-                            'access_date' => $article[17],
-                            'attachment' => $article[18],
-                            'citations_first' => $article[19],
-                            'citations_subsequent' => $article[20],
-                            'citations_parenthetical_first' => $article[21],
-                            'citations_parenthetical_subsequent' => $article[22],
-                            'references_all' => $article[23],
-                            'references_authors' => $article[24],
-                            'references_editors' => $article[25],
-                        ),
-                        array(
-                            'id' => $article[0]
-                        )
+                $tempnam = tempnam(sys_get_temp_dir(), 'mlReferences');
+                $zip = new ZipArchive();
+                $zip->open($tempnam, ZipArchive::CREATE);
+                $zip->addFromString('articles.csv', $articles);
+                $zip->addFromString('authors.csv', $authors);
+                $zip->addFromString('articles_authors.csv', $articles_authors);
+                $zip->close();
+                ob_clean();
+                header('Content-Type: application/zip');
+                header(sprintf('Content-Disposition: attachment; filename="%s.zip"', $document['name']));
+                header(sprintf('Content-Length: %d', filesize($tempnam)));
+                readfile($tempnam);
+                unlink($tempnam);
+                break;
+            case 'upload_zip':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    $articles = mlReferences_zip_get_articles($_FILES['file']['tmp_name']);
+                    foreach ($articles as $article) {
+                        $GLOBALS['wpdb']->update(
+                            sprintf('%sarticles', mlReferences_get_prefix()),
+                            array(
+                                'type' => $article[2],
+                                'title_1' => $article[3],
+                                'title_2' => $article[4],
+                                'year' => $article[5],
+                                'volume' => $article[6],
+                                'issue' => $article[7],
+                                'page' => $article[8],
+                                'url' => $article[9],
+                                'doi' => $article[10],
+                                'issn' => $article[11],
+                                'original_publication' => $article[12],
+                                'isbn' => $article[13],
+                                'label' => $article[14],
+                                'publisher' => $article[15],
+                                'place_published' => $article[16],
+                                'access_date' => $article[17],
+                                'attachment' => $article[18],
+                                'citations_first' => $article[19],
+                                'citations_subsequent' => $article[20],
+                                'citations_parenthetical_first' => $article[21],
+                                'citations_parenthetical_subsequent' => $article[22],
+                                'references_all' => $article[23],
+                                'references_authors' => $article[24],
+                                'references_editors' => $article[25],
+                            ),
+                            array(
+                                'id' => $article[0]
+                            )
+                        );
+                    }
+                    $authors = mlReferences_zip_get_authors($_FILES['file']['tmp_name']);
+                    foreach ($authors as $author) {
+                        $GLOBALS['wpdb']->update(
+                            sprintf('%sauthors', mlReferences_get_prefix()),
+                            array(
+                                'name' => $author[1],
+                                'first_name' => $author[2],
+                                'url' => $author[3],
+                            ),
+                            array(
+                                'id' => $author[0]
+                            )
+                        );
+                    }
+                    $articles_authors = mlReferences_zip_get_articles_authors($_FILES['file']['tmp_name']);
+                    foreach ($articles_authors as $article_author) {
+                        $GLOBALS['wpdb']->update(
+                            sprintf('%sarticles_authors', mlReferences_get_prefix()),
+                            array(
+                                'article_id' => $article_author[1],
+                                'author_id' => $article_author[2],
+                                'role' => $article_author[3],
+                            ),
+                            array(
+                                'id' => $article_author[0]
+                            )
+                        );
+                    }
+                    $_SESSION['mlReferences']['flashes'] = array(
+                        'updated' => 'The document was uploaded successfully.',
                     );
+                    ?>
+                    <meta
+                        content="0;url=<?php echo admin_url('admin.php?action=&page=mlReferences'); ?>"
+                        http-equiv="refresh"
+                        >
+                    <?php
+                } else {
+                    ?>
+                    <h1>Zip file - Upload</h1>
+                    <form
+                        action="<?php echo admin_url(sprintf('admin.php?action=upload_zip&id=%d&page=mlReferences', $_REQUEST['id'])); ?>"
+                        enctype="multipart/form-data"
+                        method="post"
+                        >
+                        <table class="bordered widefat wp-list-table">
+                            <tr>
+                                <td class="label"><label for="file">File</label></td>
+                                <td><input id="file" name="file" type="file"></td>
+                            </tr>
+                        </table>
+                        <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
+                    </form>
+                    <?php
                 }
-                $authors = mlReferences_zip_get_authors($_FILES['file']['tmp_name']);
-                foreach ($authors AS $author) {
-                    $GLOBALS['wpdb']->update(
-                        sprintf('%sauthors', mlReferences_get_prefix()),
-                        array(
-                            'name' => $author[1],
-                            'first_name' => $author[2],
-                            'url' => $author[3],
-                        ),
-                        array(
-                            'id' => $author[0]
-                        )
-                    );
-                }
-                $articles_authors = mlReferences_zip_get_articles_authors($_FILES['file']['tmp_name']);
-                foreach ($articles_authors AS $article_author) {
-                    $GLOBALS['wpdb']->update(
-                        sprintf('%sarticles_authors', mlReferences_get_prefix()),
-                        array(
-                            'article_id' => $article_author[1],
-                            'author_id' => $article_author[2],
-                            'role' => $article_author[3],
-                        ),
-                        array(
-                            'id' => $article_author[0]
-                        )
-                    );
-                }
-                $_SESSION['mlReferences']['flashes'] = array(
-                    'updated' => 'The document was uploaded successfully.',
+                break;
+            default:
+                $documents = $GLOBALS['wpdb']->get_results(
+                    sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', mlReferences_get_prefix()),
+                    ARRAY_A
                 );
                 ?>
-                <meta
-                    content="0;url=<?php echo admin_url('admin.php?action=&page=mlReferences'); ?>"
-                    http-equiv="refresh"
-                    >
-                <?php
-            } else {
-                ?>
-                <h1>Zip file - Upload</h1>
-                <form
-                    action="<?php echo admin_url(
-                        sprintf('admin.php?action=upload_zip&id=%d&page=mlReferences', $_REQUEST['id'])
-                    ); ?>"
-                    enctype="multipart/form-data"
-                    method="post"
-                    >
+                <h1>
+                    Documents
+                    <a
+                        class="page-title-action"
+                        href="<?php echo admin_url('admin.php?action=upload&page=mlReferences'); ?>"
+                        >Upload</a>
+                </h1>
+                <?php mlReferences_flashes(); ?>
+                <?php if ($documents) : ?>
                     <table class="bordered widefat wp-list-table">
                         <tr>
-                            <td class="label"><label for="file">File</label></td>
-                            <td><input id="file" name="file" type="file"></td>
+                            <th class="narrow right">Identifier</th>
+                            <th>Name</th>
+                            <th class="narrow center">ZIP</th>
+                            <th class="narrow center">XML</th>
+                            <th class="narrow center">Actions</th>
                         </tr>
+                        <?php foreach ($documents as $document) : ?>
+                            <tr>
+                                <td class="narrow right"><?php echo $document['id']; ?></td>
+                                <td><?php echo $document['name']; ?></td>
+                                <td class="narrow center">
+                                    <a
+                                        href="<?php echo admin_url(sprintf('admin.php?action=download_zip&id=%d&page=mlReferences', $document['id'])); ?>"
+                                        >Download</a>
+                                    -
+                                    <a
+                                        href="<?php echo admin_url(sprintf('admin.php?action=upload_zip&id=%d&page=mlReferences', $document['id'])); ?>"
+                                        >Upload</a>
+                                </td>
+                                <td class="narrow center">
+                                    <a
+                                        href="<?php echo admin_url(sprintf('admin.php?action=download&id=%d&page=mlReferences', $document['id'])); ?>"
+                                        >Download</a>
+                                </td>
+                                <td class="narrow center">
+                                    <a
+                                        href="<?php echo admin_url(sprintf('admin.php?action=delete&id=%d&page=mlReferences', $document['id'])); ?>"
+                                        >Delete</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
                     </table>
-                    <p class="submit"><input class="button-primary" type="submit" value="Submit"></p>
-                </form>
+                <?php else : ?>
+                    <div class="error">
+                        <p><strong>There are no documents in the database.</strong></p>
+                    </div>
+                <?php endif; ?>
                 <?php
-            }
-            break;
-        default:
-            $documents = $GLOBALS['wpdb']->get_results(
-                sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', mlReferences_get_prefix()),
-                ARRAY_A
-            );
-            ?>
-            <h1>
-                Documents
-                <a
-                    class="page-title-action"
-                    href="<?php echo admin_url('admin.php?action=upload&page=mlReferences'); ?>"
-                    >Upload</a>
-            </h1>
-            <?php mlReferences_flashes(); ?>
-            <?php if ($documents) : ?>
-                <table class="bordered widefat wp-list-table">
-                    <tr>
-                        <th class="narrow right">Identifier</th>
-                        <th>Name</th>
-                        <th class="narrow center">ZIP</th>
-                        <th class="narrow center">XML</th>
-                        <th class="narrow center">Actions</th>
-                    </tr>
-                    <?php foreach ($documents AS $document) : ?>
-                        <tr>
-                            <td class="narrow right"><?php echo $document['id']; ?></td>
-                            <td><?php echo $document['name']; ?></td>
-                            <td class="narrow center">
-                                <a href="<?php
-                                echo admin_url(
-                                    sprintf(
-                                        'admin.php?action=download_zip&id=%d&page=mlReferences',
-                                        $document['id']
-                                    )
-                                );
-                                ?>">Download</a>
-                                -
-                                <a href="<?php
-                                echo admin_url(
-                                    sprintf(
-                                        'admin.php?action=upload_zip&id=%d&page=mlReferences',
-                                        $document['id']
-                                    )
-                                );
-                                ?>">Upload</a>
-                            </td>
-                            <td class="narrow center">
-                                <a href="<?php
-                                echo admin_url(
-                                    sprintf(
-                                        'admin.php?action=download&id=%d&page=mlReferences',
-                                        $document['id']
-                                    )
-                                );
-                                ?>">Download</a>
-                            </td>
-                            <td class="narrow center">
-                                <a href="<?php
-                                echo admin_url(
-                                    sprintf(
-                                        'admin.php?action=delete&id=%d&page=mlReferences',
-                                        $document['id']
-                                    )
-                                );
-                                ?>">Delete</a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
-            <?php else: ?>
-                <div class="error">
-                    <p><strong>There are no documents in the database.</strong></p>
-                </div>
-            <?php endif; ?>
-            <?php
-            break;
+                break;
         }
         ?>
         </div>
@@ -2075,7 +2041,7 @@ function mlReferences_add_meta_boxes_1($page)
                 <td>
                     <select id="mlReferences_1_root" name="mlReferences_1_root">
                         <option <?php echo $root === 0? 'selected="selected"': ''; ?> value="0">None</option>
-                        <?php foreach ($pages AS $page) : ?>
+                        <?php foreach ($pages as $page) : ?>
                             <option
                                 <?php echo $root === $page->ID? 'selected="selected"': ''; ?>
                                 value="<?php echo $page->ID; ?>"
@@ -2281,7 +2247,7 @@ EOD;
                 <th class="narrow">Style 4</th>
                 <th class="narrow">Style 5</th>
             </tr>
-            <?php foreach ($articles AS $key => $value) : ?>
+            <?php foreach ($articles as $key => $value) : ?>
                 <tr
                     class="article <?php echo ($key % 2 === 0)? 'even': 'odd'; ?>"
                     data-id="<?php echo $value['id']; ?>"
@@ -2358,14 +2324,10 @@ function mlReferences_save_post($page_id)
         }
     }
     $annotations = array();
-    foreach ($_POST['mlReferences_3_ontologies'] AS $key => $_) {
-        if (
-            !empty($_POST['mlReferences_3_ontologies'][$key])
-            and
-            !empty($_POST['mlReferences_3_classes'][$key])
-            and
-            !empty($_POST['mlReferences_3_properties'][$key])
-            and
+    foreach ($_POST['mlReferences_3_ontologies'] as $key => $_) {
+        if (!empty($_POST['mlReferences_3_ontologies'][$key]) and
+            !empty($_POST['mlReferences_3_classes'][$key]) and
+            !empty($_POST['mlReferences_3_properties'][$key]) and
             !empty($_POST['mlReferences_3_values'][$key])
         ) {
             $annotations[] = array(
@@ -2376,21 +2338,11 @@ function mlReferences_save_post($page_id)
             );
         }
     }
-    update_post_meta(
-        $page_id, 'mlReferences_1_multipage_report', $_POST['mlReferences_1_multipage_report']
-    );
-    update_post_meta(
-        $page_id, 'mlReferences_1_root', $_POST['mlReferences_1_root']
-    );
-    update_post_meta(
-        $page_id, 'mlReferences_2_table_of_contents', $_POST['mlReferences_2_table_of_contents']
-    );
-    update_post_meta(
-        $page_id, 'mlReferences_2_references', $_POST['mlReferences_2_references']
-    );
-    update_post_meta(
-        $page_id, 'mlReferences_3', json_encode($annotations)
-    );
+    update_post_meta($page_id, 'mlReferences_1_multipage_report', $_POST['mlReferences_1_multipage_report']);
+    update_post_meta($page_id, 'mlReferences_1_root', $_POST['mlReferences_1_root']);
+    update_post_meta($page_id, 'mlReferences_2_table_of_contents', $_POST['mlReferences_2_table_of_contents']);
+    update_post_meta($page_id, 'mlReferences_2_references', $_POST['mlReferences_2_references']);
+    update_post_meta($page_id, 'mlReferences_3', json_encode($annotations));
 }
 
 function mlReferences_wp_head()
@@ -2437,7 +2389,7 @@ function mlReferences_the_content($contents)
         $contents = array();
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $table_of_contents);
         $items = array();
-        foreach ($pages AS $page) {
+        foreach ($pages as $page) {
             $shortcodes = mlReferences_get_shortcodes($page->post_content);
             if (!empty($shortcodes)) {
                 $items[] = sprintf('<li><a href="%s">%s</a></li>', get_permalink($page->ID), get_the_title($page->ID));
@@ -2450,11 +2402,11 @@ function mlReferences_the_content($contents)
         }
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $references);
         $items = array();
-        foreach ($pages AS $page) {
+        foreach ($pages as $page) {
             $shortcodes = mlReferences_get_shortcodes($page->post_content);
             if (!empty($shortcodes)) {
                 uasort($shortcodes, 'mlReferences_uasort');
-                foreach ($shortcodes AS $key => $value) {
+                foreach ($shortcodes as $key => $value) {
                     if (empty($items[$value['string']])) {
                         $items[$value['string']] = array(
                             'id' => $value['id'],
@@ -2464,7 +2416,7 @@ function mlReferences_the_content($contents)
                         );
                     }
                     if (!empty($value['numbers'])) {
-                        foreach ($value['numbers'] AS $number) {
+                        foreach ($value['numbers'] as $number) {
                             $items[$value['string']]['numbers'][] = sprintf('%d.%d', $page->ID, $number);
                         }
                     }
@@ -2475,10 +2427,10 @@ function mlReferences_the_content($contents)
         uasort($items, 'mlReferences_uasort');
         if (!empty($items)) {
             $contents[] = '<ul role="doc-bibliography">';
-            foreach ($items AS $item) {
+            foreach ($items as $item) {
                 $numbers = array();
                 if (!empty($item['numbers'])) {
-                    foreach ($item['numbers'] AS $number) {
+                    foreach ($item['numbers'] as $number) {
                         $numbers[] = sprintf('[%s]', $number);
                     }
                 }
@@ -2498,7 +2450,7 @@ function mlReferences_the_content($contents)
         $shortcodes = mlReferences_get_shortcodes($contents);
         if (!empty($shortcodes)) {
             $index = 0;
-            foreach ($shortcodes AS $key => $value) {
+            foreach ($shortcodes as $key => $value) {
                 $index++;
                 $contents = str_replace(
                     $key,
@@ -2510,10 +2462,10 @@ function mlReferences_the_content($contents)
             $items = array();
             $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
             $items[] = '<ul role="doc-bibliography">';
-            foreach ($shortcodes AS $key => $value) {
+            foreach ($shortcodes as $key => $value) {
                 $numbers = array();
                 if (!empty($value['numbers'])) {
-                    foreach ($value['numbers'] AS $number) {
+                    foreach ($value['numbers'] as $number) {
                         $numbers[] = sprintf('[%d]', $number);
                     }
                 }
@@ -2547,8 +2499,7 @@ add_action('wp_head', 'mlReferences_wp_head', 90);
 
 add_filter('the_content', 'mlReferences_the_content', 90);
 
-if (defined('WP_CLI') && WP_CLI)
-{
+if (defined('WP_CLI') && WP_CLI) {
     class mlReferences_cli
     {
         /**
@@ -2576,7 +2527,7 @@ if (defined('WP_CLI') && WP_CLI)
         /**
          * @subcommand upload_zip
          */
-        public function upload_zip($args)
+        public function uploadZip($args)
         {
             $file = $args[0];
             $articles = mlReferences_zip_get_articles($file);
