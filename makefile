@@ -7,18 +7,18 @@ SHELL:=/bin/bash
 build:
 	cd .. \
 	&& \
-	/usr/bin/rm --force references_management/references_management.zip \
+	/usr/bin/rm --force mlReferences/mlReferences.zip \
 	&& \
 	/usr/bin/zip \
 		--recurse-paths \
-		references_management.zip \
-		references_management \
+		mlReferences.zip \
+		mlReferences \
 		-x '*.git*' \
 		-x '*.gitignore*' \
 		-x '*files*' \
 		-x '*makefile*' \
 		-x '*phpcs.xml*' \
 	&& \
-	/usr/bin/mv references_management.zip references_management \
+	/usr/bin/mv mlReferences.zip mlReferences \
 	&& \
-	cd references_management
+	cd mlReferences
