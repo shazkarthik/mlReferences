@@ -2,10 +2,9 @@
 
 function mlReferences_models_documents_select_all()
 {
-    $documents = $GLOBALS['wpdb']->get_results(
-        sprintf('SELECT * FROM `%sdocuments` ORDER BY `id` DESC', mlReferences_utilities_get_prefix()),
-        ARRAY_A
-    );
+    $query = 'SELECT * FROM `%sdocuments` ORDER BY `id` DESC';
+    $query = sprintf($query, mlReferences_utilities_get_prefix());
+    $documents = $GLOBALS['wpdb']->get_results($query, ARRAY_A);
     return $documents;
 }
 
@@ -20,13 +19,11 @@ function mlReferences_models_documents_select_one($id)
 
 function mlReferences_models_documents_insert($file, $name, $type, $articles)
 {
-    $GLOBALS['wpdb']->insert(
-        sprintf('%sdocuments', mlReferences_utilities_get_prefix()),
-        array(
-            'name' => $name,
-            'type' => $type,
-        )
+    $array = array(
+        'name' => $name,
+        'type' => $type,
     );
+    $GLOBALS['wpdb']->insert(sprintf('%sdocuments', mlReferences_utilities_get_prefix()), $array);
     $id = $GLOBALS['wpdb']->insert_id;
     mlReferences_utilities_get_directory(array($id));
     copy($file, mlReferences_utilities_get_file(array($id, $name)));
@@ -62,32 +59,32 @@ function mlReferences_models_articles_select_all($document_id)
 {
     $query = <<<EOD
 SELECT
-id,
-number,
-type,
-title_1,
-title_2,
-year,
-volume,
-issue,
-page,
-url,
-doi,
-issn,
-original_publication,
-isbn,
-label,
-publisher,
-place_published,
-access_date,
-attachment,
-citations_first,
-citations_subsequent,
-citations_parenthetical_first,
-citations_parenthetical_subsequent,
-references_all,
-references_authors,
-references_editors
+    id,
+    number,
+    type,
+    title_1,
+    title_2,
+    year,
+    volume,
+    issue,
+    page,
+    url,
+    doi,
+    issn,
+    original_publication,
+    isbn,
+    label,
+    publisher,
+    place_published,
+    access_date,
+    attachment,
+    citations_first,
+    citations_subsequent,
+    citations_parenthetical_first,
+    citations_parenthetical_subsequent,
+    references_all,
+    references_authors,
+    references_editors
 FROM `%sarticles`
 WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
@@ -187,14 +184,42 @@ function mlReferences_models_authors_select_all()
     return $authors;
 }
 
+function mlReferences_models_authors_select_many($article_id, $role)
+{
+    $query = <<<EOD
+SELECT `%sauthors`.`name`, `%sauthors`.`first_name`
+FROM `%sauthors`
+INNER JOIN `%sarticles_authors`
+ON `%sarticles_authors`.`article_id` = %%d AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
+WHERE `%sarticles_authors`.`role` = %%s
+ORDER BY `%sarticles_authors`.`id` ASC
+EOD;
+    $query = sprintf(
+        $query,
+        mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix()
+    );
+    $query = $GLOBALS['wpdb']->prepare($query, $article_id, $role);
+    $authors = $GLOBALS['wpdb']->get_results($query, ARRAY_A);
+    return $authors;
+}
+
 function mlReferences_models_authors_select_one($article_id, $role, $offset)
 {
     $query = <<<EOD
 SELECT `%sauthors`.`name`, `%sauthors`.`first_name`
 FROM `%sauthors`
-INNER JOIN `%sarticles_authors` ON
-`%sarticles_authors`.`article_id` = %%d AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
+INNER JOIN `%sarticles_authors`
+ON `%sarticles_authors`.`article_id` = %%d AND `%sarticles_authors`.`author_id` = `%sauthors`.`id`
 WHERE `%sarticles_authors`.`role` = %%s
+ORDER BY `%sarticles_authors`.`id` ASC
 LIMIT 1
 OFFSET %d
 EOD;
@@ -208,9 +233,10 @@ EOD;
         mlReferences_utilities_get_prefix(),
         mlReferences_utilities_get_prefix(),
         mlReferences_utilities_get_prefix(),
+        mlReferences_utilities_get_prefix(),
         $offset
     );
-    $query = $GLOBALS['wpdb']->prepare($query, $article_id, 'Author');
+    $query = $GLOBALS['wpdb']->prepare($query, $article_id, $role);
     $author = $GLOBALS['wpdb']->get_row($query, ARRAY_A);
     return $author;
 }
