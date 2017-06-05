@@ -144,12 +144,12 @@ EOD;
         )
     );
 
-    mlReferences_get_directory(array());
+    mlReferences_utilities_get_directory(array());
 }
 
 function mlReferences_register_deactivation_hook()
 {
-    mlReferences_delete(mlReferences_get_directory(array()));
+    mlReferences_utilities_delete(mlReferences_utilities_get_directory(array()));
 
     $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles_authors`', mlReferences_utilities_get_prefix()));
     $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sauthors`', mlReferences_utilities_get_prefix()));
