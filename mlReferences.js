@@ -2,22 +2,25 @@ jQuery(function () {
     var mlReferences_3 = jQuery('.mlReferences_3');
     if (mlReferences_3.length) {
         var zebra = function (table) {
-            table.find('tr').removeClass('even');
-            table.find('tr').removeClass('odd');
-            table.find('tr:even').addClass('even');
-            table.find('tr:odd').addClass('odd');
+            var tr = table.find('tr');
+            tr.removeClass('even');
+            tr.removeClass('odd');
+            tr.filter(':even').addClass('even');
+            tr.filter(':odd').addClass('odd');
         };
         mlReferences_3.on('click', '.add', function () {
-            table.append(template({
-                ontologies: ontologies,
-                classes: classes,
+            var options = {
                 annotation: {
                     ontology: '',
                     class: '',
                     property: '',
                     value: ''
-                }
-            }));
+                },
+                classes: classes,
+                ontologies: ontologies
+            };
+            var tr = template(options);
+            table.append(tr);
             zebra(table);
         });
         mlReferences_3.on('click', '.delete', function () {
@@ -25,17 +28,22 @@ jQuery(function () {
             zebra(table);
         });
         var table = mlReferences_3.find('table');
-        var ontologies = jQuery.parseJSON(table.attr('data-ontologies'));
-        var classes = jQuery.parseJSON(table.attr('data-classes'));
         var template = window._.template(mlReferences_3.find('.template').html());
-        var annotations = jQuery.parseJSON(table.attr('data-annotations'));
+        var annotations = table.attr('data-annotations');
+        annotations = jQuery.parseJSON(annotations);
+        var ontologies = table.attr('data-ontologies');
+        ontologies = jQuery.parseJSON(ontologies);
+        var classes = table.attr('data-classes');
+        classes = jQuery.parseJSON(classes);
         if (annotations.length) {
             jQuery.each(annotations, function (key, value) {
-                table.append(template({
-                    ontologies: ontologies,
+                var options = {
+                    annotation: value,
                     classes: classes,
-                    annotation: value
-                }));
+                    ontologies: ontologies
+                };
+                var tr = template(options);
+                table.append(tr);
                 zebra(table);
             });
         } else {
