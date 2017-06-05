@@ -432,11 +432,12 @@ SELECT
     `citations_first`,
     `citations_subsequent`,
     `citations_parenthetical_first`,
-    `citations_parenthetical_subsequent`,
+    `citations_parenthetical_subsequent`
 FROM `%sarticles`
 ORDER BY `title_1` ASC
 EOD;
-    $articles = $GLOBALS['wpdb']->get_results(sprintf($query, mlReferences_utilities_get_prefix()), ARRAY_A);
+    $query = sprintf($query, mlReferences_utilities_get_prefix());
+    $articles = $GLOBALS['wpdb']->get_results($query, ARRAY_A);
     ?>
     <div class="mlReferences_4">
         <table class="mlReferences_widget">
@@ -460,7 +461,6 @@ EOD;
                 <th class="narrow">Style 2</th>
                 <th class="narrow">Style 3</th>
                 <th class="narrow">Style 4</th>
-                <th class="narrow">Style 5</th>
             </tr>
             <?php foreach ($articles as $key => $value) : ?>
                 <tr
@@ -612,7 +612,7 @@ function mlReferences_the_content($contents)
         foreach ($pages as $page) {
             $shortcodes = mlReferences_utilities_get_shortcodes($page->post_content);
             if (!empty($shortcodes)) {
-                uasort($shortcodes, 'mlReferences_uasort');
+                uasort($shortcodes, 'mlReferences_utilities_uasort');
                 foreach ($shortcodes as $key => $value) {
                     if (empty($items[$value['string']])) {
                         $items[$value['string']] = array(
@@ -631,7 +631,7 @@ function mlReferences_the_content($contents)
             }
         }
         $items = array_values($items);
-        uasort($items, 'mlReferences_uasort');
+        uasort($items, 'mlReferences_utilities_uasort');
         if (!empty($items)) {
             $contents[] = '<ul role="doc-bibliography">';
             foreach ($items as $item) {
@@ -665,7 +665,7 @@ function mlReferences_the_content($contents)
                     $contents
                 );
             };
-            uasort($shortcodes, 'mlReferences_uasort');
+            uasort($shortcodes, 'mlReferences_utilities_uasort');
             $items = array();
             $items[] = sprintf('<p><strong>%s:</strong></p>', $references);
             $items[] = '<ul role="doc-bibliography">';
