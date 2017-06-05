@@ -32,7 +32,9 @@ function mlReferences_dashboard_end_note_upload_get()
 
 function mlReferences_dashboard_end_note_upload_post()
 {
-    list($errors, $articles) = mlReferences_end_note_get_items($_FILES['file_1']['tmp_name']);
+    $file_1 = $_FILES['file_1'];
+    $file_2 = $_FILES['file_2'];
+    list($errors, $articles) = mlReferences_end_note_get_articles($file_1['tmp_name'], $file_2['tmp_name']);
     if ($errors) {
         $_SESSION['mlReferences']['flashes'] = array(
             'error' => 'The document was not uploaded successfully. Please try again.',
@@ -57,12 +59,7 @@ function mlReferences_dashboard_end_note_upload_post()
         <?php
         return;
     }
-    mlReferences_models_documents_insert(
-        $_FILES['file_1']['tmp_name'],
-        $_FILES['file_1']['name'],
-        'EndNote',
-        $articles
-    );
+    mlReferences_models_documents_insert($file_1['tmp_name'], $file_1['name'], 'EndNote', $articles);
     $_SESSION['mlReferences']['flashes'] = array(
         'updated' => 'The document was uploaded successfully.',
     );
@@ -76,7 +73,7 @@ function mlReferences_dashboard_end_note_download()
 {
     $id = $_REQUEST['id'];
     $id = intval($id);
-    list($document, $contents) = mlReferences_actions_download($id);
+    list($document, $contents) = mlReferences_end_note_download($id);
     ob_clean();
     header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
     header(sprintf('Content-Length: %d', strlen($contents)));
@@ -85,14 +82,78 @@ function mlReferences_dashboard_end_note_download()
 
 function mlReferences_dashboard_spreadsheet_upload_get()
 {
+    $sample = sprintf('%s/mlReferences.xlsx', plugins_url('/mlReferences'));
+    ?>
+    <h1>Documents - Upload Spreadsheet</h1>
+    <form
+        action="<?php echo mlReferences_utilities_get_admin_url('action=spreadsheet-upload'); ?>"
+        enctype="multipart/form-data"
+        method="post"
+        >
+        <table class="bordered widefat wp-list-table">
+            <tr>
+                <td class="label">
+                    <label for="file">File (<a href="<?php echo $sample; ?>">Sample</a>)</label>
+                </td>
+                <td><input id="file" name="file" type="file"></td>
+            </tr>
+        </table>
+        <p class="submit">
+            <input class="button-primary" type="submit" value="Submit">
+        </p>
+    </form>
+    <?php
 }
 
 function mlReferences_dashboard_spreadsheet_upload_post()
 {
+    $file = $_FILES['file'];
+    list($errors, $articles) = mlReferences_spreadsheet_get_articles($file['tmp_name']);
+    if ($errors) {
+        $_SESSION['mlReferences']['flashes'] = array(
+            'error' => 'The document was not uploaded successfully. Please try again.',
+        );
+        ?>
+        <meta
+            content="0;url=<?php echo mlReferences_utilities_get_admin_url('action=spreadsheet-upload'); ?>"
+            http-equiv="refresh"
+            >
+        <?php
+        return;
+    }
+    if (!$articles) {
+        $_SESSION['mlReferences']['flashes'] = array(
+            'error' => 'The document was not uploaded successfully. Please try again.',
+        );
+        ?>
+        <meta
+            content="0;url=<?php echo mlReferences_utilities_get_admin_url('action=spreadsheet-upload'); ?>"
+            http-equiv="refresh"
+            >
+        <?php
+        return;
+    }
+    mlReferences_models_documents_insert($file['tmp_name'], $file['name'], 'Spreadsheet', $articles);
+    $_SESSION['mlReferences']['flashes'] = array(
+        'updated' => 'The document was uploaded successfully.',
+    );
+    ?>
+    <meta content="0;url=<?php echo mlReferences_utilities_get_admin_url('action='); ?>" http-equiv="refresh">
+    <?php
+    return;
 }
 
 function mlReferences_dashboard_spreadsheet_download()
 {
+    $id = $_REQUEST['id'];
+    $id = intval($id);
+    list($document, $tempnam) = mlReferences_spreadsheet_download($id);
+    ob_clean();
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
+    header(sprintf('Content-Length: %d', filesize($tempnam)));
+    readfile($tempnam);
+    unlink($tempnam);
 }
 
 function mlReferences_dashboard_zip_upload_get()
@@ -116,8 +177,10 @@ function mlReferences_dashboard_zip_upload_get()
 
 function mlReferences_dashboard_zip_upload_post()
 {
-    $articles = mlReferences_zip_get_articles($_FILES['file']['tmp_name']);
-    mlReferences_zip_upload($articles);
+    $articles = mlReferences_zip_upload_get_articles($_FILES['file']['tmp_name']);
+    $authors = mlReferences_zip_upload_get_authors($_FILES['file']['tmp_name']);
+    $articles_authors = mlReferences_zip_upload_get_articles_authors($_FILES['file']['tmp_name']);
+    mlReferences_zip_upload($articles, $authors, $articles_authors);
     $_SESSION['mlReferences']['flashes'] = array(
         'updated' => 'The document was uploaded successfully.',
     );
@@ -385,7 +448,33 @@ function mlReferences_faq()
             </ol>
         </div>
         <div class="welcome-panel">
-            <p><strong>Columns</strong></p>
+            <p><strong>Spreadsheets</strong></p>
+            <hr>
+            <ol>
+                <li>Number</li>
+                <li>Type</li>
+                <li>Title</li>
+                <li>Title2</li>
+                <li>Year</li>
+                <li>Volume</li>
+                <li>Issue</li>
+                <li>Page</li>
+                <li>URL</li>
+                <li>DOI</li>
+                <li>ISSN</li>
+                <li>Original Publication</li>
+                <li>ISBN</li>
+                <li>Label</li>
+                <li>Publisher</li>
+                <li>Place Published</li>
+                <li>Access Date</li>
+                <li>Attachment</li>
+                <li>Authors (pipe separated values)</li>
+                <li>Editors (pipe separated values)</li>
+            </ol>
+        </div>
+        <div class="welcome-panel">
+            <p><strong>CSV Files</strong></p>
             <hr>
             <ol>
                 <li>
