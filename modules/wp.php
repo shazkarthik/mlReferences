@@ -555,7 +555,7 @@ function mlReferences_save_post($page_id)
 function mlReferences_wp_head()
 {
     $page = get_post(get_queried_object_id());
-    if (!empty(mlReferences_get_shortcodes($page->post_content))) {
+    if (!empty(mlReferences_utilities_get_shortcodes($page->post_content))) {
         $user = get_userdata($page->post_author);
         echo sprintf('<meta content="References for %s" name="Biro.BibliographicCollection">', $page->post_title);
         echo sprintf('<meta content="%s" name="DC.creator">', $user->display_name);
@@ -597,7 +597,7 @@ function mlReferences_the_content($contents)
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $table_of_contents);
         $items = array();
         foreach ($pages as $page) {
-            $shortcodes = mlReferences_get_shortcodes($page->post_content);
+            $shortcodes = mlReferences_utilities_get_shortcodes($page->post_content);
             if (!empty($shortcodes)) {
                 $items[] = sprintf('<li><a href="%s">%s</a></li>', get_permalink($page->ID), get_the_title($page->ID));
             }
@@ -610,7 +610,7 @@ function mlReferences_the_content($contents)
         $contents[] = sprintf('<p><strong>%s:</strong></p>', $references);
         $items = array();
         foreach ($pages as $page) {
-            $shortcodes = mlReferences_get_shortcodes($page->post_content);
+            $shortcodes = mlReferences_utilities_get_shortcodes($page->post_content);
             if (!empty($shortcodes)) {
                 uasort($shortcodes, 'mlReferences_uasort');
                 foreach ($shortcodes as $key => $value) {
@@ -654,7 +654,7 @@ function mlReferences_the_content($contents)
         }
         $contents = implode('', $contents);
     } else {
-        $shortcodes = mlReferences_get_shortcodes($contents);
+        $shortcodes = mlReferences_utilities_get_shortcodes($contents);
         if (!empty($shortcodes)) {
             $index = 0;
             foreach ($shortcodes as $key => $value) {
