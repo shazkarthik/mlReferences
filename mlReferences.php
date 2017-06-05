@@ -17,10 +17,12 @@ require_once('vendors/PHPExcel-1.8/Classes/PHPExcel/IOFactory.php');
 
 require_once('modules/actions.php');
 require_once('modules/end_note.php');
+require_once('modules/models.php');
 require_once('modules/pages.php');
 require_once('modules/spreadsheet.php');
 require_once('modules/utilities.php');
 require_once('modules/wp.php');
+require_once('modules/zip.php');
 if (defined('WP_CLI') && WP_CLI) {
     require_once('modules/cli.php');
 }
