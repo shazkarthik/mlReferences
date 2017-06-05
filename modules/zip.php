@@ -1,20 +1,21 @@
 <?php
 
-function mlReferences_zip_upload($file, $articles)
+function mlReferences_zip_upload($articles, $authors, $articles_authors)
 {
-    if (empty($articles)) {
-        return;
+    if (!empty($articles)) {
+        foreach ($articles as $article) {
+            mlReferences_models_articles_update($article);
+        }
     }
-    foreach ($articles as $article) {
-        mlReferences_models_articles_update($article);
+    if (!empty($authors)) {
+        foreach ($authors as $author) {
+            mlReferences_models_authors_update($article);
+        }
     }
-    $authors = mlReferences_zip_get_authors($_FILES['file']['tmp_name']);
-    foreach ($authors as $author) {
-        mlReferences_models_authors_update($article);
-    }
-    $articles_authors = mlReferences_zip_get_articles_authors($_FILES['file']['tmp_name']);
-    foreach ($articles_authors as $article_author) {
-        mlReferences_models_articles_authors_update($article_author);
+    if (!empty($articles_authors)) {
+        foreach ($articles_authors as $article_author) {
+            mlReferences_models_articles_authors_update($article_author);
+        }
     }
 }
 
@@ -143,7 +144,7 @@ function mlReferences_zip_download_get_articles($document)
 {
     $articles = mlReferences_models_articles_select_all($document['id']);
     $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-    $dialect = mlReferences_get_csv_dialect();
+    $dialect = mlReferences_utilities_get_csv_dialect();
     $writer = new Csv_Writer($resource, $dialect);
     $row = array(
         'id' => 'Identifier',
@@ -187,7 +188,7 @@ function mlReferences_zip_download_get_authors()
 {
     $authors = mlReferences_models_authors_select_all();
     $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-    $dialect = mlReferences_get_csv_dialect();
+    $dialect = mlReferences_utilities_get_csv_dialect();
     $writer = new Csv_Writer($resource, $dialect);
     $row = array(
         'id' => 'Identifier',
@@ -209,7 +210,7 @@ function mlReferences_zip_download_get_articles_authors()
 {
     $articles_authors = mlReferences_models_articles_authors_select_all($document['id']);
     $resource = @fopen('php://temp/maxmemory:999999999', 'w');
-    $dialect = mlReferences_get_csv_dialect();
+    $dialect = mlReferences_utilities_get_csv_dialect();
     $writer = new Csv_Writer($resource, $dialect);
     $row = array(
         'id' => 'Identifier',
