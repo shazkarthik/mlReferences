@@ -15,35 +15,49 @@ function mlReferences_utilities_delete($directory)
     }
 }
 
-function mlReferences_utilities_filters_author($item)
+function mlReferences_utilities_filters_author($article)
 {
-    return $item['role'] === 'Author';
+    return $article['role'] === 'Author';
 }
 
-function mlReferences_utilities_filters_authors($item)
+function mlReferences_utilities_filters_authors($article)
 {
-    if ($item === 'Ed') {
+    if ($article === 'Ed') {
         return false;
     }
-    if ($item === 'Eds') {
+    if ($article === 'Eds') {
         return false;
     }
-    if (substr($item, 0, 1) == '-') {
+    if (substr($article, 0, 1) == '-') {
         return false;
     }
-    if (preg_match('#[A-Za-z]\.$#', $item) !== 0) {
+    if (preg_match('#[A-Za-z]\.$#', $article) !== 0) {
         return false;
     }
-    if (strpos($item, '.') !== false) {
+    if (strpos($article, '.') !== false) {
         return false;
     }
 
-    return strlen($item) > 1;
+    return strlen($article) > 1;
 }
 
-function mlReferences_utilities_filters_editor($item)
+function mlReferences_utilities_filters_editor($article)
 {
-    return $item['role'] === 'Editor';
+    return $article['role'] === 'Editor';
+}
+
+function mlReferences_utilities_flashes()
+{
+    ?>
+    <?php if (!empty($_SESSION['mlReferences']['flashes'])) : ?>
+        <?php foreach ($_SESSION['mlReferences']['flashes'] as $key => $value) : ?>
+            <div class="<?php echo $key; ?>">
+                <p><strong><?php echo $value; ?></strong></p>
+            </div>
+        <?php endforeach; ?>
+        <?php $_SESSION['mlReferences']['flashes'] = array(); ?>
+    <?php endif; ?>
+    <?php
 }
 
 function mlReferences_utilities_log($contents)
@@ -76,7 +90,7 @@ function mlReferences_utilities_get_access_date($access_date)
 {
     if (strpos($access_date, '/') !== false) {
         $access_date = str_replace('/', '.', $access_date);
-        $access_date = mlReferences_get_access_date($access_date);
+        $access_date = mlReferences_utilities_get_access_date($access_date);
         return $access_date;
     }
     if (preg_match('#(\d{1,2})\.(\d{1,2})\.(\d{4})#', $access_date, $matches)) {
@@ -88,6 +102,13 @@ function mlReferences_utilities_get_access_date($access_date)
         return $access_date;
     }
     return '';
+}
+
+function mlReferences_utilities_get_admin_url($query)
+{
+    $admin_url = sprintf('admin.php?page=mlReferences&%s', $query);
+    $admin_url = admin_url($admin_url);
+    return $admin_url;
 }
 
 function mlReferences_utilities_get_author($name)
@@ -115,10 +136,10 @@ function mlReferences_utilities_get_author($name)
     return $explode;
 }
 
-function mlReferences_utilities_get_authors($item)
+function mlReferences_utilities_get_authors($article)
 {
     $authors = array();
-    foreach ($item['authors'] as $author) {
+    foreach ($article['authors'] as $author) {
         $authors[] = array(
             'name' => $author['name'],
             'first_name' => $author['first_name'],
@@ -234,24 +255,24 @@ function mlReferences_utilities_get_csv_dialect()
 
 function mlReferences_utilities_get_directory($items)
 {
-    $directory = mlReferences_get_file($items);
+    $directory = mlReferences_utilities_get_file($items);
     if (!@is_dir($directory)) {
         @mkdir($directory, 0777, true);
     }
     return $directory;
 }
 
-function mlReferences_get_endnote($item, &$txt)
+function mlReferences_utilities_get_endnote($article, &$txt)
 {
-    $item['authors'] = mlReferences_get_authors($item);
+    $article['authors'] = mlReferences_utilities_get_authors($article);
     mlReferences_utilities_log(str_repeat('-', 80));
     mlReferences_utilities_log('Article');
-    mlReferences_utilities_log(sprintf('    Title          : %s', $item['title_1']));
-    mlReferences_utilities_log(sprintf('    Year           : %s', $item['year']));
-    mlReferences_utilities_log(sprintf('    Publisher      : %s', $item['publisher']));
-    mlReferences_utilities_log(sprintf('    Place Published: %s', $item['place_published']));
+    mlReferences_utilities_log(sprintf('    Title          : %s', $article['title_1']));
+    mlReferences_utilities_log(sprintf('    Year           : %s', $article['year']));
+    mlReferences_utilities_log(sprintf('    Publisher      : %s', $article['publisher']));
+    mlReferences_utilities_log(sprintf('    Place Published: %s', $article['place_published']));
     mlReferences_utilities_log('    Authors:');
-    foreach ($item['authors'] as $author) {
+    foreach ($article['authors'] as $author) {
         mlReferences_utilities_log(sprintf('        %s, %s', $author['name'], $author['first_name']));
     }
     foreach ($txt as $key => $value) {
@@ -260,13 +281,13 @@ function mlReferences_get_endnote($item, &$txt)
             'authors' => false,
         );
         mlReferences_utilities_log(sprintf('Checking if "%s" is a match...', $value));
-        $value = mlReferences_get_value($value);
-        $strlen = strlen($item['title_1']);
+        $value = mlReferences_utilities_get_value($value);
+        $strlen = strlen($article['title_1']);
         $title_1 = substr($value[1], 0, $strlen);
-        if ($item['title_1'] === $title_1) {
-            if ((!empty($item['year']) and strpos($txt[$key], $item['year']) !== false) or
-                (!empty($item['publisher']) and strpos($txt[$key], $item['publisher']) !== false) or
-                (!empty($item['place_published']) and strpos($txt[$key], $item['place_published']) !== false)
+        if ($article['title_1'] === $title_1) {
+            if ((!empty($article['year']) and strpos($txt[$key], $article['year']) !== false) or
+                (!empty($article['publisher']) and strpos($txt[$key], $article['publisher']) !== false) or
+                (!empty($article['place_published']) and strpos($txt[$key], $article['place_published']) !== false)
             ) {
                 $statuses['title'] = true;
                 mlReferences_utilities_log('    Step 1: Title is a match');
@@ -281,10 +302,10 @@ function mlReferences_get_endnote($item, &$txt)
         if ($statuses['authors'] === false) {
             $authors_1 = $value[0];
             $authors_1 = preg_split('/[^\p{L}a-zA-Z-\'’]/iu', $authors_1);
-            $authors_1 = array_filter($authors_1, 'mlReferences_filters_authors');
+            $authors_1 = array_filter($authors_1, 'mlReferences_utilities_filters_authors');
             $count_1 = count($authors_1);
             $count_2 = 0;
-            foreach ($item['authors'] as $author) {
+            foreach ($article['authors'] as $author) {
                 if (in_array($author['name'], $authors_1)) {
                     $count_2 += 1;
                     continue;
@@ -306,11 +327,11 @@ function mlReferences_get_endnote($item, &$txt)
         if ($statuses['authors'] === false) {
             $authors_2 = $value[0];
             $authors_2 = preg_split('/, |& /iu', $authors_2);
-            $authors_2 = array_filter($authors_2, 'mlReferences_filters_authors');
+            $authors_2 = array_filter($authors_2, 'mlReferences_utilities_filters_authors');
             $authors_2 = array_map('trim', $authors_2);
             $count_1 = count($authors_2);
             $count_2 = 0;
-            foreach ($item['authors'] as $author) {
+            foreach ($article['authors'] as $author) {
                 if (in_array($author['name'], $authors_2)) {
                     $count_2 += 1;
                     continue;
@@ -332,11 +353,11 @@ function mlReferences_get_endnote($item, &$txt)
         if ($statuses['authors'] === false) {
             $authors_3 = $value[0];
             $authors_3 = explode(',', $authors_3, 2);
-            $authors_3 = array_filter($authors_3, 'mlReferences_filters_authors');
+            $authors_3 = array_filter($authors_3, 'mlReferences_utilities_filters_authors');
             $authors_3 = array_map('trim', $authors_3);
             $count_1 = count($authors_3);
             $count_2 = 0;
-            foreach ($item['authors'] as $author) {
+            foreach ($article['authors'] as $author) {
                 if (in_array($author['name'], $authors_3)) {
                     $count_2 += 1;
                     continue;
@@ -359,7 +380,7 @@ function mlReferences_get_endnote($item, &$txt)
             $authors_4 = $value[0];
             $count_1 = count($authors_4);
             $count_2 = 0;
-            foreach ($item['authors'] as $author) {
+            foreach ($article['authors'] as $author) {
                 if ($author['name'] === $authors_4) {
                     $count_2 += 1;
                 }
@@ -388,6 +409,7 @@ function mlReferences_get_endnote($item, &$txt)
 function mlReferences_utilities_get_file($items)
 {
     array_unshift($items, 'files');
+    array_unshift($items, '..');
     array_unshift($items, rtrim(plugin_dir_path(__FILE__), '/'));
     return implode(DIRECTORY_SEPARATOR, $items);
 }
@@ -409,28 +431,28 @@ function mlReferences_utilities_get_prefix()
     return sprintf('%smlReferences_', $GLOBALS['wpdb']->prefix);
 }
 
-function mlReferences_utilities_get_references_all($item)
+function mlReferences_utilities_get_references_all($article)
 {
     return sprintf(
         '%s. %s: %s. %s: %s',
-        mlReferences_get_citations_first($item['authors'], $item['year']),
-        $item['title_1'],
-        $item['title_2'],
-        $item['place_published'],
-        $item['publisher']
+        mlReferences_utilities_get_citations_first($article['authors'], $article['year']),
+        $article['title_1'],
+        $article['title_2'],
+        $article['place_published'],
+        $article['publisher']
     );
 }
 
-function mlReferences_utilities_get_references_authors($item)
+function mlReferences_utilities_get_references_authors($article)
 {
-    $item['authors'] = array_filter($item['authors'], 'mlReferences_utilities_filters_author');
-    $count = count($item['authors']);
+    $article['authors'] = array_filter($article['authors'], 'mlReferences_utilities_filters_author');
+    $count = count($article['authors']);
     if ($count === 0) {
         return '';
     }
     $names = array();
-    if (!empty($item['authors'])) {
-        foreach ($item['authors'] as $key => $value) {
+    if (!empty($article['authors'])) {
+        foreach ($article['authors'] as $key => $value) {
             $separator = ',';
             if ($key + 1 === $count - 1) {
                 $separator = ' &';
@@ -441,19 +463,19 @@ function mlReferences_utilities_get_references_authors($item)
             $names[] = sprintf('%s%s', $value['name'], $separator);
         }
     }
-    return sprintf('%s, %s', implode(' ', $names), $item['year']);
+    return sprintf('%s, %s', implode(' ', $names), $article['year']);
 }
 
-function mlReferences_utilities_get_references_editors($item)
+function mlReferences_utilities_get_references_editors($article)
 {
-    $item['authors'] = array_filter($item['authors'], 'mlReferences_utilities_filters_editor');
-    $count = count($item['authors']);
+    $article['authors'] = array_filter($article['authors'], 'mlReferences_utilities_filters_editor');
+    $count = count($article['authors']);
     if ($count === 0) {
         return '';
     }
     $names = array();
-    if (!empty($item['authors'])) {
-        foreach ($item['authors'] as $key => $value) {
+    if (!empty($article['authors'])) {
+        foreach ($article['authors'] as $key => $value) {
             $separator = ',';
             if ($key + 1 === $count - 1) {
                 $separator = ' &';
@@ -464,7 +486,7 @@ function mlReferences_utilities_get_references_editors($item)
             $names[] = sprintf('%s%s', $value['name'], $separator);
         }
     }
-    return sprintf('%s, %s', implode(' ', $names), $item['year']);
+    return sprintf('%s, %s', implode(' ', $names), $article['year']);
 }
 
 function mlReferences_utilities_get_shortcodes($contents)
@@ -539,13 +561,6 @@ function mlReferences_utilities_get_url($first_name, $last_name)
     return '';
 }
 
-function mlReferences_utilities_get_admin_url($query)
-{
-    $admin_url = sprintf('admin.php?page=mlReferences&%s', $query);
-    $admin_url = admin_url($admin_url);
-    return $admin_url;
-}
-
 function mlReferences_utilities_get_value($value_1)
 {
     $value_2 = preg_split('#\((\d\d\d\d|n\.d\.)\)\s*\.#', $value_1);
@@ -576,18 +591,3 @@ function mlReferences_utilities_get_value($value_1)
     $value_2[1] = trim(@$value_2[1]);
     return $value_2;
 }
-
-function mlReferences_utilities_flashes()
-{
-    ?>
-    <?php if (!empty($_SESSION['mlReferences']['flashes'])) : ?>
-        <?php foreach ($_SESSION['mlReferences']['flashes'] as $key => $value) : ?>
-            <div class="<?php echo $key; ?>">
-                <p><strong><?php echo $value; ?></strong></p>
-            </div>
-        <?php endforeach; ?>
-        <?php $_SESSION['mlReferences']['flashes'] = array(); ?>
-    <?php endif; ?>
-    <?php
-}
-
