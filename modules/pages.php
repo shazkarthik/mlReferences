@@ -34,7 +34,7 @@ function mlReferences_dashboard_end_note_upload_post()
 {
     $file_1 = $_FILES['file_1'];
     $file_2 = $_FILES['file_2'];
-    list($errors, $articles) = mlReferences_end_note_get_articles($file_1['tmp_name'], $file_2['tmp_name']);
+    list($articles, $txt, $errors) = mlReferences_end_note_get_articles($file_1['tmp_name'], $file_2['tmp_name']);
     if ($errors) {
         $_SESSION['mlReferences']['flashes'] = array(
             'error' => 'The document was not uploaded successfully. Please try again.',
@@ -108,7 +108,7 @@ function mlReferences_dashboard_spreadsheet_upload_get()
 function mlReferences_dashboard_spreadsheet_upload_post()
 {
     $file = $_FILES['file'];
-    list($errors, $articles) = mlReferences_spreadsheet_get_articles($file['tmp_name']);
+    list($articles, $errors) = mlReferences_spreadsheet_get_articles($file['tmp_name']);
     if ($errors) {
         $_SESSION['mlReferences']['flashes'] = array(
             'error' => 'The document was not uploaded successfully. Please try again.',
