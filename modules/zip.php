@@ -170,9 +170,10 @@ function mlReferences_zip_download_get_articles($document)
         'citations_subsequent' => 'Authors Publish Text Subsequent',
         'citations_parenthetical_first' => 'Authors Publish Text First Parenthetical',
         'citations_parenthetical_subsequent' => 'Authors Publish Text Subsequent Parenthetical',
-        'references_all' => 'Full Reference',
+        'endnote' => 'Full Reference (EndNote)',
         'references_authors' => 'Authors Publish Reference',
         'references_editors' => 'Editors Publish Reference',
+        'references_all' => 'Full Reference (Derived)',
     );
     $writer->writeRow($row, ';');
     foreach ($articles as $article) {
