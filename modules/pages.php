@@ -503,9 +503,10 @@ function mlReferences_faq()
                         <li>Authors Publish Text Subsequent</li>
                         <li>Authors Publish Text First Parenthetical</li>
                         <li>Authors Publish Text Subsequent Parenthetical</li>
-                        <li>Full Reference</li>
+                        <li>Full Reference (EndNote)</li>
                         <li>Authors Publish Reference</li>
                         <li>Editors Publish Reference</li>
+                        <li>Full Reference (Derived)</li>
                     </ul>
                 </li>
                 <li>

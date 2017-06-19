@@ -82,9 +82,10 @@ SELECT
     citations_subsequent,
     citations_parenthetical_first,
     citations_parenthetical_subsequent,
-    references_all,
+    endnote,
     references_authors,
-    references_editors
+    references_editors,
+    references_all
 FROM `%sarticles`
 WHERE `document_id` = %%d
 ORDER BY `type` ASC, `id` ASC
@@ -130,6 +131,7 @@ function mlReferences_models_articles_insert($article)
         'citations_subsequent' => $article['citations_subsequent'],
         'citations_parenthetical_first' => $article['citations_parenthetical_first'],
         'citations_parenthetical_subsequent' => $article['citations_parenthetical_subsequent'],
+        'endnote' => $article['endnote'],
         'references_authors' => $article['references_authors'],
         'references_editors' => $article['references_editors'],
         'references_all' => $article['references_all'],
@@ -163,9 +165,10 @@ function mlReferences_models_articles_update($article)
         'citations_subsequent' => $article[20],
         'citations_parenthetical_first' => $article[21],
         'citations_parenthetical_subsequent' => $article[22],
-        'references_all' => $article[23],
+        'endnote' => $article[23],
         'references_authors' => $article[24],
         'references_editors' => $article[25],
+        'references_all' => $article[26],
     );
     $GLOBALS['wpdb']->update(
         sprintf('%sarticles', mlReferences_utilities_get_prefix()),
