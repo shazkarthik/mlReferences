@@ -227,8 +227,8 @@ function mlReferences_end_note_get_article($record, &$txt)
     $article['isbn'] = $article['isbn'][0];
     $strlen = strlen($article['isbn']);
     if ($strlen === 8) {
-        $article['isbn'] = '';
         $article['issn'] = sprintf('%s-%s', substr($article['isbn'], 0, 4), substr($article['isbn'], 4, 4));
+        $article['isbn'] = '';
     }
     if ($strlen === 10) {
         $article['isbn'] = sprintf(
