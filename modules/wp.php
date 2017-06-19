@@ -432,7 +432,7 @@ SELECT
     `citations_first`,
     `citations_subsequent`,
     `citations_parenthetical_first`,
-    `citations_parenthetical_subsequent`,
+    `citations_parenthetical_subsequent`
 FROM `%sarticles`
 ORDER BY `title_1` ASC
 EOD;
