@@ -296,7 +296,7 @@ EOD;
         mlReferences_utilities_get_prefix(),
         mlReferences_utilities_get_prefix()
     );
-    $query = $GLOBALS['wpdb']->prepare($query, $document['id']);
+    $query = $GLOBALS['wpdb']->prepare($query, $document_id);
     $articles_authors = $GLOBALS['wpdb']->get_results($query, ARRAY_A);
     return $articles_authors;
 }

@@ -207,7 +207,7 @@ function mlReferences_zip_download_get_authors()
     return $authors;
 }
 
-function mlReferences_zip_download_get_articles_authors()
+function mlReferences_zip_download_get_articles_authors($document)
 {
     $articles_authors = mlReferences_models_articles_authors_select_all($document['id']);
     $resource = @fopen('php://temp/maxmemory:999999999', 'w');
