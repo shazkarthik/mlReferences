@@ -2,7 +2,7 @@
 
 /**
  * Plugin Name: mlReferences
- * Plugin URI: http://medialeg.ch/Products/mlReferences
+ * Plugin URI: http://medialeg.ch/produkte/mlreferences/
  * Description: This plugin allows to import and use literature references managed in <a href="http://endnote.com" target="_blank">Endnote</a>. Imported references can be integrated into wordpress pages and posts. References lists are generated per page/post or for a group of pages/posts on demand.
  * Author: medialeg
  * Version: 1.0
