@@ -1,3 +1,15 @@
+.dashicons-mlReferences:before {
+    background-color: transparent !important;
+    background-image: url('mlReferences.png') !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    height: 20px !important;
+    padding: 7px 0 !important;
+    width: 20px !important;
+    content: '' !important;
+}
+
 .mlReferences {
     margin: 0 20px 0 0 !important;
 }
