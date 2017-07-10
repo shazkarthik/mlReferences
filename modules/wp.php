@@ -200,7 +200,14 @@ function mlReferences_styles()
 
 function mlReferences_admin_menu()
 {
-    add_menu_page('mlReferences', 'mlReferences', 'manage_options', '/mlReferences', 'mlReferences_dashboard', '');
+    add_menu_page(
+        'mlReferences',
+        'mlReferences',
+        'manage_options',
+        '/mlReferences',
+        'mlReferences_dashboard',
+        'dashicons-mlReferences'
+    );
     add_submenu_page('/mlReferences', 'F.A.Q', 'F.A.Q', 'manage_options', '/mlReferences/faq', 'mlReferences_faq');
 }
 
