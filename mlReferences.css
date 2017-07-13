@@ -100,6 +100,15 @@
     width: 1px !important;
 }
 
+.mlReferences .notice {
+    margin: 20px 0 0 0 !important;
+}
+
+.mlReferences .notice p {
+    margin: 0.5em 0 !important;
+    padding: 2px !important;
+}
+
 .mlReferences .right {
     text-align: right !important;
 }
