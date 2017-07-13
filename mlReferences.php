@@ -17,6 +17,7 @@ require_once('vendors/PHPExcel-1.8/Classes/PHPExcel/IOFactory.php');
 
 require_once('modules/actions.php');
 require_once('modules/end_note.php');
+require_once('modules/license.php');
 require_once('modules/models.php');
 require_once('modules/pages.php');
 require_once('modules/spreadsheet.php');
@@ -33,8 +34,14 @@ register_deactivation_hook(__FILE__, 'mlReferences_register_deactivation_hook');
 add_action('init', 'mlReferences_init');
 add_action('admin_init', 'mlReferences_admin_init');
 add_action('admin_menu', 'mlReferences_admin_menu');
+add_action('admin_notices', 'mlReferences_wp_admin_notices');
+add_action('mlReferences_wp_cron', 'mlReferences_wp_cron');
 add_action('add_meta_boxes', 'mlReferences_add_meta_boxes');
 add_action('save_post', 'mlReferences_save_post');
 add_action('wp_head', 'mlReferences_wp_head', 90);
 
 add_filter('the_content', 'mlReferences_the_content', 90);
+
+if (!wp_next_scheduled('mlReferences_wp_cron')) {
+    wp_schedule_event(time(), 'daily', 'mlReferences_wp_cron');
+}
