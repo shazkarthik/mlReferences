@@ -220,8 +220,8 @@ function mlReferences_admin_menu()
         'mlReferences_faq',
         ''
     );
-    add_submenu_page('
-        /mlReferences',
+    add_submenu_page(
+        '/mlReferences',
         'License',
         'License',
         'manage_options',
