@@ -556,16 +556,12 @@ function mlReferences_license()
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mlReferences_actions_license($_FILES['license']['tmp_name']);
             if (mlReferences_license_is_valid()) {
-                $_SESSION['flashes'] = array(
-                    'updated' => array(
-                        'Your license was added successfully.',
-                    ),
+                $_SESSION['mlReferences']['flashes'] = array(
+                    'updated' => 'Your license was added successfully.',
                 );
             } else {
-                $_SESSION['flashes'] = array(
-                    'error' => array(
-                        'Your license was not added successfully. Please try again',
-                    ),
+                $_SESSION['mlReferences']['flashes'] = array(
+                    'error' => 'Your license was not added successfully. Please try again',
                 );
             }
             ?>
