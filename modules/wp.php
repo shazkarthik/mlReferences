@@ -149,6 +149,9 @@ EOD;
 
 function mlReferences_register_deactivation_hook()
 {
+    $timestamp = wp_next_scheduled('mlReferences_wp_cron');
+    wp_unschedule_event($timestamp, 'mlReferences_wp_cron');
+
     mlReferences_utilities_delete(mlReferences_utilities_get_directory(array()));
 
     $GLOBALS['wpdb']->query(sprintf('DROP TABLE IF EXISTS `%sarticles_authors`', mlReferences_utilities_get_prefix()));
@@ -208,7 +211,47 @@ function mlReferences_admin_menu()
         'mlReferences_dashboard',
         'dashicons-mlReferences'
     );
-    add_submenu_page('/mlReferences', 'F.A.Q', 'F.A.Q', 'manage_options', '/mlReferences/faq', 'mlReferences_faq');
+    add_submenu_page(
+        '/mlReferences',
+        'F.A.Q',
+        'F.A.Q',
+        'manage_options',
+        '/mlReferences/faq',
+        'mlReferences_faq',
+        ''
+    );
+    add_submenu_page('
+        /mlReferences',
+        'License',
+        'License',
+        'manage_options',
+        '/mlReferences/license',
+        'mlReferences_license',
+        ''
+    );
+}
+
+function mlReferences_wp_admin_notices()
+{
+    if (!mlReferences_license_is_valid()) {
+        ?>
+        <div class="notice notice-error">
+            <p>
+                <strong>mlReferences:</strong>
+                You need a license to use this plugin.
+                If you already have a license, upload it
+                <a href="<?php echo admin_url('admin.php?page=mlReferences/license'); ?>">here</a>.
+                Otherwise, you can purchase a license at
+                <a href="http://medialeg.ch" target="_blank">http://medialeg.ch</a>.
+            </p>
+        </div>
+        <?php
+    }
+}
+
+function mlReferences_wp_cron()
+{
+    mlReferences_license_verify();
 }
 
 function mlReferences_add_meta_boxes()
