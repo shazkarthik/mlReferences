@@ -51,7 +51,7 @@ function mlReferences_utilities_flashes()
     ?>
     <?php if (!empty($_SESSION['mlReferences']['flashes'])) : ?>
         <?php foreach ($_SESSION['mlReferences']['flashes'] as $key => $value) : ?>
-            <div class="<?php echo $key; ?>">
+            <div class="notice notice-<?php echo $key; ?>">
                 <p><strong><?php echo $value; ?></strong></p>
             </div>
         <?php endforeach; ?>
