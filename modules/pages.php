@@ -63,7 +63,7 @@ function mlReferences_dashboard_end_note_upload_post()
     }
     mlReferences_models_documents_insert($file_1['tmp_name'], $file_1['name'], 'EndNote', $articles);
     $_SESSION['mlReferences']['flashes'] = array(
-        'updated' => 'The document was uploaded successfully.',
+        'success' => 'The document was uploaded successfully.',
     );
     ?>
     <meta content="0;url=<?php echo mlReferences_utilities_get_admin_url('action='); ?>" http-equiv="refresh">
@@ -139,7 +139,7 @@ function mlReferences_dashboard_spreadsheet_upload_post()
     }
     mlReferences_models_documents_insert($file['tmp_name'], $file['name'], 'Spreadsheet', $articles);
     $_SESSION['mlReferences']['flashes'] = array(
-        'updated' => 'The document was uploaded successfully.',
+        'success' => 'The document was uploaded successfully.',
     );
     ?>
     <meta content="0;url=<?php echo mlReferences_utilities_get_admin_url('action='); ?>" http-equiv="refresh">
@@ -188,7 +188,7 @@ function mlReferences_dashboard_zip_upload_post()
     $articles_authors = mlReferences_zip_upload_get_articles_authors($_FILES['file']['tmp_name']);
     mlReferences_zip_upload($articles, $authors, $articles_authors);
     $_SESSION['mlReferences']['flashes'] = array(
-        'updated' => 'The document was uploaded successfully.',
+        'success' => 'The document was uploaded successfully.',
     );
     ?>
     <meta content="0;url=<?php echo mlReferences_utilities_get_admin_url('action='); ?>" http-equiv="refresh">
@@ -216,7 +216,7 @@ function mlReferences_dashboard_delete_get()
     ?>
     <h1>mlReferences - Documents - Delete</h1>
     <?php if (mlReferences_license_is_valid()): ?>
-        <div class="error">
+        <div class="notice notice-error">
             <p><strong>Are you sure you want to delete this document?</strong></p>
         </div>
         <form action="<?php echo $admin_url; ?>" method="post">
@@ -235,7 +235,7 @@ function mlReferences_dashboard_delete_post()
     $id = intval($id);
     mlReferences_models_documents_delete($id);
     $_SESSION['mlReferences']['flashes'] = array(
-        'updated' => 'The document was deleted successfully.',
+        'success' => 'The document was deleted successfully.',
     );
     ?>
     <meta
@@ -326,7 +326,7 @@ function mlReferences_dashboard_default()
                 <?php endforeach; ?>
             </table>
         <?php else : ?>
-            <div class="error">
+            <div class="notice notice-error">
                 <p><strong>There are no documents in the database.</strong></p>
             </div>
         <?php endif; ?>
@@ -557,7 +557,7 @@ function mlReferences_license()
             mlReferences_actions_license($_FILES['license']['tmp_name']);
             if (mlReferences_license_is_valid()) {
                 $_SESSION['mlReferences']['flashes'] = array(
-                    'updated' => 'Your license was added successfully.',
+                    'success' => 'Your license was added successfully.',
                 );
             } else {
                 $_SESSION['mlReferences']['flashes'] = array(
