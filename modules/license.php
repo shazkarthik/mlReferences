@@ -6,7 +6,7 @@ function mlReferences_license_verify() {
         update_option('mlReferences_license_status', 'Off', 'no');
         return;
     }
-    $url = 'http://plugins.medialeg.ch/licenses';
+    $url = 'https://plugins.medialeg.ch/licenses';
     $options = array(
         'body' => array(
             'contents' => $contents,
