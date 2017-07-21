@@ -174,9 +174,13 @@ function mlReferences_zip_download_get_articles($document)
         'references_authors' => 'Authors Publish Reference',
         'references_editors' => 'Editors Publish Reference',
         'references_all' => 'Full Reference (Derived)',
+        'references_authors_' => 'Authors Publish Reference',
+        'references_editors_' => 'Editors Publish Reference',
     );
     $writer->writeRow($row, ';');
     foreach ($articles as $article) {
+        $article['references_authors_'] = $article['references_authors'];
+        $article['references_editors_'] = $article['references_editors'];
         $writer->writeRow($article, ';');
     }
     @rewind($resource);

@@ -156,7 +156,7 @@ function mlReferences_utilities_get_citations_first($authors, $year)
         return '';
     }
     if ($count === 1) {
-        return sprintf('%s et al., %s', @$authors[0]['name'], $year);
+        return sprintf('%s (%s)', @$authors[0]['name'], $year);
     }
     if ($count === 2) {
         return sprintf('%s & %s et al., %s', @$authors[0]['name'], @$authors[1]['name'], $year);
@@ -450,43 +450,53 @@ function mlReferences_utilities_get_references_authors($article)
     if ($count === 0) {
         return '';
     }
-    $names = array();
-    if (!empty($article['authors'])) {
-        foreach ($article['authors'] as $key => $value) {
-            $separator = ',';
-            if ($key + 1 === $count - 1) {
-                $separator = ' &';
-            }
-            if ($key + 1 === $count) {
-                $separator = '';
-            }
-            $names[] = sprintf('%s%s', $value['name'], $separator);
-        }
+    if ($count === 1) {
+        return sprintf('%s, %s', @$article['authors'][0]['name'], $article['year']);
     }
-    return sprintf('%s, %s', implode(' ', $names), $article['year']);
+    if ($count > 1) {
+        $names = array();
+        if (!empty($article['authors'])) {
+            foreach ($article['authors'] as $key => $value) {
+                $separator = ',';
+                if ($key + 1 === $count - 1) {
+                    $separator = ' &';
+                }
+                if ($key + 1 === $count) {
+                    $separator = '';
+                }
+                $names[] = sprintf('%s%s', $value['name'], $separator);
+            }
+        }
+        return sprintf('%s et al., %s', implode(' ', $names), $article['year']);
+    }
 }
 
 function mlReferences_utilities_get_references_editors($article)
 {
-    $article['authors'] = array_filter($article['authors'], 'mlReferences_utilities_filters_editor');
+    $article['authors'] = array_values(array_filter($article['authors'], 'mlReferences_utilities_filters_editor'));
     $count = count($article['authors']);
     if ($count === 0) {
         return '';
     }
-    $names = array();
-    if (!empty($article['authors'])) {
-        foreach ($article['authors'] as $key => $value) {
-            $separator = ',';
-            if ($key + 1 === $count - 1) {
-                $separator = ' &';
-            }
-            if ($key + 1 === $count) {
-                $separator = '';
-            }
-            $names[] = sprintf('%s%s', $value['name'], $separator);
-        }
+    if ($count === 1) {
+        return sprintf('%s, %s', @$article['authors'][0]['name'], $article['year']);
     }
-    return sprintf('%s, %s', implode(' ', $names), $article['year']);
+    if ($count >= 1) {
+        $names = array();
+        if (!empty($article['authors'])) {
+            foreach ($article['authors'] as $key => $value) {
+                $separator = ',';
+                if ($key + 1 === $count - 1) {
+                    $separator = ' &';
+                }
+                if ($key + 1 === $count) {
+                    $separator = '';
+                }
+                $names[] = sprintf('%s%s', $value['name'], $separator);
+            }
+        }
+        return sprintf('%s et al., %s', implode(' ', $names), $article['year']);
+    }
 }
 
 function mlReferences_utilities_get_shortcodes($contents)
