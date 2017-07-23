@@ -518,6 +518,8 @@ function mlReferences_faq()
                             <li>Authors Publish Reference</li>
                             <li>Editors Publish Reference</li>
                             <li>Full Reference (Derived)</li>
+                            <li>Authors Publish Reference</li>
+                            <li>Editors Publish Reference</li>
                         </ul>
                     </li>
                     <li>
