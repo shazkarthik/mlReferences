@@ -1,5 +1,155 @@
 <?php
 
+function mlReferences_dashboard_mendeley_upload_get()
+{
+    ?>
+    <h1>mlReferences - Documents - Upload Mendeley</h1>
+    <?php if (mlReferences_license_is_valid()): ?>
+        <form
+            action="<?php echo mlReferences_utilities_get_admin_url('action=mendeley-upload'); ?>"
+            enctype="multipart/form-data"
+            method="post"
+            >
+            <table class="bordered widefat wp-list-table">
+                <tr>
+                    <td class="label">
+                        <label for="file_1">XML File</label>
+                    </td>
+                    <td><input id="file" name="file_1" type="file"></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input class="button-primary" type="submit" value="Submit">
+            </p>
+        </form>
+    <?php endif; ?>
+    <?php
+}
+
+function mlReferences_dashboard_mendeley_upload_post()
+{
+    $file_1 = $_FILES['file_1'];
+    list($articles, $txt, $errors) = mlReferences_mendeley_get_articles($file_1['tmp_name']);
+    if ($errors) {
+        $_SESSION['mlReferences']['flashes'] = array(
+            'error' => 'The document was not uploaded successfully. Please try again.',
+        );
+        ?>
+        <meta
+            content="0;url=<?php echo mlReferences_utilities_get_admin_url('action=mendeley-upload'); ?>"
+            http-equiv="refresh"
+            >
+        <?php
+        return;
+    }
+    if (!$articles) {
+        $_SESSION['mlReferences']['flashes'] = array(
+            'error' => 'The document was not uploaded successfully. Please try again.',
+        );
+        ?>
+        <meta
+            content="0;url=<?php echo mlReferences_utilities_get_admin_url('action=mendeley-upload'); ?>"
+            http-equiv="refresh"
+            >
+        <?php
+        return;
+    }
+    mlReferences_models_documents_insert($file_1['tmp_name'], $file_1['name'], 'Mendeley', $articles);
+    $_SESSION['mlReferences']['flashes'] = array(
+        'success' => 'The document was uploaded successfully.',
+    );
+    ?>
+    <meta content="0;url=<?php echo mlReferences_utilities_get_admin_url('action='); ?>" http-equiv="refresh">
+    <?php
+    return;
+}
+
+function mlReferences_dashboard_mendeley_download()
+{
+    $id = $_REQUEST['id'];
+    $id = intval($id);
+    list($document, $contents) = mlReferences_mendeley_download($id);
+    ob_clean();
+    header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
+    header(sprintf('Content-Length: %d', strlen($contents)));
+    echo $contents;
+}
+
+function mlReferences_dashboard_zotero_upload_get()
+{
+    ?>
+    <h1>mlReferences - Documents - Upload Zotero</h1>
+    <?php if (mlReferences_license_is_valid()): ?>
+        <form
+            action="<?php echo mlReferences_utilities_get_admin_url('action=zotero-upload'); ?>"
+            enctype="multipart/form-data"
+            method="post"
+            >
+            <table class="bordered widefat wp-list-table">
+                <tr>
+                    <td class="label">
+                        <label for="file_1">XML File</label>
+                    </td>
+                    <td><input id="file" name="file_1" type="file"></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input class="button-primary" type="submit" value="Submit">
+            </p>
+        </form>
+    <?php endif; ?>
+    <?php
+}
+
+function mlReferences_dashboard_zotero_upload_post()
+{
+    $file_1 = $_FILES['file_1'];
+    list($articles, $txt, $errors) = mlReferences_zotero_get_articles($file_1['tmp_name']);
+    if ($errors) {
+        $_SESSION['mlReferences']['flashes'] = array(
+            'error' => 'The document was not uploaded successfully. Please try again.',
+        );
+        ?>
+        <meta
+            content="0;url=<?php echo mlReferences_utilities_get_admin_url('action=zotero-upload'); ?>"
+            http-equiv="refresh"
+            >
+        <?php
+        return;
+    }
+    if (!$articles) {
+        $_SESSION['mlReferences']['flashes'] = array(
+            'error' => 'The document was not uploaded successfully. Please try again.',
+        );
+        ?>
+        <meta
+            content="0;url=<?php echo mlReferences_utilities_get_admin_url('action=zotero-upload'); ?>"
+            http-equiv="refresh"
+            >
+        <?php
+        return;
+    }
+    mlReferences_models_documents_insert($file_1['tmp_name'], $file_1['name'], 'Zotero', $articles);
+    $_SESSION['mlReferences']['flashes'] = array(
+        'success' => 'The document was uploaded successfully.',
+    );
+    ?>
+    <meta content="0;url=<?php echo mlReferences_utilities_get_admin_url('action='); ?>" http-equiv="refresh">
+    <?php
+    return;
+}
+
+function mlReferences_dashboard_zotero_download()
+{
+    $id = $_REQUEST['id'];
+    $id = intval($id);
+    list($document, $contents) = mlReferences_zotero_download($id);
+    ob_clean();
+    header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
+    header(sprintf('Content-Length: %d', strlen($contents)));
+    echo $contents;
+}
+
 function mlReferences_dashboard_end_note_upload_get()
 {
     ?>
@@ -253,6 +403,14 @@ function mlReferences_dashboard_default()
         mlReferences - Documents
         <a
             class="page-title-action"
+            href="<?php echo mlReferences_utilities_get_admin_url('action=mendeley-upload'); ?>"
+            >Upload Mendeley</a>
+        <a
+            class="page-title-action"
+            href="<?php echo mlReferences_utilities_get_admin_url('action=zotero-upload'); ?>"
+            >Upload Zotero</a>
+        <a
+            class="page-title-action"
             href="<?php echo mlReferences_utilities_get_admin_url('action=end-note-upload'); ?>"
             >Upload EndNote</a>
         <a
@@ -268,6 +426,8 @@ function mlReferences_dashboard_default()
                     <th class="narrow right">Identifier</th>
                     <th>Name</th>
                     <th class="narrow center">ZIP</th>
+                    <th class="narrow center">Mendeley</th>
+                    <th class="narrow center">Zotero</th>
                     <th class="narrow center">EndNote</th>
                     <th class="narrow center">Spreadsheet</th>
                     <th class="narrow center">Actions</th>
@@ -293,6 +453,26 @@ function mlReferences_dashboard_default()
                             $admin_url = mlReferences_utilities_get_admin_url($admin_url);
                             ?>
                             <a href="<?php echo $admin_url; ?>">Upload</a>
+                        </td>
+                        <td class="narrow center">
+                            <?php if ($document['type'] === 'Mendeley') : ?>
+                                <?php
+                                $admin_url = 'action=mendeley-download&id=%d';
+                                $admin_url = sprintf($admin_url, $document['id']);
+                                $admin_url = mlReferences_utilities_get_admin_url($admin_url);
+                                ?>
+                                <a href="<?php echo $admin_url; ?>">Download</a>
+                            <?php endif; ?>
+                        </td>
+                        <td class="narrow center">
+                            <?php if ($document['type'] === 'Zotero') : ?>
+                                <?php
+                                $admin_url = 'action=zotero-download&id=%d';
+                                $admin_url = sprintf($admin_url, $document['id']);
+                                $admin_url = mlReferences_utilities_get_admin_url($admin_url);
+                                ?>
+                                <a href="<?php echo $admin_url; ?>">Download</a>
+                            <?php endif; ?>
                         </td>
                         <td class="narrow center">
                             <?php if ($document['type'] === 'EndNote') : ?>
@@ -344,6 +524,26 @@ function mlReferences_dashboard()
     <div class="mlReferences wrap">
         <?php
         switch ($action) {
+            case 'mendeley-upload':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    mlReferences_dashboard_mendeley_upload_post();
+                } else {
+                    mlReferences_dashboard_mendeley_upload_get();
+                }
+                break;
+            case 'mendeley-download':
+                mlReferences_dashboard_mendeley_download();
+                break;
+            case 'zotero-upload':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    mlReferences_dashboard_zotero_upload_post();
+                } else {
+                    mlReferences_dashboard_zotero_upload_get();
+                }
+                break;
+            case 'zotero-download':
+                mlReferences_dashboard_zotero_download();
+                break;
             case 'end-note-upload':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     mlReferences_dashboard_end_note_upload_post();
