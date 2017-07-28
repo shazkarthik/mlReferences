@@ -13,7 +13,7 @@ function mlReferences_zotero_download($id)
     $xml = @simplexml_load_string($contents);
     $records = $xml->xpath('//xml/records/record');
     foreach ($records as $record) {
-        $number = $record->xpath('rec-number');
+        $number = $record->xpath('ref-type');
         $number = array_pop($number);
         $number = (string) $number;
         $article = mlReferences_models_articles_select_one($document['id'], $number);
