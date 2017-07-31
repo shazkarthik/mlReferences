@@ -36,6 +36,10 @@ function mlReferences_mendeley_download($id)
         $issues = '';
         $pages = '';
         $urls = $record->xpath('urls/pdf-urls/url');
+        foreach ($urls as $url) {
+            $dom = dom_import_simplexml($url);
+            $dom->nodeValue = $article['url'];
+        }
         $issns = '';
         $original_publications = '';
         $isbns = '';

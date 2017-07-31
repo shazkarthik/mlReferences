@@ -13,9 +13,9 @@ function mlReferences_dashboard_mendeley_upload_get()
             <table class="bordered widefat wp-list-table">
                 <tr>
                     <td class="label">
-                        <label for="file_1">XML File</label>
+                        <label for="file">XML File</label>
                     </td>
-                    <td><input id="file" name="file_1" type="file"></td>
+                    <td><input id="file" name="file" type="file"></td>
                 </tr>
             </table>
             <p class="submit">
@@ -28,8 +28,8 @@ function mlReferences_dashboard_mendeley_upload_get()
 
 function mlReferences_dashboard_mendeley_upload_post()
 {
-    $file_1 = $_FILES['file_1'];
-    list($articles, $txt, $errors) = mlReferences_mendeley_get_articles($file_1['tmp_name']);
+    $file = $_FILES['file'];
+    list($articles, $errors) = mlReferences_mendeley_get_articles($file['tmp_name']);
     if ($errors) {
         $_SESSION['mlReferences']['flashes'] = array(
             'error' => 'The document was not uploaded successfully. Please try again.',
@@ -54,7 +54,7 @@ function mlReferences_dashboard_mendeley_upload_post()
         <?php
         return;
     }
-    mlReferences_models_documents_insert($file_1['tmp_name'], $file_1['name'], 'Mendeley', $articles);
+    mlReferences_models_documents_insert($file['tmp_name'], $file['name'], 'Mendeley', $articles);
     $_SESSION['mlReferences']['flashes'] = array(
         'success' => 'The document was uploaded successfully.',
     );
@@ -88,9 +88,9 @@ function mlReferences_dashboard_zotero_upload_get()
             <table class="bordered widefat wp-list-table">
                 <tr>
                     <td class="label">
-                        <label for="file_1">XML File</label>
+                        <label for="file">XML File</label>
                     </td>
-                    <td><input id="file" name="file_1" type="file"></td>
+                    <td><input id="file" name="file" type="file"></td>
                 </tr>
             </table>
             <p class="submit">
@@ -103,8 +103,8 @@ function mlReferences_dashboard_zotero_upload_get()
 
 function mlReferences_dashboard_zotero_upload_post()
 {
-    $file_1 = $_FILES['file_1'];
-    list($articles, $txt, $errors) = mlReferences_zotero_get_articles($file_1['tmp_name']);
+    $file = $_FILES['file'];
+    list($articles, $errors) = mlReferences_zotero_get_articles($file['tmp_name']);
     if ($errors) {
         $_SESSION['mlReferences']['flashes'] = array(
             'error' => 'The document was not uploaded successfully. Please try again.',
@@ -129,7 +129,7 @@ function mlReferences_dashboard_zotero_upload_post()
         <?php
         return;
     }
-    mlReferences_models_documents_insert($file_1['tmp_name'], $file_1['name'], 'Zotero', $articles);
+    mlReferences_models_documents_insert($file['tmp_name'], $file['name'], 'Zotero', $articles);
     $_SESSION['mlReferences']['flashes'] = array(
         'success' => 'The document was uploaded successfully.',
     );
@@ -403,16 +403,16 @@ function mlReferences_dashboard_default()
         mlReferences - Documents
         <a
             class="page-title-action"
+            href="<?php echo mlReferences_utilities_get_admin_url('action=end-note-upload'); ?>"
+            >Upload EndNote</a>
+        <a
+            class="page-title-action"
             href="<?php echo mlReferences_utilities_get_admin_url('action=mendeley-upload'); ?>"
             >Upload Mendeley</a>
         <a
             class="page-title-action"
             href="<?php echo mlReferences_utilities_get_admin_url('action=zotero-upload'); ?>"
             >Upload Zotero</a>
-        <a
-            class="page-title-action"
-            href="<?php echo mlReferences_utilities_get_admin_url('action=end-note-upload'); ?>"
-            >Upload EndNote</a>
         <a
             class="page-title-action"
             href="<?php echo mlReferences_utilities_get_admin_url('action=spreadsheet-upload'); ?>"
@@ -426,9 +426,9 @@ function mlReferences_dashboard_default()
                     <th class="narrow right">Identifier</th>
                     <th>Name</th>
                     <th class="narrow center">ZIP</th>
+                    <th class="narrow center">EndNote</th>
                     <th class="narrow center">Mendeley</th>
                     <th class="narrow center">Zotero</th>
-                    <th class="narrow center">EndNote</th>
                     <th class="narrow center">Spreadsheet</th>
                     <th class="narrow center">Actions</th>
                 </tr>
@@ -455,6 +455,16 @@ function mlReferences_dashboard_default()
                             <a href="<?php echo $admin_url; ?>">Upload</a>
                         </td>
                         <td class="narrow center">
+                            <?php if ($document['type'] === 'EndNote') : ?>
+                                <?php
+                                $admin_url = 'action=end-note-download&id=%d';
+                                $admin_url = sprintf($admin_url, $document['id']);
+                                $admin_url = mlReferences_utilities_get_admin_url($admin_url);
+                                ?>
+                                <a href="<?php echo $admin_url; ?>">Download</a>
+                            <?php endif; ?>
+                        </td>
+                        <td class="narrow center">
                             <?php if ($document['type'] === 'Mendeley') : ?>
                                 <?php
                                 $admin_url = 'action=mendeley-download&id=%d';
@@ -468,16 +478,6 @@ function mlReferences_dashboard_default()
                             <?php if ($document['type'] === 'Zotero') : ?>
                                 <?php
                                 $admin_url = 'action=zotero-download&id=%d';
-                                $admin_url = sprintf($admin_url, $document['id']);
-                                $admin_url = mlReferences_utilities_get_admin_url($admin_url);
-                                ?>
-                                <a href="<?php echo $admin_url; ?>">Download</a>
-                            <?php endif; ?>
-                        </td>
-                        <td class="narrow center">
-                            <?php if ($document['type'] === 'EndNote') : ?>
-                                <?php
-                                $admin_url = 'action=end-note-download&id=%d';
                                 $admin_url = sprintf($admin_url, $document['id']);
                                 $admin_url = mlReferences_utilities_get_admin_url($admin_url);
                                 ?>
@@ -524,6 +524,16 @@ function mlReferences_dashboard()
     <div class="mlReferences wrap">
         <?php
         switch ($action) {
+            case 'end-note-upload':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    mlReferences_dashboard_end_note_upload_post();
+                } else {
+                    mlReferences_dashboard_end_note_upload_get();
+                }
+                break;
+            case 'end-note-download':
+                mlReferences_dashboard_end_note_download();
+                break;
             case 'mendeley-upload':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     mlReferences_dashboard_mendeley_upload_post();
@@ -543,16 +553,6 @@ function mlReferences_dashboard()
                 break;
             case 'zotero-download':
                 mlReferences_dashboard_zotero_download();
-                break;
-            case 'end-note-upload':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    mlReferences_dashboard_end_note_upload_post();
-                } else {
-                    mlReferences_dashboard_end_note_upload_get();
-                }
-                break;
-            case 'end-note-download':
-                mlReferences_dashboard_end_note_download();
                 break;
             case 'spreadsheet-upload':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
