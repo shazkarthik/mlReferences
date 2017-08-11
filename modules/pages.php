@@ -1,5 +1,80 @@
 <?php
 
+function mlReferences_dashboard_ris_upload_get()
+{
+    ?>
+    <h1>mlReferences - Documents - Upload RIS</h1>
+    <?php if (mlReferences_license_is_valid()): ?>
+        <form
+            action="<?php echo mlReferences_utilities_get_admin_url('action=ris-upload'); ?>"
+            enctype="multipart/form-data"
+            method="post"
+            >
+            <table class="bordered widefat wp-list-table">
+                <tr>
+                    <td class="label">
+                        <label for="file">RIS File</label>
+                    </td>
+                    <td><input id="file" name="file" type="file"></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input class="button-primary" type="submit" value="Submit">
+            </p>
+        </form>
+    <?php endif; ?>
+    <?php
+}
+
+function mlReferences_dashboard_ris_upload_post()
+{
+    $file = $_FILES['file'];
+    list($articles, $errors) = mlReferences_ris_get_articles($file['tmp_name']);
+    if ($errors) {
+        $_SESSION['mlReferences']['flashes'] = array(
+            'error' => 'The document was not uploaded successfully. Please try again.',
+        );
+        ?>
+        <meta
+            content="0;url=<?php echo mlReferences_utilities_get_admin_url('action=ris-upload'); ?>"
+            http-equiv="refresh"
+            >
+        <?php
+        return;
+    }
+    if (!$articles) {
+        $_SESSION['mlReferences']['flashes'] = array(
+            'error' => 'The document was not uploaded successfully. Please try again.',
+        );
+        ?>
+        <meta
+            content="0;url=<?php echo mlReferences_utilities_get_admin_url('action=ris-upload'); ?>"
+            http-equiv="refresh"
+            >
+        <?php
+        return;
+    }
+    mlReferences_models_documents_insert($file['tmp_name'], $file['name'], 'RIS', $articles);
+    $_SESSION['mlReferences']['flashes'] = array(
+        'success' => 'The document was uploaded successfully.',
+    );
+    ?>
+    <meta content="0;url=<?php echo mlReferences_utilities_get_admin_url('action='); ?>" http-equiv="refresh">
+    <?php
+    return;
+}
+
+function mlReferences_dashboard_ris_download()
+{
+    $id = $_REQUEST['id'];
+    $id = intval($id);
+    list($document, $contents) = mlReferences_ris_download($id);
+    ob_clean();
+    header(sprintf('Content-Disposition: attachment; filename="%s"', $document['name']));
+    header(sprintf('Content-Length: %d', strlen($contents)));
+    echo $contents;
+}
+
 function mlReferences_dashboard_mendeley_upload_get()
 {
     ?>
@@ -415,6 +490,10 @@ function mlReferences_dashboard_default()
             >Upload Zotero</a>
         <a
             class="page-title-action"
+            href="<?php echo mlReferences_utilities_get_admin_url('action=ris-upload'); ?>"
+            >Upload RIS</a>
+        <a
+            class="page-title-action"
             href="<?php echo mlReferences_utilities_get_admin_url('action=spreadsheet-upload'); ?>"
             >Upload Spreadsheet</a>
     </h1>
@@ -429,6 +508,7 @@ function mlReferences_dashboard_default()
                     <th class="narrow center">EndNote</th>
                     <th class="narrow center">Mendeley</th>
                     <th class="narrow center">Zotero</th>
+                    <th class="narrow center">RIS</th>
                     <th class="narrow center">Spreadsheet</th>
                     <th class="narrow center">Actions</th>
                 </tr>
@@ -478,6 +558,16 @@ function mlReferences_dashboard_default()
                             <?php if ($document['type'] === 'Zotero') : ?>
                                 <?php
                                 $admin_url = 'action=zotero-download&id=%d';
+                                $admin_url = sprintf($admin_url, $document['id']);
+                                $admin_url = mlReferences_utilities_get_admin_url($admin_url);
+                                ?>
+                                <a href="<?php echo $admin_url; ?>">Download</a>
+                            <?php endif; ?>
+                        </td>
+                        <td class="narrow center">
+                            <?php if ($document['type'] === 'RIS') : ?>
+                                <?php
+                                $admin_url = 'action=ris-download&id=%d';
                                 $admin_url = sprintf($admin_url, $document['id']);
                                 $admin_url = mlReferences_utilities_get_admin_url($admin_url);
                                 ?>
@@ -553,6 +643,16 @@ function mlReferences_dashboard()
                 break;
             case 'zotero-download':
                 mlReferences_dashboard_zotero_download();
+                break;
+            case 'ris-upload':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    mlReferences_dashboard_ris_upload_post();
+                } else {
+                    mlReferences_dashboard_ris_upload_get();
+                }
+                break;
+            case 'ris-download':
+                mlReferences_dashboard_ris_download();
                 break;
             case 'spreadsheet-upload':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

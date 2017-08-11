@@ -21,6 +21,7 @@ require_once('modules/license.php');
 require_once('modules/mendeley.php');
 require_once('modules/models.php');
 require_once('modules/pages.php');
+require_once('modules/ris.php');
 require_once('modules/spreadsheet.php');
 require_once('modules/utilities.php');
 require_once('modules/wp.php');
