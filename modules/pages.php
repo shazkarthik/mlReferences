@@ -486,12 +486,12 @@ function mlReferences_dashboard_default()
             >Upload Mendeley</a>
         <a
             class="page-title-action"
-            href="<?php echo mlReferences_utilities_get_admin_url('action=zotero-upload'); ?>"
-            >Upload Zotero</a>
-        <a
-            class="page-title-action"
             href="<?php echo mlReferences_utilities_get_admin_url('action=ris-upload'); ?>"
             >Upload RIS</a>
+        <a
+            class="page-title-action"
+            href="<?php echo mlReferences_utilities_get_admin_url('action=zotero-upload'); ?>"
+            >Upload Zotero</a>
         <a
             class="page-title-action"
             href="<?php echo mlReferences_utilities_get_admin_url('action=spreadsheet-upload'); ?>"
@@ -507,8 +507,8 @@ function mlReferences_dashboard_default()
                     <th class="narrow center">ZIP</th>
                     <th class="narrow center">EndNote</th>
                     <th class="narrow center">Mendeley</th>
-                    <th class="narrow center">Zotero</th>
                     <th class="narrow center">RIS</th>
+                    <th class="narrow center">Zotero</th>
                     <th class="narrow center">Spreadsheet</th>
                     <th class="narrow center">Actions</th>
                 </tr>
@@ -555,9 +555,9 @@ function mlReferences_dashboard_default()
                             <?php endif; ?>
                         </td>
                         <td class="narrow center">
-                            <?php if ($document['type'] === 'Zotero') : ?>
+                            <?php if ($document['type'] === 'RIS') : ?>
                                 <?php
-                                $admin_url = 'action=zotero-download&id=%d';
+                                $admin_url = 'action=ris-download&id=%d';
                                 $admin_url = sprintf($admin_url, $document['id']);
                                 $admin_url = mlReferences_utilities_get_admin_url($admin_url);
                                 ?>
@@ -565,9 +565,9 @@ function mlReferences_dashboard_default()
                             <?php endif; ?>
                         </td>
                         <td class="narrow center">
-                            <?php if ($document['type'] === 'RIS') : ?>
+                            <?php if ($document['type'] === 'Zotero') : ?>
                                 <?php
-                                $admin_url = 'action=ris-download&id=%d';
+                                $admin_url = 'action=zotero-download&id=%d';
                                 $admin_url = sprintf($admin_url, $document['id']);
                                 $admin_url = mlReferences_utilities_get_admin_url($admin_url);
                                 ?>
@@ -634,16 +634,6 @@ function mlReferences_dashboard()
             case 'mendeley-download':
                 mlReferences_dashboard_mendeley_download();
                 break;
-            case 'zotero-upload':
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                    mlReferences_dashboard_zotero_upload_post();
-                } else {
-                    mlReferences_dashboard_zotero_upload_get();
-                }
-                break;
-            case 'zotero-download':
-                mlReferences_dashboard_zotero_download();
-                break;
             case 'ris-upload':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     mlReferences_dashboard_ris_upload_post();
@@ -653,6 +643,16 @@ function mlReferences_dashboard()
                 break;
             case 'ris-download':
                 mlReferences_dashboard_ris_download();
+                break;
+            case 'zotero-upload':
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                    mlReferences_dashboard_zotero_upload_post();
+                } else {
+                    mlReferences_dashboard_zotero_upload_get();
+                }
+                break;
+            case 'zotero-download':
+                mlReferences_dashboard_zotero_download();
                 break;
             case 'spreadsheet-upload':
                 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

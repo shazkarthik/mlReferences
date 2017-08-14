@@ -10,7 +10,7 @@ function mlReferences_ris_download($id)
     $document = mlReferences_models_documents_select_one($id);
     $file = mlReferences_utilities_get_file(array($id, $document['name']));
     $contents = @file_get_contents($file);
-    $records = explode("ER  -", $contents);
+    $records = explode('ER  - ', $contents);
     foreach ($records as $record) {
         $data = array();
         preg_match('#ID  - ([^\n)]*)#', $record, $match);
@@ -21,25 +21,36 @@ function mlReferences_ris_download($id)
         $offset = 0;
         foreach (explode("\n", $record) as $key => $value) {
             $value = trim($value);
-            $prefix = substr($value, 0, 2);
-            switch ($prefix) {
-            case 'TY':
+            $prefix = explode('-', $value);
+            $tags = array(
+                'TY' , 'ID' , 'T1' , 'A1' , 'PB' , 'DO' , 'IS' , 'VL'
+            );
+            switch (trim($prefix[0])) {
+            case $tags[0]:
                 $data = preg_replace(
-                    '#TY  - .*?$#', sprintf('TY  - %s', $article['type']), $value
+                    sprintf('#%s  - .*?$#', $tags[0]),
+                    sprintf('%s  - %s', $tags[0], $article['type']),
+                    $value
                 );
                 $contents = str_replace($value, $data, $contents);
                 break;
-            case 'ID':
+            case $tags[1]:
                 $data = preg_replace(
-                    '#ID  - .*?$#', sprintf('ID  - %s', $article['number']), $value
-                );
-            case 'T1':
-                $data = preg_replace(
-                    '#T1  - .*?$#', sprintf('T1  - %s', $article['title_1']), $value
+                    sprintf('#%s  - .*?$#', $tags[1]),
+                    sprintf('%s  - %s', $tags[1], $article['number']),
+                    $value
                 );
                 $contents = str_replace($value, $data, $contents);
                 break;
-            case 'A1':
+            case $tags[2]:
+                $data = preg_replace(
+                    sprintf('#%s  - .*?$#', $tags[2]),
+                    sprintf('%s  - %s', $tags[2], $article['title_1']),
+                    $value
+                );
+                $contents = str_replace($value, $data, $contents);
+                break;
+            case $tags[3]:
                 $query_ = <<<EOD
 SELECT `%sauthors`.`name`, `%sauthors`.`first_name`
 FROM `%sauthors`
@@ -67,30 +78,41 @@ EOD;
                 $author = $GLOBALS['wpdb']->get_row($query_, ARRAY_A);
                 $offset += 1;
                 $data = preg_replace(
-                    '#A1  - .*?$#', sprintf('A1  - %s, %s', $author['name'], $author['first_name']), $value
-                );
-                $contents = $contents . implode("\n", $data);
-            case 'PB':
-                $data = preg_replace(
-                    '#PB  - .*?$#', sprintf('PB  - %s', $article['publisher']), $value
+                    sprintf('#%s  - .*?$#', $tags[3]),
+                    sprintf('%s  - %s, %s', $tags[3], $author['name'], $author['first_name']),
+                    $value
                 );
                 $contents = str_replace($value, $data, $contents);
                 break;
-            case 'DO':
+            case $tags[4]:
                 $data = preg_replace(
-                    '#DO  - .*?$#', sprintf('DO  - %s', $article['doi']), $value
+                    sprintf('#%s  - .*?$#', $tags[4]),
+                    sprintf('%s  - %s', $tags[4], $article['publisher']),
+                    $value
                 );
                 $contents = str_replace($value, $data, $contents);
                 break;
-            case 'IS':
+            case $tags[5]:
                 $data = preg_replace(
-                    '#IS  - .*?$#', sprintf('IS  - %s', $article['issue']), $value
+                    sprintf('#%s  - .*?$#', $tags[5]),
+                    sprintf('%s  - %s', $tags[5], $article['doi']),
+                    $value
                 );
                 $contents = str_replace($value, $data, $contents);
                 break;
-            case 'VL':
+            case $tags[6]:
                 $data = preg_replace(
-                    '#VL  - .*?$#', sprintf('VL  - %s', $article['volume']), $value
+                    sprintf('#%s  - .*?$#', $tags[6]),
+                    sprintf('%s  - %s', $tags[6], $article['issue']),
+                    $value
+                );
+                $contents = str_replace($value, $data, $contents);
+                break;
+            case $tags[7]:
+                $data = preg_replace(
+                    sprintf('#%s  - .*?$#', $tags[7]),
+                    sprintf('%s  - %s', $tags[7], $article['volume']),
+                    $value
                 );
                 $contents = str_replace($value, $data, $contents);
                 break;
@@ -161,34 +183,34 @@ function mlReferences_ris_get_article($record)
 
     foreach (explode("\n", $record) as $key => $value) {
         $value = trim($value);
-        $prefix = substr($value, 0, 2);
-        switch ($prefix) {
+        $prefix = explode('-', $value);
+        switch (trim($prefix[0])) {
             case 'TY':
-                $article['type'] = trim(substr($value, 5));
+                $article['type'] = trim($prefix[1]);
                 break;
             case 'ID':
-                $article['number'] = trim(substr($value, 5));
+                $article['number'] = trim($prefix[1]);
                 break;
             case 'T1':
-                $article['title_1'] = trim(substr($value, 5));
+                $article['title_1'] = trim($prefix[1]);
                 break;
             case 'UR':
-                $article['url'] = trim(substr($value, 5));
+                $article['url'] = trim($prefix[1]);
                 break;
             case 'A1':
-                $authors[] = trim(substr($value, 5));
+                $authors[] = trim($prefix[1]);
                 break;
             case 'VL':
-                $article['volume'] = trim(substr($value, 5));
+                $article['volume'] = trim($prefix[1]);
                 break;
             case 'IS':
-                $article['issue'] = trim(substr($value, 5));
+                $article['issue'] = trim($prefix[1]);
                 break;
             case 'DO':
-                $article['doi'] = trim(substr($value, 5));
+                $article['doi'] = trim($prefix[1]);
                 break;
             case 'PB':
-                $article['publisher'] = trim(substr($value, 5));
+                $article['publisher'] = trim($prefix[1]);
                 break;
         }
 
@@ -215,14 +237,17 @@ function mlReferences_ris_get_articles($ris)
     $articles = array();
 
     $ris = @file_get_contents($ris);
-    $records = explode("ER  -", $ris);
+    $records = explode('ER  - ', $ris);
     foreach ($records as $record) {
         if (strpos($record, 'TY  -') === false) {
             continue;
         }
         try {
-            $article = mlReferences_ris_get_article($record);
-            $articles[] = $article;
+            preg_match('#ID  - ([^\n)]*)#', $record, $matches);
+            if (!empty($matches)) {
+                $article = mlReferences_ris_get_article($record);
+                $articles[] = $article;
+            }
         } catch (Exception $exception) {
             return array($articles, sprintf('mlReferences_ris_get_articles() - %s', $exception->getMessage()));
         }
